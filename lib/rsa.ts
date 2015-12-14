@@ -42,8 +42,9 @@ export class Rsa extends AlgorithmBase {
 
 	static checkAlgorithmHashedParams(alg: IRsaKeyGenParams) {
 		super.checkAlgorithmHashedParams(alg);
-		alg.name = alg.name.toUpperCase();
-		if (HASH_ALGS.indexOf(alg.name) == -1)
+		var _alg = alg.hash;
+		_alg.name = _alg.name.toUpperCase();
+		if (HASH_ALGS.indexOf(_alg.name) == -1)
 			throw new Error("AlgorithmHashedParams: Unknow hash algorithm in use");
 	}
 }
@@ -73,7 +74,7 @@ export class RsaPKCS1 extends Rsa {
 		this.checkRsaGenParams(alg);
 		this.checkAlgorithmHashedParams(alg);
 
-		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(arguments);
+		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
 		return keyPair;
 	}
 

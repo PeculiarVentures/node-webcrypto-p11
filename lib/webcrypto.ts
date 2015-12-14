@@ -1,5 +1,6 @@
 import {Module, Session, Slot} from "graphene-pk11";
 import * as iwc from "./iwebcrypto"
+import * as subtle from "./subtlecrypto"
 
 /**
  * PKCS11 with WebCrypto Interface
@@ -11,7 +12,7 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
     private slot: Slot;
     private initialized: boolean;
 
-    public subtle: iwc.ISubtleCrypto;
+    public subtle: iwc.ISubtleCrypto = null;
     
     /**
      * Generates cryptographically random values
@@ -35,6 +36,7 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
         var session = this.session = slot.session;
         session.start();
         session.login(params.pin);
+        this.subtle = new subtle.P11SubtleCrypto(session);
     }
     
     /**

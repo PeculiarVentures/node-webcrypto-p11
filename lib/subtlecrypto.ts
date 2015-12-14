@@ -12,10 +12,11 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 	protected session: Session;
 
 	constructor(session: Session) {
-		this.session = session
+		this.session = session;
 	}
 
 	generateKey(algorithm: iwc.AlgorithmType, extractable: boolean, keyUsages: string[]): Promise {
+		var that = this;
 		return new Promise(function(resolve, reject) {
 			//convert string to IAlgorithmIdentifier
 			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
@@ -39,7 +40,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 				default:
 					throw new TypeError("");
 			}
-			var key = algClass.generateKey(this.session, _alg, extractable, keyUsages);
+			var key = algClass.generateKey(that.session, _alg, extractable, keyUsages);
 			resolve(key);
 		})
 	}

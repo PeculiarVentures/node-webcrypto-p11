@@ -2,6 +2,7 @@
 
 export interface IAlgorithmIdentifier{
 	name: string;
+	hash?: IAlgorithmIdentifier;
 }
 
 export type AlgorithmType = string | IAlgorithmIdentifier;

@@ -5,7 +5,7 @@ export class CryptoKey implements iwc.ICryptoKey{
 	type: string;
 	extractable: boolean;
 	algorithm: any;
-	usages: string[];
+	usages: string[] = [];
 	
 	private _key;
 	get key(){
@@ -13,6 +13,7 @@ export class CryptoKey implements iwc.ICryptoKey{
 	}
 	
 	constructor(key, alg: iwc.IAlgorithmIdentifier){
+		key = key.toType();
 		this._key = key;
 		this.extractable = !key.isExractable || key.isExractable();
 		this.algorithm = alg;
@@ -38,11 +39,11 @@ export class CryptoKey implements iwc.ICryptoKey{
 				this.usages.push("unwrap");
 		}
 		if (this.type == "public" || this.type == "secret"){
-			if (key.isDecrypt())
+			if (key.isEncrypt())
 				this.usages.push("encrypt");
-			if (key.isSign())
+			if (key.isVerify())
 				this.usages.push("verify");
-			if (key.isUnwrap())
+			if (key.isWrap())
 				this.usages.push("wrap");
 		}
 	}
