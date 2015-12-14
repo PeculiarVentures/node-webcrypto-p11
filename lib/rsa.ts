@@ -3,11 +3,11 @@ import {AlgorithmBase} from "./alg"
 import * as iwc from "./iwebcrypto"
 import {CryptoKey} from "./key"
 
-let ALG_NAME_RSA_PKCS1 = "RSA-PKCS1-v1_5";
+let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 let ALG_NAME_RSA_PSS = "RSA-PSS";
 let ALG_NAME_RSA_OAEP = "RSA-OAEP";
 
-let HASH_ALGS = ["SHA1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
+let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
 
 export class Rsa extends AlgorithmBase {
 	static ALGORITHM_NAME: string = ""
