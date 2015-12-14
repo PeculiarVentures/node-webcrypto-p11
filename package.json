@@ -1,0 +1,31 @@
+{
+  "name": "node-webcrypto-p11",
+  "version": "1.0.0",
+  "description": "A WebCrypto Polyfill built on PKCS11",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PeculiarVentures/node-webcrypto-p11.git"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.3"
+  },
+  "dependencies": {
+    "graphene-pk11": "^1.0.0",
+    "typescript": "1.7.3"
+  },
+  "keywords": [
+    "crypto",
+    "graphene",
+    "webcrypto"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PeculiarVentures/node-webcrypto-p11/issues"
+  },
+  "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme"
+}
