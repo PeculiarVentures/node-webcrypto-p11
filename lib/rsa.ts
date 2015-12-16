@@ -1,4 +1,7 @@
-import {Session} from "graphene-pk11"
+import * as graphene from "graphene-pk11"
+var RSA = graphene.RSA;
+var Enums = graphene.Enums;
+
 import * as alg from "./alg"
 import * as iwc from "./iwebcrypto"
 import {CryptoKey} from "./key"
@@ -11,7 +14,7 @@ let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
 
 export class Rsa extends alg.AlgorithmBase {
 	static ALGORITHM_NAME: string = "";
-	static generateKey(session: Session, alg: any, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
+	static generateKey(session: graphene.Session, alg: any, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
 		var size = alg.modulusLength;
 		var exp = new Buffer(alg.publicExponent);
 		var _key = session.generate("RSA", null, {
@@ -51,36 +54,6 @@ export class Rsa extends alg.AlgorithmBase {
 		if (HASH_ALGS.indexOf(_alg.name) == -1)
 			throw new Error("AlgorithmHashedParams: Unknow hash algorithm in use");
 	}
-}
-
-export interface IRsaKeyGenParams extends iwc.IAlgorithmIdentifier {
-	modulusLength: number;
-	publicExponent: Uint8Array;
-}
-
-export class RsaKey extends CryptoKey {
-	modulusLength: number;
-	publicExponent: Uint8Array;
-
-	constructor(key, alg: IRsaKeyGenParams) {
-		super(key, alg);
-		this.modulusLength = alg.modulusLength;
-		this.publicExponent = alg.publicExponent;
-		//TODO: get params from key if alg params is empty
-	}
-}
-
-export class RsaPKCS1 extends Rsa {
-	static ALGORITHM_NAME: string = ALG_NAME_RSA_PKCS1;
-
-	static generateKey(session: Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
-		this.checkAlgorithmIdentifier(alg);
-		this.checkRsaGenParams(alg);
-		this.checkAlgorithmHashedParams(alg);
-
-		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
-		return keyPair;
-	}
 
 	static wc2pk11(alg) {
 		RsaPKCS1.checkRsaAlgorithm(alg);
@@ -107,17 +80,51 @@ export class RsaPKCS1 extends Rsa {
 		}
 		return _alg;
 	}
+}
 
-	static sign(session: Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer) {
-		var _alg = RsaPKCS1.wc2pk11(alg);
+export interface IRsaKeyGenParams extends iwc.IAlgorithmIdentifier {
+	modulusLength: number;
+	publicExponent: Uint8Array;
+}
+
+export class RsaKey extends CryptoKey {
+	modulusLength: number;
+	publicExponent: Uint8Array;
+
+	constructor(key, alg: IRsaKeyGenParams) {
+		super(key, alg);
+		this.modulusLength = alg.modulusLength;
+		this.publicExponent = alg.publicExponent;
+		//TODO: get params from key if alg params is empty
+	}
+}
+
+export class RsaPKCS1 extends Rsa {
+	static ALGORITHM_NAME: string = ALG_NAME_RSA_PKCS1;
+
+	static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
+		this.checkAlgorithmIdentifier(alg);
+		this.checkRsaGenParams(alg);
+		this.checkAlgorithmHashedParams(alg);
+
+		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
+		return keyPair;
+	}
+
+	static sign(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer) {
+		RsaPKCS1.checkAlgorithmIdentifier(alg);
+		RsaPKCS1.checkPrivateKey(key);
+		var _alg = RsaPKCS1.wc2pk11(key.algorithm);
 
 		var signer = session.createSign(_alg, key.key);
 		signer.update(data);
 		var signature = signer.final();
 	}
 
-	static verify(session: Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
-		var _alg = RsaPKCS1.wc2pk11(alg);
+	static verify(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
+		RsaPKCS1.checkAlgorithmIdentifier(alg);
+		RsaPKCS1.checkPublicKey(key);
+		var _alg = RsaPKCS1.wc2pk11(key.algorithm);
 
 		var signer = session.createVerify(_alg, key.key);
 		signer.update(data);
@@ -130,7 +137,7 @@ export class RsaPKCS1 extends Rsa {
 export class RsaPSS extends Rsa {
 	static ALGORITHM_NAME: string = ALG_NAME_RSA_PSS;
 
-	static generateKey(session: Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
+	static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
 		throw new Error("not realized in this implementation");
 	}
 }
@@ -138,12 +145,61 @@ export class RsaPSS extends Rsa {
 export class RsaOAEP extends Rsa {
 	static ALGORITHM_NAME: string = ALG_NAME_RSA_OAEP;
 
-	static generateKey(session: Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
+	static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
 		this.checkAlgorithmIdentifier(alg);
 		this.checkRsaGenParams(alg);
 		this.checkAlgorithmHashedParams(alg);
 
 		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(arguments);
 		return keyPair;
+	}
+
+	static wc2pk11(alg) {
+		var params = null;
+		switch (alg.hash.name.toUpperCase()) {
+			case "SHA-1":
+				params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA1, Enums.MGF1.SHA1);
+				break;
+			case "SHA-224":
+				params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA224, Enums.MGF1.SHA224);
+				break;
+			case "SHA-256":
+				params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA256, Enums.MGF1.SHA256);
+				break;
+			case "SHA-384":
+				params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA384, Enums.MGF1.SHA384);
+				break;
+			case "SHA-512":
+				params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA512, Enums.MGF1.SHA512);
+				break;
+			default:
+				throw new Error("Unknown hash name in use");
+		}
+		var res = { name: "RSA_PKCS_OAEP", params: params };
+		return res;
+	}
+
+	static encrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
+		RsaPKCS1.checkAlgorithmIdentifier(alg);
+		RsaPKCS1.checkPublicKey(key);
+		var _alg =RsaPKCS1.wc2pk11(key.algorithm); 
+
+		var enc = session.createEncrypt(_alg, key.key);
+		var msg = new Buffer(0);
+		msg = Buffer.concat([msg, enc.update(data)]);
+		msg = Buffer.concat([msg, enc.final()]);
+		return msg;
+	}
+
+	static decrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
+		RsaPKCS1.checkAlgorithmIdentifier(alg);
+		RsaPKCS1.checkPrivateKey(key);
+		var _alg =RsaPKCS1.wc2pk11(key.algorithm);
+
+		var dec = session.createDecrypt(_alg, key.key);
+		var msg = new Buffer(0);
+		msg = Buffer.concat([msg, dec.update(data)]);
+		msg = Buffer.concat([msg, dec.final()]);
+		return msg;
 	}
 }

@@ -1,6 +1,6 @@
 /// <reference path="./promise.ts" />
 
-import {Session} from "graphene-pk11"
+import * as graphene from "graphene-pk11"
 import {CryptoKey} from "./key"
 
 import * as alg from "./alg"
@@ -9,9 +9,9 @@ import * as rsa from "./rsa"
 import * as iwc from "./iwebcrypto"
 
 export class P11SubtleCrypto implements iwc.ISubtleCrypto {
-	protected session: Session;
+	protected session: graphene.Session;
 
-	constructor(session: Session) {
+	constructor(session: graphene.Session) {
 		this.session = session;
 	}
 
