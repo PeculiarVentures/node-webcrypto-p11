@@ -13,7 +13,6 @@ let ALG_NAME_RSA_OAEP = "RSA-OAEP";
 let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
 
 export class Rsa extends alg.AlgorithmBase {
-	static ALGORITHM_NAME: string = "";
 	static generateKey(session: graphene.Session, alg: any, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
 		var size = alg.modulusLength;
 		var exp = new Buffer(alg.publicExponent);
@@ -32,13 +31,7 @@ export class Rsa extends alg.AlgorithmBase {
 		};
 	}
 
-	static checkRsaAlgorithm(alg: iwc.IAlgorithmIdentifier) {
-		if (alg.name.toLowerCase() !== this.ALGORITHM_NAME.toLowerCase())
-			throw new Error("RsaKeyGenParams: Wrong algrotiyhm name. Must be " + this.ALGORITHM_NAME);
-	}
-
 	static checkRsaGenParams(alg: IRsaKeyGenParams) {
-		this.checkRsaAlgorithm;
 		if (!alg.modulusLength)
 			throw new TypeError("RsaKeyGenParams: modulusLength: Missing required property");
 		if (alg.modulusLength < 256 || alg.modulusLength > 16384)
@@ -56,7 +49,6 @@ export class Rsa extends alg.AlgorithmBase {
 	}
 
 	static wc2pk11(alg) {
-		RsaPKCS1.checkRsaAlgorithm(alg);
 		RsaPKCS1.checkAlgorithmHashedParams(alg);
 		var _alg = null;
 		switch (alg.hash.name.toUpperCase()) {

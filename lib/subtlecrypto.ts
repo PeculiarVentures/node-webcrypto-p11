@@ -5,8 +5,20 @@ import {CryptoKey} from "./key"
 
 import * as alg from "./alg"
 import * as rsa from "./rsa"
+import * as aes from "./aes"
 
 import * as iwc from "./iwebcrypto"
+
+function prepare_algorithm(alg: iwc.AlgorithmType): iwc.IAlgorithmIdentifier {
+	var _alg: iwc.IAlgorithmIdentifier = { name: "" };
+	if (alg instanceof String) {
+		_alg = { name: alg };
+	}
+	else {
+		_alg = <iwc.IAlgorithmIdentifier>alg;
+	}
+	return _alg
+}
 
 export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 	protected session: graphene.Session;
@@ -18,14 +30,8 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 	generateKey(algorithm: iwc.AlgorithmType, extractable: boolean, keyUsages: string[]): Promise {
 		var that = this;
 		return new Promise(function(resolve, reject) {
-			//convert string to IAlgorithmIdentifier
-			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
-			if (algorithm instanceof String) {
-				_alg = { name: algorithm };
-			}
-			else {
-				_alg = <iwc.IAlgorithmIdentifier>algorithm;
-			}
+			var _alg = prepare_algorithm(algorithm);
+
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
@@ -36,6 +42,9 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					break;
 				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
 					algClass = rsa.RsaOAEP
+					break;
+				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+					algClass = aes.AesGCM
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
@@ -48,13 +57,8 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 	sign(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
 		var that = this;
 		return new Promise(function(resolve, reject) {
-			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
-			if (algorithm instanceof String) {
-				_alg = { name: algorithm };
-			}
-			else {
-				_alg = <iwc.IAlgorithmIdentifier>algorithm;
-			}
+			var _alg = prepare_algorithm(algorithm);
+
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
@@ -70,17 +74,12 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 			resolve(signature);
 		})
 	}
-	
+
 	verify(algorithm: iwc.AlgorithmType, key: CryptoKey, signature: Buffer, data: Buffer): Promise {
 		var that = this;
 		return new Promise(function(resolve, reject) {
-			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
-			if (algorithm instanceof String) {
-				_alg = { name: algorithm };
-			}
-			else {
-				_alg = <iwc.IAlgorithmIdentifier>algorithm;
-			}
+			var _alg = prepare_algorithm(algorithm);
+
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
@@ -96,21 +95,19 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 			resolve(valid);
 		})
 	}
-	
+
 	encrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
 		var that = this;
 		return new Promise(function(resolve, reject) {
-			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
-			if (algorithm instanceof String) {
-				_alg = { name: algorithm };
-			}
-			else {
-				_alg = <iwc.IAlgorithmIdentifier>algorithm;
-			}
+			var _alg = prepare_algorithm(algorithm);
+
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
 					algClass = rsa.RsaOAEP
+					break;
+				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+					algClass = aes.AesGCM
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
@@ -119,27 +116,68 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 			resolve(msg);
 		})
 	}
-	
+
 	decrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
 		var that = this;
 		return new Promise(function(resolve, reject) {
-			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
-			if (algorithm instanceof String) {
-				_alg = { name: algorithm };
-			}
-			else {
-				_alg = <iwc.IAlgorithmIdentifier>algorithm;
-			}
+			var _alg = prepare_algorithm(algorithm);
+
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
 					algClass = rsa.RsaOAEP
+					break;
+				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+					algClass = aes.AesGCM
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
 			}
 			var msg = algClass.decrypt(that.session, _alg, key, data);
 			resolve(msg);
+		})
+	}
+
+	wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, algorithm: iwc.IAlgorithmIdentifier): Promise {
+		var that = this;
+		return new Promise(function(resolve, reject) {
+			var _alg = prepare_algorithm(algorithm);
+
+			var algClass: alg.IAlgorithmBase = null;
+			switch (_alg.name.toLowerCase()) {
+				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaOAEP
+					break;
+				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+					algClass = aes.AesGCM
+					break;
+				default:
+					throw new TypeError("Unsupported algorith in use");
+			}
+			var wrappedKey = algClass.wrapKey(that.session, key, wrappingKey, _alg);
+			resolve(wrappedKey);
+		})
+	}
+
+	unwrapKey(format: string, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): Promise {
+		var that = this;
+		return new Promise(function(resolve, reject) {
+			var _alg1 = prepare_algorithm(unwrapAlgorithm);
+			var _alg2 = prepare_algorithm(unwrappedAlgorithm);
+
+			var algClass: alg.IAlgorithmBase = null;
+			switch (_alg1.name.toLowerCase()) {
+				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaOAEP
+					break;
+				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+					algClass = aes.AesGCM
+					break;
+				default:
+					throw new TypeError("Unsupported algorith in use");
+			}
+			var unwrappedKey = algClass.unwrapKey(that.session, wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
+			resolve(unwrappedKey);
 		})
 	}
 

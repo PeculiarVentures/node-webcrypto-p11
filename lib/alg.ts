@@ -13,6 +13,8 @@ export interface IAlgorithmBase {
 }
 
 export class AlgorithmBase {
+	static ALGORITHM_NAME: string = "";
+	
 	static generateKey(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKey | iwc.ICryptoKeyPair {
 		throw new Error("Method is not supported");
 	}
@@ -46,7 +48,10 @@ export class AlgorithmBase {
 			throw TypeError("AlgorithmIdentifier: Algorithm must be an Object");
 		if (!(alg.name && typeof (alg.name) == "string"))
 			throw TypeError("AlgorithmIdentifier: Missing required property name");
+		if (alg.name.toLowerCase() !== this.ALGORITHM_NAME.toLowerCase())
+			throw new Error("AlgorithmIdentifier: Wrong algorithm name. Must be " + this.ALGORITHM_NAME);
 	}
+	
 	static checkAlgorithmHashedParams(alg) {
 		if (!alg.hash)
 			throw new TypeError("AlgorithmHashedParams: Missing required property hash");

@@ -8,7 +8,7 @@ export class CryptoKey implements iwc.ICryptoKey{
 	usages: string[] = [];
 	
 	private _key;
-	get key(){
+	get key(): graphene.Key{
 		return this._key;
 	}
 	

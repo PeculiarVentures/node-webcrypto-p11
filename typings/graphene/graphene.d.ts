@@ -2578,13 +2578,6 @@ declare module "graphene-pk11" {
 		final(): Buffer;
 	}
 
-	export var AES: {
-		Aes: Aes
-		AesCBC: AesCBC
-		AesGCM: AesGCM
-		AesGCMParams: AesGCMParams
-	}
-
 	class AsymmetricKey {
 		session: Session;
 		publicKey: Key;
@@ -2617,64 +2610,66 @@ declare module "graphene-pk11" {
 	interface GenParams {
 		label?: string
 		extractable?: boolean
+		token?: boolean
 		keyUsages: Array<string>
-	}
-
-
-	interface AesGenParams extends GenParams {
-		length: number
 	}
 
 	export namespace RSA {
 
 		interface RsaGenParams extends GenParams {
-			modulusLength: number
-			publicExponent: number
+			modulusLength: number;
+			publicExponent: number;
 		}
 
 		class Rsa extends AsymmetricKey {
-			modulusLength: number
-			publicExponent: number
+			modulusLength: number;
+			publicExponent: number;
 
 			generate(session: Session, algorithm: string | AlgParams, props: RsaGenParams): Rsa;
 		}
 		class RsaOAEPParams implements ICkiConverter {
 			constructor(hashAlgs: number, mgf: number, sourceData?: number, source?: Buffer)
-			toCKI(): Object
+			toCKI(): Object;
 		}
 
 		class RsaPSSParams implements ICkiConverter {
-			constructor(hashAlgs: number, mgf: number, soltLength: number)
+			constructor(hashAlgs: number, mgf: number, soltLength: number);
+			toCKI(): Object;
+		}
+
+	}
+
+	export namespace AES {
+		interface AesGenParams extends GenParams {
+			length: number;
+		}
+
+		class Aes extends SymmetricKey {
+			length: number;
+
+			static generate(session: Session, algorithm: string | AlgParams, props: AesGenParams): Aes;
+		}
+
+		class AesCBC extends Aes {
+			encrypt(data: Buffer): Buffer;
+			decrypt(data: Buffer): Buffer;
+			wrapKey(key: Key): Buffer;
+			wrapKey(data: Buffer): Key;
+		}
+
+		class AesGCMParams implements ICkiConverter {
+			constructor(iv: Buffer, additionalData?: Buffer, tagLength?: number)
 			toCKI(): Object
 		}
 
+		class AesGCM extends Aes {
+			encrypt(data: Buffer): Buffer
+			decrypt(data: Buffer): Buffer
+		}
 	}
 
 	interface ICkiConverter {
 		toCKI(): Object
-	}
-
-	class Aes extends SymmetricKey {
-		length: number
-
-		generate(session: Session, algorithm: string | AlgParams, props: AesGenParams): Aes;
-	}
-
-	class AesCBC extends Aes {
-		encrypt(data: Buffer): Buffer
-		decrypt(data: Buffer): Buffer
-		wrapKey(key: Key): Buffer
-		wrapKey(data: Buffer): Key
-	}
-
-	class AesGCMParams implements ICkiConverter {
-		constructor(iv: Buffer, additionalData?: Buffer, tagLength?: number)
-		toCKI(): Object
-	}
-
-	class AesGCM extends Aes {
-		encrypt(data: Buffer): Buffer
-		decrypt(data: Buffer): Buffer
 	}
 
 }
