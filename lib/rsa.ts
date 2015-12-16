@@ -119,6 +119,8 @@ export class RsaPKCS1 extends Rsa {
 		var signer = session.createSign(_alg, key.key);
 		signer.update(data);
 		var signature = signer.final();
+		
+		return signature;
 	}
 
 	static verify(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
@@ -129,6 +131,7 @@ export class RsaPKCS1 extends Rsa {
 		var signer = session.createVerify(_alg, key.key);
 		signer.update(data);
 		var res = signer.final(signature);
+		
 		return res;
 	}
 
