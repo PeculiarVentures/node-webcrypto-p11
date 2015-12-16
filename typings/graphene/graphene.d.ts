@@ -1910,6 +1910,23 @@ declare module "graphene-pk11" {
 		deriveKey(alg: AlgParams | String, key: Key, template: Object): Key;
 
 		generate(keyType: string, algorithm: AlgParams, props: Object): any;
+
+		/**
+		* Wraps key
+		* @param wkey wrapping key
+		* @param alg the wrapping algorithm
+		* @param key key to be wrapped
+		*/
+		wrapKey(wkey: Key, alg: AlgParams | String, key: Key): Buffer;
+		
+		/**
+		* Unwraps key
+		* @param ukey unwrapping key
+		* @param alg the unwrapping algorithm
+		* @param obj template
+		* @param data encoded data
+		*/
+		unwrapKey(ukey: Key, alg: AlgParams | String, obj: Object, data: Buffer): Key
 	}
 
 	interface AlgParams {

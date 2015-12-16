@@ -119,7 +119,7 @@ export class RsaPKCS1 extends Rsa {
 		var signer = session.createSign(_alg, key.key);
 		signer.update(data);
 		var signature = signer.final();
-		
+
 		return signature;
 	}
 
@@ -131,7 +131,7 @@ export class RsaPKCS1 extends Rsa {
 		var signer = session.createVerify(_alg, key.key);
 		signer.update(data);
 		var res = signer.final(signature);
-		
+
 		return res;
 	}
 
@@ -188,7 +188,7 @@ export class RsaOAEP extends Rsa {
 		var _alg = this.wc2pk11(key.algorithm); 
 
 		//TODO: Remove <any>
-		var enc = session.createEncrypt(<any> _alg, key.key);
+		var enc = session.createEncrypt(<any>_alg, key.key);
 		var msg = new Buffer(0);
 		msg = Buffer.concat([msg, enc.update(data)]);
 		msg = Buffer.concat([msg, enc.final()]);
@@ -206,5 +206,29 @@ export class RsaOAEP extends Rsa {
 		msg = Buffer.concat([msg, dec.update(data)]);
 		msg = Buffer.concat([msg, dec.final()]);
 		return msg;
+	}
+
+	static wrapKey(session: graphene.Session, key: CryptoKey, wrappingKey: CryptoKey, alg: iwc.IAlgorithmIdentifier): Buffer {
+		this.checkAlgorithmIdentifier(alg);
+		this.checkAlgorithmHashedParams(alg);
+		this.checkSecretKey(key);
+		this.checkPublicKey(wrappingKey);
+		var _alg = this.wc2pk11(alg);
+
+		var wrappedKey: Buffer = session.wrapKey(wrappingKey.key, _alg, key.key);
+		return wrappedKey;
+	}
+
+	static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
+		this.checkAlgorithmIdentifier(unwrapAlgorithm);
+		this.checkAlgorithmHashedParams(unwrapAlgorithm);
+		this.checkPrivateKey(unwrappingKey);
+		var _alg = this.wc2pk11(alg);
+		
+		//TODO: convert unwrappedAlgorithm to PKCS11 Algorithm 
+
+		var unwrappedKey: graphene.Key = session.unwrapKey(unwrappingKey.key, _alg, {name:""}, wrappedKey);
+		//TODO: WrapKey with known AlgKey 
+		return new CryptoKey(unwrappedKey,{name:""});
 	}
 }
