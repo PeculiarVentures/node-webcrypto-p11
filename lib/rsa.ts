@@ -1,5 +1,5 @@
 import {Session} from "graphene-pk11"
-import {AlgorithmBase} from "./alg"
+import * as alg from "./alg"
 import * as iwc from "./iwebcrypto"
 import {CryptoKey} from "./key"
 
@@ -9,8 +9,8 @@ let ALG_NAME_RSA_OAEP = "RSA-OAEP";
 
 let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
 
-export class Rsa extends AlgorithmBase {
-	static ALGORITHM_NAME: string = ""
+export class Rsa extends alg.AlgorithmBase {
+	static ALGORITHM_NAME: string = "";
 	static generateKey(session: Session, alg: any, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
 		var size = alg.modulusLength;
 		var exp = new Buffer(alg.publicExponent);
@@ -29,9 +29,13 @@ export class Rsa extends AlgorithmBase {
 		};
 	}
 
-	static checkRsaGenParams(alg: IRsaKeyGenParams) {
+	static checkRsaAlgorithm(alg: iwc.IAlgorithmIdentifier) {
 		if (alg.name.toLowerCase() !== this.ALGORITHM_NAME.toLowerCase())
-			throw new Error("RsaKeyGenParams: Wrong algrotiyhm name. Must be RSASSA_PKCS1_v1_5");
+			throw new Error("RsaKeyGenParams: Wrong algrotiyhm name. Must be " + this.ALGORITHM_NAME);
+	}
+
+	static checkRsaGenParams(alg: IRsaKeyGenParams) {
+		this.checkRsaAlgorithm;
 		if (!alg.modulusLength)
 			throw new TypeError("RsaKeyGenParams: modulusLength: Missing required property");
 		if (alg.modulusLength < 256 || alg.modulusLength > 16384)
@@ -40,7 +44,7 @@ export class Rsa extends AlgorithmBase {
 			throw new TypeError("RsaKeyGenParams: publicExponent: Missing or not a Uint8Array");
 	}
 
-	static checkAlgorithmHashedParams(alg: IRsaKeyGenParams) {
+	static checkAlgorithmHashedParams(alg: iwc.IAlgorithmIdentifier) {
 		super.checkAlgorithmHashedParams(alg);
 		var _alg = alg.hash;
 		_alg.name = _alg.name.toUpperCase();
@@ -76,6 +80,49 @@ export class RsaPKCS1 extends Rsa {
 
 		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
 		return keyPair;
+	}
+
+	static wc2pk11(alg) {
+		RsaPKCS1.checkRsaAlgorithm(alg);
+		RsaPKCS1.checkAlgorithmHashedParams(alg);
+		var _alg = null;
+		switch (alg.hash.name.toUpperCase()) {
+			case "SHA-1":
+				_alg = "SHA1_RSA_PKCS";
+				break;
+			case "SHA-224":
+				_alg = "SHA224_RSA_PKCS";
+				break;
+			case "SHA-256":
+				_alg = "SHA256_RSA_PKCS";
+				break;
+			case "SHA-384":
+				_alg = "SHA384_RSA_PKCS";
+				break;
+			case "SHA-512":
+				_alg = "SHA512_RSA_PKCS";
+				break;
+			default:
+				throw new TypeError("Unknown Hash agorithm name in use");
+		}
+		return _alg;
+	}
+
+	static sign(session: Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer) {
+		var _alg = RsaPKCS1.wc2pk11(alg);
+
+		var signer = session.createSign(_alg, key.key);
+		signer.update(data);
+		var signature = signer.final();
+	}
+
+	static verify(session: Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
+		var _alg = RsaPKCS1.wc2pk11(alg);
+
+		var signer = session.createVerify(_alg, key.key);
+		signer.update(data);
+		var res = signer.final(signature);
+		return res;
 	}
 
 }
