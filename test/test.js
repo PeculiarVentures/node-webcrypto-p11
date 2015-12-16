@@ -11,7 +11,7 @@ describe("test", function () {
     after(function () {
     })
 
-    it("generate RSA PKCS1 1.5", function () {
+    it("generate RSA PKCS1 1.5", function (done) {
 		webcrypto = new WebCrypto(config);
         
 		webcrypto.subtle.generateKey({
@@ -25,10 +25,9 @@ describe("test", function () {
             ["sign", "verify"]
         )
         .then(function(k){
-            console.log(k);
+            assert.equal(k.privateKey !== null, true, "Has no private key");
+            assert.equal(k.publicKey !== null, true, "Has no public key");
         })
-        .catch(function(e){
-            console.error('Error:', e.message, e.stack);
-        })
+        .then(done, done);
     })
 })
