@@ -96,5 +96,51 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 			resolve(valid);
 		})
 	}
+	
+	encrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
+		var that = this;
+		return new Promise(function(resolve, reject) {
+			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
+			if (algorithm instanceof String) {
+				_alg = { name: algorithm };
+			}
+			else {
+				_alg = <iwc.IAlgorithmIdentifier>algorithm;
+			}
+			var algClass: alg.IAlgorithmBase = null;
+			switch (_alg.name.toLowerCase()) {
+				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaOAEP
+					break;
+				default:
+					throw new TypeError("Unsupported algorith in use");
+			}
+			var msg = algClass.encrypt(that.session, _alg, key, data);
+			resolve(msg);
+		})
+	}
+	
+	decrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
+		var that = this;
+		return new Promise(function(resolve, reject) {
+			var _alg: iwc.IAlgorithmIdentifier = { name: "" };
+			if (algorithm instanceof String) {
+				_alg = { name: algorithm };
+			}
+			else {
+				_alg = <iwc.IAlgorithmIdentifier>algorithm;
+			}
+			var algClass: alg.IAlgorithmBase = null;
+			switch (_alg.name.toLowerCase()) {
+				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaOAEP
+					break;
+				default:
+					throw new TypeError("Unsupported algorith in use");
+			}
+			var msg = algClass.decrypt(that.session, _alg, key, data);
+			resolve(msg);
+		})
+	}
 
 }
