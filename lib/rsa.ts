@@ -112,9 +112,9 @@ export class RsaPKCS1 extends Rsa {
 	}
 
 	static sign(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer) {
-		RsaPKCS1.checkAlgorithmIdentifier(alg);
-		RsaPKCS1.checkPrivateKey(key);
-		var _alg = RsaPKCS1.wc2pk11(key.algorithm);
+		this.checkAlgorithmIdentifier(alg);
+		this.checkPrivateKey(key);
+		var _alg = this.wc2pk11(key.algorithm);
 
 		var signer = session.createSign(_alg, key.key);
 		signer.update(data);
@@ -124,9 +124,9 @@ export class RsaPKCS1 extends Rsa {
 	}
 
 	static verify(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
-		RsaPKCS1.checkAlgorithmIdentifier(alg);
-		RsaPKCS1.checkPublicKey(key);
-		var _alg = RsaPKCS1.wc2pk11(key.algorithm);
+		this.checkAlgorithmIdentifier(alg);
+		this.checkPublicKey(key);
+		var _alg = this.wc2pk11(key.algorithm);
 
 		var signer = session.createVerify(_alg, key.key);
 		signer.update(data);
@@ -153,7 +153,7 @@ export class RsaOAEP extends Rsa {
 		this.checkRsaGenParams(alg);
 		this.checkAlgorithmHashedParams(alg);
 
-		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(arguments);
+		var keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
 		return keyPair;
 	}
 
@@ -183,11 +183,12 @@ export class RsaOAEP extends Rsa {
 	}
 
 	static encrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
-		RsaPKCS1.checkAlgorithmIdentifier(alg);
-		RsaPKCS1.checkPublicKey(key);
-		var _alg =RsaPKCS1.wc2pk11(key.algorithm); 
+		this.checkAlgorithmIdentifier(alg);
+		this.checkPublicKey(key);
+		var _alg = this.wc2pk11(key.algorithm); 
 
-		var enc = session.createEncrypt(_alg, key.key);
+		//TODO: Remove <any>
+		var enc = session.createEncrypt(<any> _alg, key.key);
 		var msg = new Buffer(0);
 		msg = Buffer.concat([msg, enc.update(data)]);
 		msg = Buffer.concat([msg, enc.final()]);
@@ -195,11 +196,12 @@ export class RsaOAEP extends Rsa {
 	}
 
 	static decrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
-		RsaPKCS1.checkAlgorithmIdentifier(alg);
-		RsaPKCS1.checkPrivateKey(key);
-		var _alg =RsaPKCS1.wc2pk11(key.algorithm);
+		this.checkAlgorithmIdentifier(alg);
+		this.checkPrivateKey(key);
+		var _alg = this.wc2pk11(key.algorithm);
 
-		var dec = session.createDecrypt(_alg, key.key);
+		//TODO: Remove <any>
+		var dec = session.createDecrypt(<any>_alg, key.key);
 		var msg = new Buffer(0);
 		msg = Buffer.concat([msg, dec.update(data)]);
 		msg = Buffer.concat([msg, dec.final()]);
