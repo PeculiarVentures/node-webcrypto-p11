@@ -54,7 +54,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = ec.Ecdh;
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var key = algClass.generateKey(that.session, _alg, extractable, keyUsages);
 			resolve(key);
@@ -78,7 +78,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = ec.Ecdsa
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var signature = algClass.sign(that.session, _alg, key, data);
 			resolve(signature);
@@ -102,7 +102,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = ec.Ecdsa
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var valid = algClass.verify(that.session, _alg, key, signature, data);
 			resolve(valid);
@@ -123,7 +123,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = aes.AesGCM
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var msg = algClass.encrypt(that.session, _alg, key, data);
 			resolve(msg);
@@ -144,7 +144,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = aes.AesGCM
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var msg = algClass.decrypt(that.session, _alg, key, data);
 			resolve(msg);
@@ -165,7 +165,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = aes.AesGCM
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var wrappedKey = algClass.wrapKey(that.session, key, wrappingKey, _alg);
 			resolve(wrappedKey);
@@ -187,7 +187,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = aes.AesGCM
 					break;
 				default:
-					throw new TypeError("Unsupported algorith in use");
+					throw new TypeError("Unsupported algorithm in use");
 			}
 			var unwrappedKey = algClass.unwrapKey(that.session, wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
 			resolve(unwrappedKey);

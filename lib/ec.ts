@@ -134,7 +134,7 @@ export class Ecdsa extends Ec {
 		this.checkAlgorithmIdentifier(alg);
 		this.checkAlgorithmHashedParams(alg);
 		this.checkPrivateKey(key);
-		var _alg = this.wc2pk11(key.algorithm);
+		var _alg = this.wc2pk11(alg);
 
 		var signer = session.createSign(_alg, key.key);
 		signer.update(data);
@@ -147,7 +147,7 @@ export class Ecdsa extends Ec {
 		this.checkAlgorithmIdentifier(alg);
 		this.checkAlgorithmHashedParams(alg);
 		this.checkPublicKey(key);
-		var _alg = this.wc2pk11(key.algorithm);
+		var _alg = this.wc2pk11(alg);
 
 		var signer = session.createVerify(_alg, key.key);
 		signer.update(data);

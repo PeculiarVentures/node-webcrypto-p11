@@ -1,23 +1,18 @@
 var assert = require('assert');
-var WebCrypto = require("../src/webcrypto.js").default;
-var config = require("./config.js")
 
-describe("test", function () {
+describe("RSA", function () {
     var webcrypto;
-    var keys = [];
+    var keys;
     
     var TEST_MESSAGE = new Buffer("This is test message for crypto functions");
 
-    before(function () {
-        webcrypto = new WebCrypto(config);
+    before(function(done){
+        webcrypto = global.webcrypto;
+        keys = global.keys;
+        done();
     })
 
-    after(function () {
-        //TODO: Delete all tmp keys
-        webcrypto.close();
-    })
-
-    it("RSA PKCS1 1.5", function (done) {
+    it("RSA PKCS1 1.5 sign/verify", function (done) {
         var key = null;
 		webcrypto.subtle.generateKey({
             name:"RSASSA-PKCS1-v1_5",
@@ -47,7 +42,7 @@ describe("test", function () {
         .then(done, done);
     })
     
-    it("RSA OAEP", function (done) {
+    it("RSA OAEP encrypt/decrypt", function (done) {
         var key = null;
 		webcrypto.subtle.generateKey({
             name:"RSA-OAEP",
@@ -77,7 +72,7 @@ describe("test", function () {
         .then(done, done);
     })
     
-    it("RSA OAEP", function (done) {
+    it("RSA OAEP wrap/unwrap", function (done) {
         var key = null;
         var skey = null;
 		webcrypto.subtle.generateKey({
@@ -95,11 +90,11 @@ describe("test", function () {
             assert.equal(k.publicKey !== null, true, "Has no public key");
             key = k;
             keys.push(key);
-            return webcrypto.subtle.genrateKey({
+            return webcrypto.subtle.generateKey({
                 name: "AES-GCM",
                 length: 256, //can be  128, 192, or 256
             },
-            false, //whether the key is extractable (i.e. can be used in exportKey)
+            true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt"]); 
         })
         .then(function(skey){
@@ -114,7 +109,7 @@ describe("test", function () {
                 })        
         })
         .then(function(dec){
-            assert.equal(dec.toString(), TEST_MESSAGE.toString(), "Rsa OAEP encrypt/decrypt is not valid")
+            throw new Error("Rsa OAEP unwrap method is not finished");
         })
         .then(done, done);
     })

@@ -6,12 +6,12 @@ import * as alg from "./alg"
 import * as iwc from "./iwebcrypto"
 import {CryptoKey} from "./key"
 
-let ALG_NAME_AES_CTR = "AES-CTR";
-let ALG_NAME_AES_CBC = "AES-CBC";
-let ALG_NAME_AES_CMAC = "AES-CMAC";
-let ALG_NAME_AES_GCM = "AES-GCM";
-let ALG_NAME_AES_CFB = "AES-CFB";
-let ALG_NAME_AES_KW = "AES-KW";
+export var ALG_NAME_AES_CTR = "AES-CTR";
+export var ALG_NAME_AES_CBC = "AES-CBC";
+export var ALG_NAME_AES_CMAC = "AES-CMAC";
+export var ALG_NAME_AES_GCM = "AES-GCM";
+export var ALG_NAME_AES_CFB = "AES-CFB";
+export var ALG_NAME_AES_KW = "AES-KW";
 
 let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
 

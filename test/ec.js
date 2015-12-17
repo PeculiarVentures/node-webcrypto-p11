@@ -1,23 +1,19 @@
 var assert = require('assert');
-var WebCrypto = require("../src/webcrypto.js").default;
-var config = require("./config.js")
 
-describe("test", function () {
+describe("EC", function () {
     var webcrypto;
-    var keys = [];
+    var keys;
+    
+    before(function(done){
+        webcrypto = global.webcrypto;
+        keys = global.keys;
+        done();
+    })
     
     var TEST_MESSAGE = new Buffer("This is test message for crypto functions");
 
-    before(function () {
-        webcrypto = new WebCrypto(config);
-    })
-
-    after(function () {
-        //TODO: Delete all tmp keys
-        webcrypto.close();
-    })
-
     it("Ecdsa", function (done) {
+        
         var key = null;
 		webcrypto.subtle.generateKey(
 			{
@@ -55,6 +51,7 @@ describe("test", function () {
         })
         .then(function(v){
             assert.equal(v, true, "Ecdsa signature is not valid")
+            console.log("TEST")
         })
         .then(done, done);
     })

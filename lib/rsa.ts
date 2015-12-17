@@ -5,6 +5,7 @@ var Enums = graphene.Enums;
 import * as alg from "./alg"
 import * as iwc from "./iwebcrypto"
 import {CryptoKey} from "./key"
+import * as aes from "./aes"
 
 let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 let ALG_NAME_RSA_PSS = "RSA-PSS";
@@ -217,7 +218,21 @@ export class RsaOAEP extends Rsa {
 		this.checkPrivateKey(unwrappingKey);
 		var _alg = this.wc2pk11(alg);
 		
-		//TODO: convert unwrappedAlgorithm to PKCS11 Algorithm 
+		//convert unwrappedAlgorithm to PKCS11 Algorithm
+		
+		switch (unwrappedAlgorithm.name){
+			case aes.ALG_NAME_AES_CTR: 
+			case aes.ALG_NAME_AES_CBC: 
+			case aes.ALG_NAME_AES_CMAC: 
+			case aes.ALG_NAME_AES_GCM: 
+			case aes.ALG_NAME_AES_CFB: 
+			case aes.ALG_NAME_AES_KW:
+				aes.Aes.checkKeyGenParams(<any>unwrappedAlgorithm);
+				break;
+			default:
+				throw new Error("Unsupported algorithm in use"); 
+		}
+		 
 
 		var unwrappedKey: graphene.Key = session.unwrapKey(unwrappingKey.key, _alg, {name:""}, wrappedKey);
 		//TODO: WrapKey with known AlgKey 
