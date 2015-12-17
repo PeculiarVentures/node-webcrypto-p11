@@ -2625,7 +2625,7 @@ declare module "graphene-pk11" {
 			modulusLength: number;
 			publicExponent: number;
 
-			generate(session: Session, algorithm: string | AlgParams, props: RsaGenParams): Rsa;
+			static generate(session: Session, algorithm: string | AlgParams, props: RsaGenParams): Rsa;
 		}
 		class RsaOAEPParams implements ICkiConverter {
 			constructor(hashAlgs: number, mgf: number, sourceData?: number, source?: Buffer)
@@ -2650,21 +2650,25 @@ declare module "graphene-pk11" {
 			static generate(session: Session, algorithm: string | AlgParams, props: AesGenParams): Aes;
 		}
 
-		class AesCBC extends Aes {
-			encrypt(data: Buffer): Buffer;
-			decrypt(data: Buffer): Buffer;
-			wrapKey(key: Key): Buffer;
-			wrapKey(data: Buffer): Key;
-		}
-
 		class AesGCMParams implements ICkiConverter {
 			constructor(iv: Buffer, additionalData?: Buffer, tagLength?: number)
 			toCKI(): Object
 		}
-
-		class AesGCM extends Aes {
-			encrypt(data: Buffer): Buffer
-			decrypt(data: Buffer): Buffer
+	}
+	
+	export  namespace ECDSA {
+		interface EcdsaGenParams extends GenParams {
+			namedCurve: string | Buffer;
+		}
+		
+		export class Ecdsa extends AsymmetricKey{
+			namedCurve: Buffer;
+			static generate(session: Session, algorithm: string | AlgParams, props: EcdsaGenParams): Ecdsa;
+		}
+		
+		export class EcdhParams implements ICkiConverter{
+			constructor(kdf: number, sharedData: Buffer, publicData: Buffer)
+			toCKI(): Object
 		}
 	}
 

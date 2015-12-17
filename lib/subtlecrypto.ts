@@ -6,6 +6,7 @@ import {CryptoKey} from "./key"
 import * as alg from "./alg"
 import * as rsa from "./rsa"
 import * as aes from "./aes"
+import * as ec from "./ec"
 
 import * as iwc from "./iwebcrypto"
 
@@ -35,16 +36,22 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 			var algClass: alg.IAlgorithmBase = null;
 			switch (_alg.name.toLowerCase()) {
 				case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
-					algClass = rsa.RsaPKCS1
+					algClass = rsa.RsaPKCS1;
 					break;
 				case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
-					algClass = rsa.RsaPSS
+					algClass = rsa.RsaPSS;
 					break;
 				case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-					algClass = rsa.RsaOAEP
+					algClass = rsa.RsaOAEP;
 					break;
 				case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-					algClass = aes.AesGCM
+					algClass = aes.AesGCM;
+					break;
+				case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+					algClass = ec.Ecdsa;
+					break;
+				case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
+					algClass = ec.Ecdh;
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
@@ -67,6 +74,9 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 				case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
 					algClass = rsa.RsaPSS
 					break;
+				case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaPSS
+					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
 			}
@@ -86,6 +96,9 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = rsa.RsaPKCS1
 					break;
 				case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
+					algClass = rsa.RsaPSS
+					break;
+				case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
 					algClass = rsa.RsaPSS
 					break;
 				default:
