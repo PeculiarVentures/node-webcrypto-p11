@@ -75,7 +75,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = rsa.RsaPSS
 					break;
 				case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-					algClass = rsa.RsaPSS
+					algClass = ec.Ecdsa
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
@@ -99,7 +99,7 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
 					algClass = rsa.RsaPSS
 					break;
 				case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-					algClass = rsa.RsaPSS
+					algClass = ec.Ecdsa
 					break;
 				default:
 					throw new TypeError("Unsupported algorith in use");
