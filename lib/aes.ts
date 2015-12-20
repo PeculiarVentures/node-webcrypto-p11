@@ -1,10 +1,10 @@
-import * as graphene from "graphene-pk11"
-var AES = graphene.AES;
-var Enums = graphene.Enums;
+import * as graphene from "graphene-pk11";
+let AES = graphene.AES;
+let Enums = graphene.Enums;
 
-import * as alg from "./alg"
-import * as iwc from "./iwebcrypto"
-import {CryptoKey} from "./key"
+import * as alg from "./alg";
+import * as iwc from "./iwebcrypto";
+import {CryptoKey} from "./key";
 
 export var ALG_NAME_AES_CTR = "AES-CTR";
 export var ALG_NAME_AES_CBC = "AES-CBC";
@@ -75,7 +75,7 @@ export interface IAesAlgorithmParams extends iwc.IAlgorithmIdentifier {
     tagLength?: number;
 }
 
-export interface IAesCBCAlgorithmParams extends iwc.IAlgorithmIdentifier{
+export interface IAesCBCAlgorithmParams extends iwc.IAlgorithmIdentifier {
     iv: Buffer;
 }
 
@@ -154,7 +154,7 @@ export class AesCBC extends Aes {
     static wc2pk11(alg: IAesAlgorithmParams) {
         return { name: "AES_CBC_PAD", params: alg.iv };
     }
-    
+
     static encrypt(session: graphene.Session, alg: IAesCBCAlgorithmParams, key: CryptoKey, data: Buffer): Buffer {
         this.checkAlgorithmParams(alg);
         this.checkSecretKey(key);
@@ -204,7 +204,7 @@ export class AesCBC extends Aes {
         // TODO: WrapKey with known AlgKey 
         return new CryptoKey(unwrappedKey, { name: "" });
     }
-    
+
     static checkAlgorithmParams(alg: IAesCBCAlgorithmParams) {
         this.checkAlgorithmIdentifier(alg);
         if (!alg.iv)
