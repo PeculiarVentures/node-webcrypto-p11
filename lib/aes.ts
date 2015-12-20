@@ -96,7 +96,7 @@ export class AesGCM extends Aes {
     static encrypt(session: graphene.Session, alg: IAesAlgorithmParams, key: CryptoKey, data: Buffer): Buffer {
         this.checkAlgorithmParams(alg);
         this.checkSecretKey(key);
-        let _alg = this.wc2pk11(key.algorithm);
+        let _alg = this.wc2pk11(alg);
 
         // TODO: Remove <any>
         let enc = session.createEncrypt(<any>_alg, key.key);
@@ -108,8 +108,8 @@ export class AesGCM extends Aes {
 
     static decrypt(session: graphene.Session, alg: IAesAlgorithmParams, key: CryptoKey, data: Buffer): Buffer {
         this.checkAlgorithmParams(alg);
-        this.checkAlgorithmParams(alg);
-        let _alg = this.wc2pk11(key.algorithm);
+        this.checkSecretKey(key);
+        let _alg = this.wc2pk11(alg);
 
         // TODO: Remove <any>
         let dec = session.createDecrypt(<any>_alg, key.key);

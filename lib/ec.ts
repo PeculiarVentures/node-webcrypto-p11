@@ -212,11 +212,12 @@ export class Ecdh extends Ec {
                 "decrypt": keyUsages.indexOf["decrypt"] > -1,
                 "sign": keyUsages.indexOf["sign"] > -1,
                 "verify": keyUsages.indexOf["verify"] > -1,
-                "wrapKey": keyUsages.indexOf["unwrapKey"] > -1,
+                "wrap": keyUsages.indexOf["wrapKey"] > -1,
+                "unwrap": keyUsages.indexOf["unwrapKey"] > -1,
                 "derive": keyUsages.indexOf["deriveKey"] > -1
             }
         );
 
-        return new CryptoKey(AesClass(dKey), derivedKeyType);
+        return new AesClass(dKey, derivedKeyType);
     }
 }
