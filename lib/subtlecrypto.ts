@@ -21,6 +21,23 @@ function prepare_algorithm(alg: iwc.AlgorithmType): iwc.IAlgorithmIdentifier {
     return _alg;
 }
 
+/**
+ * Prepare array of data before it's using 
+ * @param data Array which must be prepared
+ */
+function prepare_data(data: Buffer | ArrayBuffer) {
+    return (!Buffer.isBuffer(data)) ? ab2b(data) : data;
+}
+
+/**
+ * Converts ArrayBuffer to Buffer
+ * @param ab ArrayBuffer value wich must be converted to Buffer
+ */
+function ab2b(ab: ArrayBuffer) {
+    let buf = new Uint8Array(ab);
+    return new Buffer(buf);
+}
+
 export class P11SubtleCrypto implements iwc.ISubtleCrypto {
     protected session: graphene.Session;
 
@@ -64,8 +81,10 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         });
     }
 
-    sign(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
+    sign(algorithm: iwc.AlgorithmType, key: CryptoKey, data: iwc.TBuffer): Promise {
         let that = this;
+        let _data = prepare_data(data);
+
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
@@ -83,13 +102,16 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let signature = AlgClass.sign(that.session, _alg, key, data);
+            let signature = AlgClass.sign(that.session, _alg, key, _data);
             resolve(signature);
         });
     }
 
-    verify(algorithm: iwc.AlgorithmType, key: CryptoKey, signature: Buffer, data: Buffer): Promise {
+    verify(algorithm: iwc.AlgorithmType, key: CryptoKey, signature: iwc.TBuffer, data: iwc.TBuffer): Promise {
         let that = this;
+        let _signature = prepare_data(signature);
+        let _data = prepare_data(data);
+
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
@@ -107,13 +129,15 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let valid = AlgClass.verify(that.session, _alg, key, signature, data);
+            let valid = AlgClass.verify(that.session, _alg, key, _signature, _data);
             resolve(valid);
         });
     }
 
-    encrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
+    encrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: iwc.TBuffer): Promise {
         let that = this;
+        let _data = prepare_data(data);
+
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
@@ -131,13 +155,15 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let msg = AlgClass.encrypt(that.session, _alg, key, data);
+            let msg = AlgClass.encrypt(that.session, _alg, key, _data);
             resolve(msg);
         });
     }
 
-    decrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: Buffer): Promise {
+    decrypt(algorithm: iwc.AlgorithmType, key: CryptoKey, data: iwc.TBuffer): Promise {
         let that = this;
+        let _data = prepare_data(data);
+
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
@@ -155,13 +181,14 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let msg = AlgClass.decrypt(that.session, _alg, key, data);
+            let msg = AlgClass.decrypt(that.session, _alg, key, _data);
             resolve(msg);
         });
     }
 
     wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, algorithm: iwc.IAlgorithmIdentifier): Promise {
         let that = this;
+
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
@@ -184,8 +211,10 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         });
     }
 
-    unwrapKey(format: string, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): Promise {
+    unwrapKey(format: string, wrappedKey: iwc.TBuffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): Promise {
         let that = this;
+        let _wrappedKey = prepare_data(wrappedKey);
+
         return new Promise(function(resolve, reject) {
             let _alg1 = prepare_algorithm(unwrapAlgorithm);
             let _alg2 = prepare_algorithm(unwrappedAlgorithm);
@@ -204,13 +233,14 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let unwrappedKey = AlgClass.unwrapKey(that.session, wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
+            let unwrappedKey = AlgClass.unwrapKey(that.session, _wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
             resolve(unwrappedKey);
         });
     }
 
     deriveKey(algorithm: iwc.IAlgorithmIdentifier, baseKey: CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): Promise {
         let that = this;
+
         return new Promise(function(resolve, reject) {
             let _alg1 = prepare_algorithm(algorithm);
             let _alg2 = prepare_algorithm(derivedKeyType);
