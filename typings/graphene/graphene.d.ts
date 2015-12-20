@@ -1931,7 +1931,7 @@ declare module "graphene-pk11" {
 
 	interface AlgParams {
 		name: string;
-		params?: Buffer;
+		params?: Buffer | ICkiConverter;
 	}
 
 	interface KeyPair {

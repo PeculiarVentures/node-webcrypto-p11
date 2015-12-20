@@ -178,19 +178,38 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
             let _alg1 = prepare_algorithm(unwrapAlgorithm);
             let _alg2 = prepare_algorithm(unwrappedAlgorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg1.name.toLowerCase()) {
                 case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaOAEP;
+                    AlgClass = rsa.RsaOAEP;
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-                    algClass = aes.AesGCM;
+                    AlgClass = aes.AesGCM;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let unwrappedKey = algClass.unwrapKey(that.session, wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
+            let unwrappedKey = AlgClass.unwrapKey(that.session, wrappedKey, unwrappingKey, _alg1, _alg2, extractable, keyUsages);
             resolve(unwrappedKey);
+        });
+    }
+
+    deriveKey(algorithm: iwc.IAlgorithmIdentifier, baseKey: CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): Promise {
+        let that = this;
+        return new Promise(function(resolve, reject) {
+            let _alg1 = prepare_algorithm(algorithm);
+            let _alg2 = prepare_algorithm(derivedKeyType);
+
+            let AlgClass: alg.IAlgorithmBase = null;
+            switch (_alg1.name.toLowerCase()) {
+                case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdh;
+                    break;
+                default:
+                    throw new TypeError("Unsupported algorithm in use");
+            }
+            let key: CryptoKey = AlgClass.deriveKey(that.session, algorithm, baseKey, derivedKeyType, extractable, keyUsages);
+            resolve(key);
         });
     }
 

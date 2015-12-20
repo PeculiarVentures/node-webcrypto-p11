@@ -2,6 +2,8 @@ import * as graphene from "graphene-pk11";
 let ECDSA = graphene.ECDSA;
 let Enums = graphene.Enums;
 
+import * as Aes from "./aes";
+
 import * as alg from "./alg";
 import * as iwc from "./iwebcrypto";
 import {CryptoKey} from "./key";
@@ -49,18 +51,7 @@ export class Ec extends alg.AlgorithmBase {
     }
 
     static checkKeyGenParams(alg: IEcKeyGenParams) {
-        if (!alg.namedCurve)
-            throw new TypeError("EcKeyGenParams: namedCurve: Missing required property");
-        switch (alg.namedCurve.toUpperCase()) {
-            case "P-192":
-            case "P-256":
-            case "P-384":
-            case "P-521":
-                break;
-            default:
-                throw new TypeError("EcKeyGenParams: namedCurve: Wrong value. Can be P-256, P-384, or P-521");
-        }
-        alg.namedCurve = alg.namedCurve.toUpperCase();
+        this.checkAlgorithmParams(alg);
     }
 
     static checkAlgorithmHashedParams(alg: iwc.IAlgorithmIdentifier) {
@@ -73,6 +64,18 @@ export class Ec extends alg.AlgorithmBase {
 
     static checkAlgorithmParams(alg: IEcAlgorithmParams) {
         this.checkAlgorithmIdentifier(alg);
+        if (!alg.namedCurve)
+            throw new TypeError("EcParams: namedCurve: Missing required property");
+        switch (alg.namedCurve.toUpperCase()) {
+            case "P-192":
+            case "P-256":
+            case "P-384":
+            case "P-521":
+                break;
+            default:
+                throw new TypeError("EcParams: namedCurve: Wrong value. Can be P-256, P-384, or P-521");
+        }
+        alg.namedCurve = alg.namedCurve.toUpperCase();
     }
 
     static wc2pk11(alg: IEcAlgorithmParams) {
@@ -85,6 +88,8 @@ export interface IEcKeyGenParams extends iwc.IAlgorithmIdentifier {
 }
 
 export interface IEcAlgorithmParams extends iwc.IAlgorithmIdentifier {
+    namedCurve: string;
+    public?: CryptoKey;
 }
 
 export interface IEcdsaAlgorithmParams extends IEcAlgorithmParams {
@@ -159,4 +164,59 @@ export class Ecdsa extends Ec {
 
 export class Ecdh extends Ec {
     static ALGORITHM_NAME: string = ALG_NAME_ECDH;
+
+    static deriveKey(session: graphene.Session, alg: IEcdsaAlgorithmParams, baseKey: CryptoKey, derivedKeyType: Aes.IAesKeyGenParams, extractable: boolean, keyUsages: string[]): CryptoKey {
+        // check algorithm
+        this.checkAlgorithmParams(alg);
+        if (!alg.public)
+            throw new TypeError("EcParams: public: Missing required property");
+        this.checkPublicKey(alg.public);
+
+        // check baseKey
+        this.checkPrivateKey(baseKey);
+
+        // check derivedKeyType
+        if (typeof derivedKeyType !== "object")
+            throw TypeError("derivedKeyType: AlgorithmIdentifier: Algorithm must be an Object");
+        if (!(derivedKeyType.name && typeof (derivedKeyType.name) === "string"))
+            throw TypeError("derivedKeyType: AlgorithmIdentifier: Missing required property name");
+        let AesClass = null;
+        switch (derivedKeyType.name.toLowerCase()) {
+            case Aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+                Aes.AesGCM.checkKeyGenParams(<Aes.IAesKeyGenParams>derivedKeyType);
+                AesClass = Aes.AesGCM;
+                break;
+            default:
+                throw new Error("derivedKeyType: Unknown Algorithm name in use");
+        }
+
+        // derive key
+        let dKey: graphene.Key = session.deriveKey(
+            {
+                name: "ECDH1_DERIVE",
+                params: new graphene.ECDSA.EcdhParams(
+                    0x00000001, // CKD_NULL
+                    null,
+                    alg.public.key.getBinaryAttribute(0x00000181) // CKA_EC_POINT
+                )
+            },
+            baseKey.key,
+            {
+                "class": Enums.ObjectClass.SecretKey,
+                "sensitive": true,
+                "private": true,
+                "token": false,
+                "keyType": Enums.KeyType.AES,
+                "valueLen": derivedKeyType.length / 8,
+                "encrypt": keyUsages.indexOf["encrypt"] > -1,
+                "decrypt": keyUsages.indexOf["decrypt"] > -1,
+                "sign": keyUsages.indexOf["sign"] > -1,
+                "verify": keyUsages.indexOf["verify"] > -1,
+                "wrapKey": keyUsages.indexOf["unwrapKey"] > -1,
+                "derive": keyUsages.indexOf["deriveKey"] > -1
+            }
+        );
+
+        return new CryptoKey(AesClass(dKey), derivedKeyType);
+    }
 }

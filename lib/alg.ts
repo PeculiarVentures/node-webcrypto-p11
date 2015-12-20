@@ -10,7 +10,7 @@ export interface IAlgorithmBase {
     decrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: key.CryptoKey, data: Buffer): Buffer;
     wrapKey(session: graphene.Session, key: key.CryptoKey, wrappingKey: key.CryptoKey, alg: iwc.IAlgorithmIdentifier): Buffer;
     unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: key.CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey;
-    deriveKey(session: graphene.Session, algorithm: iwc.IAlgorithmIdentifier, baseKey: key.CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]);
+    deriveKey(session: graphene.Session, algorithm: iwc.IAlgorithmIdentifier, baseKey: key.CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): key.CryptoKey;
 }
 
 export class AlgorithmBase {
@@ -40,6 +40,10 @@ export class AlgorithmBase {
         throw new Error("Method is not supported");
     }
 
+    static deriveKey(session: graphene.Session, algorithm: iwc.IAlgorithmIdentifier, baseKey: key.CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): key.CryptoKey {
+        throw new Error("Method is not supported");
+    }
+
     static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: key.CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
         throw new Error("Method is not supported");
     }
@@ -51,6 +55,7 @@ export class AlgorithmBase {
             throw TypeError("AlgorithmIdentifier: Missing required property name");
         if (alg.name.toLowerCase() !== this.ALGORITHM_NAME.toLowerCase())
             throw new Error("AlgorithmIdentifier: Wrong algorithm name. Must be " + this.ALGORITHM_NAME);
+        alg.name = this.ALGORITHM_NAME;
     }
 
     static checkAlgorithmHashedParams(alg) {
