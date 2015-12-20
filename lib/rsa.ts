@@ -216,7 +216,7 @@ export class RsaOAEP extends Rsa {
         this.checkAlgorithmIdentifier(unwrapAlgorithm);
         this.checkAlgorithmHashedParams(unwrapAlgorithm);
         this.checkPrivateKey(unwrappingKey);
-        let _alg = this.wc2pk11(alg);
+        let _alg = this.wc2pk11(unwrapAlgorithm);
 
         // convert unwrappedAlgorithm to PKCS11 Algorithm
         let AlgClass = null;

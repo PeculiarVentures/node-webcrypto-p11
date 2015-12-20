@@ -80,7 +80,7 @@ describe("RSA", function () {
             modulusLength: 1024,
             publicExponent: new Uint8Array([1, 0, 1]), 
             hash: {
-                name: "SHA-256"
+                name: "SHA-1"
             }}, 
             false, 
             ["wrapKey", "unwrapKey"]
@@ -92,7 +92,7 @@ describe("RSA", function () {
             keys.push(key);
             return webcrypto.subtle.generateKey({
                 name: "AES-GCM",
-                length: 256, //can be  128, 192, or 256
+                length: 128, //can be  128, 192, or 256
             },
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt"]); 
@@ -106,11 +106,11 @@ describe("RSA", function () {
                 key.publicKey, 
                 {
                     name: "RSA-OAEP",
-                    hash: {name: "SHA-256"}
+                    hash: {name: "SHA-1"}
                 })        
         })
         .then(function(dec){
-            webcrypto.subtle.unwrapKey(
+            return webcrypto.subtle.unwrapKey(
                 "raw", //the import format, must be "raw" (only available sometimes)
                 dec, //the key you want to unwrap
                 key.privateKey, //the private key with "unwrapKey" usage flag
@@ -118,15 +118,18 @@ describe("RSA", function () {
                     name: "RSA-OAEP",
                     modulusLength: 1024,
                     publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-                    hash: {name: "SHA-256"},
+                    hash: {name: "SHA-1"},
                 },
                 {   //this what you want the wrapped key to become (same as when wrapping)
                     name: "AES-GCM",
-                    length: 256
+                    length: 128
                 },
                 false, //whether the key is extractable (i.e. can be used in exportKey)
                 ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
             )
+        })
+        .then(function(sk){
+            assert.equal(sk.key !== null, true, "Has no secret key");
         })
         .then(done, done);
     })
