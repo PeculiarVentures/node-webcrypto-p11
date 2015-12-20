@@ -212,30 +212,52 @@ export class RsaOAEP extends Rsa {
         return wrappedKey;
     }
 
-    static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
+    static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: aes.IAesKeyGenParams, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
         this.checkAlgorithmIdentifier(unwrapAlgorithm);
         this.checkAlgorithmHashedParams(unwrapAlgorithm);
         this.checkPrivateKey(unwrappingKey);
         let _alg = this.wc2pk11(alg);
 
         // convert unwrappedAlgorithm to PKCS11 Algorithm
-
+        let AlgClass = null;
         switch (unwrappedAlgorithm.name) {
-            case aes.ALG_NAME_AES_CTR:
+            // case aes.ALG_NAME_AES_CTR:
+            // case aes.ALG_NAME_AES_CMAC:
+            // case aes.ALG_NAME_AES_CFB:
+            // case aes.ALG_NAME_AES_KW:
             case aes.ALG_NAME_AES_CBC:
-            case aes.ALG_NAME_AES_CMAC:
-            case aes.ALG_NAME_AES_GCM:
-            case aes.ALG_NAME_AES_CFB:
-            case aes.ALG_NAME_AES_KW:
                 aes.Aes.checkKeyGenParams(<any>unwrappedAlgorithm);
+                AlgClass = aes.AesCBC;
+                break;
+            case aes.ALG_NAME_AES_GCM:
+                aes.Aes.checkKeyGenParams(<any>unwrappedAlgorithm);
+                AlgClass = aes.AesGCM;
                 break;
             default:
                 throw new Error("Unsupported algorithm in use");
         }
 
 
-        let unwrappedKey: graphene.Key = session.unwrapKey(unwrappingKey.key, _alg, { name: "" }, wrappedKey);
-        // TODO: WrapKey with known AlgKey 
-        return new CryptoKey(unwrappedKey, { name: "" });
+        let unwrappedKey: graphene.Key = session.unwrapKey(
+            unwrappingKey.key,
+            _alg,
+            {
+                "class": Enums.ObjectClass.SecretKey,
+                "sensitive": true,
+                "private": true,
+                "token": false,
+                "keyType": Enums.KeyType.AES,
+                "valueLen": unwrappedAlgorithm.length / 8,
+                "encrypt": keyUsages.indexOf["encrypt"] > -1,
+                "decrypt": keyUsages.indexOf["decrypt"] > -1,
+                "sign": keyUsages.indexOf["sign"] > -1,
+                "verify": keyUsages.indexOf["verify"] > -1,
+                "wrap": keyUsages.indexOf["wrapKey"] > -1,
+                "unwrap": keyUsages.indexOf["unwrapKey"] > -1,
+                "derive": keyUsages.indexOf["deriveKey"] > -1
+            },
+            wrappedKey
+        );
+        return new AlgClass(unwrappedKey, unwrappedAlgorithm);
     }
 }

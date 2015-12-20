@@ -80,7 +80,7 @@ describe("RSA", function () {
             modulusLength: 1024,
             publicExponent: new Uint8Array([1, 0, 1]), 
             hash: {
-                name: "SHA-1"
+                name: "SHA-256"
             }}, 
             false, 
             ["wrapKey", "unwrapKey"]
@@ -97,7 +97,8 @@ describe("RSA", function () {
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt"]); 
         })
-        .then(function(skey){
+        .then(function(sk){
+            skey = sk;
             assert.equal(skey.key !== null, true, "Has no secret key");
             return webcrypto.subtle.wrapKey(
                 "raw",
@@ -105,11 +106,27 @@ describe("RSA", function () {
                 key.publicKey, 
                 {
                     name: "RSA-OAEP",
-                    hash: {name: "SHA-1"}
+                    hash: {name: "SHA-256"}
                 })        
         })
         .then(function(dec){
-            throw new Error("Rsa OAEP unwrap method is not finished");
+            webcrypto.subtle.unwrapKey(
+                "raw", //the import format, must be "raw" (only available sometimes)
+                dec, //the key you want to unwrap
+                key.privateKey, //the private key with "unwrapKey" usage flag
+                {   //these are the wrapping key's algorithm options
+                    name: "RSA-OAEP",
+                    modulusLength: 1024,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: {name: "SHA-256"},
+                },
+                {   //this what you want the wrapped key to become (same as when wrapping)
+                    name: "AES-GCM",
+                    length: 256
+                },
+                false, //whether the key is extractable (i.e. can be used in exportKey)
+                ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
+            )
         })
         .then(done, done);
     })
