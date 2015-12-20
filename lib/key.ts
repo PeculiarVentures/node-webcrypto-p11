@@ -15,7 +15,7 @@ export class CryptoKey implements iwc.ICryptoKey {
     constructor(key, alg: iwc.IAlgorithmIdentifier) {
         key = key.toType();
         this._key = key;
-        this.extractable = !key.isExractable || key.isExractable();
+        this.extractable = key.isExractable ? key.isExractable() : false;
         this.algorithm = alg;
         // set key type
         switch (key.getClass()) {

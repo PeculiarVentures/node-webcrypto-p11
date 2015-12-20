@@ -27,6 +27,7 @@ describe("RSA", function () {
         .then(function(k){
             assert.equal(k.privateKey !== null, true, "Has no private key");
             assert.equal(k.publicKey !== null, true, "Has no public key");
+            console.log("Extractable", k.privateKey.extractable);
             key = k;
             keys.push(key)
             return webcrypto.subtle.sign({name: "RSASSA-PKCS1-v1_5"}, key.privateKey, TEST_MESSAGE) 
