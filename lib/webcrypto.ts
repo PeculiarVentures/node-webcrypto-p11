@@ -1,6 +1,6 @@
 import {Module, Session, Slot} from "graphene-pk11";
-import * as iwc from "./iwebcrypto"
-import * as subtle from "./subtlecrypto"
+import * as iwc from "./iwebcrypto";
+import * as subtle from "./subtlecrypto";
 
 /**
  * PKCS11 with WebCrypto Interface
@@ -13,7 +13,7 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
     private initialized: boolean;
 
     public subtle: iwc.ISubtleCrypto = null;
-    
+
     /**
      * Generates cryptographically random values
      * @param array Initialize array
@@ -21,24 +21,24 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
     getRandomValues(array): any {
         return this.session.generateRandom(array.byteLength);
     }
-    
+
     /**
      * Constructor
      * @param params Init params
      */
     constructor(params: P11WebCryptoParams) {
-        var mod = this.module = Module.load(params.library, params.name);
+        let mod = this.module = Module.load(params.library, params.name);
         mod.initialize();
-        var slots = mod.getSlots();
-        var slot = this.slot = slots[params.slot];
+        let slots = mod.getSlots();
+        let slot = this.slot = slots[params.slot];
         if (!slot)
-            throw new Error('Slot by index ' + params.slot + ' is not found');
-        var session = this.session = slot.session;
+            throw new Error("Slot by index " + params.slot + " is not found");
+        let session = this.session = slot.session;
         session.start();
         session.login(params.pin);
         this.subtle = new subtle.P11SubtleCrypto(session);
     }
-    
+
     /**
      * Close PKCS11 module
      */
@@ -55,17 +55,17 @@ interface P11WebCryptoParams extends Object {
     /**
      * Path to labrary
      */
-    library: string 
+    library: string;
     /**
      * Name of PKCS11 module
      */
-    name: string,
+    name: string;
     /**
      * Index of slot
      */
-    slot: number,  
+    slot: number;
     /**
      * PIN of slot
      */
-    pin?: string
+    pin?: string;
 }

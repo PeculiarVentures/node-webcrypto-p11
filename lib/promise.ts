@@ -1,10 +1,10 @@
-interface PromiseFunc{
-	(resolve: Function, reject: Function): void;
+interface PromiseFunc {
+    (resolve: Function, reject: Function): void;
 }
 
 declare class Promise {
-	constructor(func: PromiseFunc);
+    constructor(func: PromiseFunc);
 
-	then(): Promise;
-	catch(): Promise;
+    then(): Promise;
+    catch(): Promise;
 } 
