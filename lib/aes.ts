@@ -75,6 +75,10 @@ export interface IAesAlgorithmParams extends iwc.IAlgorithmIdentifier {
     tagLength?: number;
 }
 
+export interface IAesCBCAlgorithmParams extends iwc.IAlgorithmIdentifier{
+    iv: Buffer;
+}
+
 export class AesKey extends CryptoKey {
     length: number;
 
@@ -144,11 +148,66 @@ export class AesGCM extends Aes {
     }
 }
 
-export class AesCBC extends AesGCM {
+export class AesCBC extends Aes {
     static ALGORITHM_NAME: string = ALG_NAME_AES_CBC;
 
     static wc2pk11(alg: IAesAlgorithmParams) {
-        let params = new graphene.AES.AesGCMParams(alg.iv, alg.additionalData, alg.tagLength);
-        return { name: "AES_CBC_PAD", params: params };
+        return { name: "AES_CBC_PAD", params: alg.iv };
+    }
+    
+    static encrypt(session: graphene.Session, alg: IAesCBCAlgorithmParams, key: CryptoKey, data: Buffer): Buffer {
+        this.checkAlgorithmParams(alg);
+        this.checkSecretKey(key);
+        let _alg = this.wc2pk11(alg);
+
+        // TODO: Remove <any>
+        let enc = session.createEncrypt(<any>_alg, key.key);
+        let msg = new Buffer(0);
+        msg = Buffer.concat([msg, enc.update(data)]);
+        msg = Buffer.concat([msg, enc.final()]);
+        return msg;
+    }
+
+    static decrypt(session: graphene.Session, alg: IAesCBCAlgorithmParams, key: CryptoKey, data: Buffer): Buffer {
+        this.checkAlgorithmParams(alg);
+        this.checkSecretKey(key);
+        let _alg = this.wc2pk11(alg);
+
+        // TODO: Remove <any>
+        let dec = session.createDecrypt(<any>_alg, key.key);
+        let msg = new Buffer(0);
+        msg = Buffer.concat([msg, dec.update(data)]);
+        msg = Buffer.concat([msg, dec.final()]);
+        return msg;
+    }
+
+    static wrapKey(session: graphene.Session, key: CryptoKey, wrappingKey: CryptoKey, alg: IAesCBCAlgorithmParams): Buffer {
+        this.checkAlgorithmIdentifier(alg);
+        this.checkAlgorithmHashedParams(alg);
+        this.checkSecretKey(key);
+        this.checkPublicKey(wrappingKey);
+        let _alg = this.wc2pk11(alg);
+
+        let wrappedKey: Buffer = session.wrapKey(wrappingKey.key, <any>_alg, key.key);
+        return wrappedKey;
+    }
+
+    static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: IAesCBCAlgorithmParams, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
+        this.checkAlgorithmIdentifier(unwrapAlgorithm);
+        this.checkAlgorithmHashedParams(unwrapAlgorithm);
+        this.checkPrivateKey(unwrappingKey);
+        let _alg = this.wc2pk11(unwrapAlgorithm);
+
+        // TODO: convert unwrappedAlgorithm to PKCS11 Algorithm 
+
+        let unwrappedKey: graphene.Key = session.unwrapKey(unwrappingKey.key, <any>_alg, { name: "" }, wrappedKey);
+        // TODO: WrapKey with known AlgKey 
+        return new CryptoKey(unwrappedKey, { name: "" });
+    }
+    
+    static checkAlgorithmParams(alg: IAesCBCAlgorithmParams) {
+        this.checkAlgorithmIdentifier(alg);
+        if (!alg.iv)
+            throw new TypeError("AlgorithmParams: iv: Missing required property");
     }
 }

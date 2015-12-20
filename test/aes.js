@@ -12,7 +12,7 @@ describe("Aes", function () {
         done();
     })
 
-    it("AES GCM", function (done) {
+    it("Aes GCM", function (done) {
         var key = null;
         var iv = webcrypto.getRandomValues(new Uint8Array(12));
         webcrypto.subtle.generateKey({
@@ -65,9 +65,9 @@ describe("Aes", function () {
             .then(done, done);
     })
 
-    it("AES CBC", function (done) {
+    it("Aes CBC", function (done) {
         var key = null;
-        var iv = webcrypto.getRandomValues(new Uint8Array(12));
+        var iv = webcrypto.getRandomValues(new Uint8Array(16));
         webcrypto.subtle.generateKey({
             name: "AES-CBC",
             length: 256, //can be  128, 192, or 256
@@ -85,14 +85,7 @@ describe("Aes", function () {
 
                         //Don't re-use initialization vectors!
                         //Always generate a new iv every time your encrypt!
-                        //Recommended to use 12 bytes length
-                        iv: iv,
-
-                        //Additional authentication data (optional)
-                        additionalData: null,
-
-                        //Tag length (optional)
-                        tagLength: 128, //can be 32, 64, 96, 104, 112, 120 or 128 (default)
+                        iv: iv
                     },
                     key, //from generateKey or importKey above
                     TEST_MESSAGE //ArrayBuffer of data you want to encrypt
@@ -104,9 +97,7 @@ describe("Aes", function () {
                 return webcrypto.subtle.decrypt(
                     {
                         name: "AES-CBC",
-                        iv: iv, //The initialization vector you used to encrypt
-                        additionalData: null, //The addtionalData you used to encrypt (if any)
-                        tagLength: 128, //The tagLength you used to encrypt (if any)
+                        iv: iv //The initialization vector you used to encrypt
                     },
                     key, //from generateKey or importKey above
                     enc //ArrayBuffer of the data
