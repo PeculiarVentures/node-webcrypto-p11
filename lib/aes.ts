@@ -143,3 +143,12 @@ export class AesGCM extends Aes {
         return new CryptoKey(unwrappedKey, { name: "" });
     }
 }
+
+export class AesCBC extends AesGCM {
+    static ALGORITHM_NAME: string = ALG_NAME_AES_CBC;
+
+    static wc2pk11(alg: IAesAlgorithmParams) {
+        let params = new graphene.AES.AesGCMParams(alg.iv, alg.additionalData, alg.tagLength);
+        return { name: "AES_CBC_PAD", params: params };
+    }
+}

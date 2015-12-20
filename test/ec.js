@@ -88,7 +88,7 @@ describe("EC", function () {
                     )
             })
             .then(function (key) {
-                assert.equal(key !== null, true, "Has no derived Key value");  
+                assert.equal(key !== null, true, "Has no derived Key value");
             })
             .then(done, done);
     })

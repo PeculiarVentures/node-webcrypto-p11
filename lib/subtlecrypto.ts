@@ -33,30 +33,33 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPKCS1;
+                    AlgClass = rsa.RsaPKCS1;
                     break;
                 case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPSS;
+                    AlgClass = rsa.RsaPSS;
                     break;
                 case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaOAEP;
+                    AlgClass = rsa.RsaOAEP;
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-                    algClass = aes.AesGCM;
+                    AlgClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
                     break;
                 case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                    algClass = ec.Ecdsa;
+                    AlgClass = ec.Ecdsa;
                     break;
                 case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
-                    algClass = ec.Ecdh;
+                    AlgClass = ec.Ecdh;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let key = algClass.generateKey(that.session, _alg, extractable, keyUsages);
+            let key = AlgClass.generateKey(that.session, _alg, extractable, keyUsages);
             resolve(key);
         });
     }
@@ -66,21 +69,21 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPKCS1;
+                    AlgClass = rsa.RsaPKCS1;
                     break;
                 case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPSS;
+                    AlgClass = rsa.RsaPSS;
                     break;
                 case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                    algClass = ec.Ecdsa;
+                    AlgClass = ec.Ecdsa;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let signature = algClass.sign(that.session, _alg, key, data);
+            let signature = AlgClass.sign(that.session, _alg, key, data);
             resolve(signature);
         });
     }
@@ -90,21 +93,21 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPKCS1;
+                    AlgClass = rsa.RsaPKCS1;
                     break;
                 case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaPSS;
+                    AlgClass = rsa.RsaPSS;
                     break;
                 case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                    algClass = ec.Ecdsa;
+                    AlgClass = ec.Ecdsa;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let valid = algClass.verify(that.session, _alg, key, signature, data);
+            let valid = AlgClass.verify(that.session, _alg, key, signature, data);
             resolve(valid);
         });
     }
@@ -114,18 +117,21 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaOAEP;
+                    AlgClass = rsa.RsaOAEP;
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-                    algClass = aes.AesGCM;
+                    AlgClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let msg = algClass.encrypt(that.session, _alg, key, data);
+            let msg = AlgClass.encrypt(that.session, _alg, key, data);
             resolve(msg);
         });
     }
@@ -135,18 +141,21 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaOAEP;
+                    AlgClass = rsa.RsaOAEP;
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-                    algClass = aes.AesGCM;
+                    AlgClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let msg = algClass.decrypt(that.session, _alg, key, data);
+            let msg = AlgClass.decrypt(that.session, _alg, key, data);
             resolve(msg);
         });
     }
@@ -156,18 +165,21 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
         return new Promise(function(resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
-            let algClass: alg.IAlgorithmBase = null;
+            let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
                 case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                    algClass = rsa.RsaOAEP;
+                    AlgClass = rsa.RsaOAEP;
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-                    algClass = aes.AesGCM;
+                    AlgClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
             }
-            let wrappedKey = algClass.wrapKey(that.session, key, wrappingKey, _alg);
+            let wrappedKey = AlgClass.wrapKey(that.session, key, wrappingKey, _alg);
             resolve(wrappedKey);
         });
     }
@@ -185,6 +197,9 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
                     break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
                     AlgClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
                     break;
                 default:
                     throw new TypeError("Unsupported algorithm in use");
