@@ -10,7 +10,7 @@ git clone https://github.com/PeculiarVentures/node-webcrypto-ossl
 cd node-webcrypto-ossl
 ```
 
-## Set npm global dependencies
+## Install Global Dependencies
 - typescript (TypeScript compiler)
 - tsd (TypeScript Defenition compiler)
 - mocha (test)
@@ -20,6 +20,7 @@ npm install typescript -g
 npm install tsd -g
 npm install mocha -g
 ```
+
 ## Install SoftHSM (optional)
 - Get and install SoftHSM
 
@@ -42,7 +43,7 @@ npm install mocha -g
   `/usr/lib/softhsm/libsofthsm.so`
   
 
-## Install & and Compile node-webcrypto-p11
+## Install &  Compile node-webcrypto-p11
 
 ```
 npm install
