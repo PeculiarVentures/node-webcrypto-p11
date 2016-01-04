@@ -1,16 +1,16 @@
 # node-webcrypto-p11
 A WebCrypto Polyfill for Node in typescript built on Graphene
 
-# Installation
+## Installation
 
-## Clone Repo
+### Clone Repo
 
 ```
 git clone https://github.com/PeculiarVentures/node-webcrypto-p11
 cd node-webcrypto-p11
 ```
 
-## Dependencies
+### Dependencies
 - typescript (TypeScript compiler)
 - tsd (TypeScript Defenition compiler)
 - mocha (test)
@@ -21,7 +21,7 @@ npm install tsd -g
 npm install mocha -g
 ```
 
-## SoftHSM (optional)
+### SoftHSM (optional)
 - Get and install SoftHSM
 
     `apt-get install softhsm`
@@ -43,7 +43,7 @@ npm install mocha -g
   `/usr/lib/softhsm/libsofthsm.so`
   
 
-## Install & Compile 
+### Install & Compile 
 
 ```
 npm install
@@ -57,14 +57,14 @@ tsc
 ```
 
 
-# Test
+## Test
 
 ```
 mocha
 ```
 
 
-### Related
+## Related
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
  - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
  - [Graphene](https://github.com/PeculiarVentures/graphene)
