@@ -53,14 +53,8 @@ npm install
 
 ```
 tsd install
-```
-
-**Compile TypeScript**
-  
-```
 tsc
 ```
-
 
 
 # Test
