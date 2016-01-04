@@ -1,26 +1,75 @@
 # node-webcrypto-p11
 A WebCrypto Polyfill for Node in typescript built on Graphene
 
-## SoftHSM
-* Install SoftHSM
+# Install instructions
+
+## Clone Repo
+
+```
+git clone https://github.com/PeculiarVentures/node-webcrypto-ossl
+cd node-webcrypto-ossl
+```
+
+## Set npm global dependencies
+- typescript (TypeScript compiler)
+- tsd (TypeScript Defenition compiler)
+- mocha (test)
+
+```
+npm install typescript -g
+npm install tsd -g
+npm install mocha -g
+```
+## Install SoftHSM (optional)
+- Get and install SoftHSM
 
     `apt-get install softhsm`
 
-* Specify where your configuration file is
+- Specify where your configuration file is
 
     `export SOFTHSM2_CONF=/etc/softhsm/softhsm.conf`
 
-* Fix the configuation file to specify correct path to it's db
+- Fix the configuation file to specify correct path to it's db
 
     `%s:/lib\/lib/lib`
 
-* Initialize the first slot
+- Initialize the first slot
 
     `softhsm2-util --init-token --slot 0 --label "My token 1"`
 
-* The pkcs11 module you can now use can be found here:
+- The pkcs11 module you can now use can be found here:
 
   `/usr/lib/softhsm/libsofthsm.so`
+  
+
+## Install node-webcrypto-p11
+
+```
+npm install
+```
+
+If it has errors you can do next
+
+- download TypeScript dependencies
+
+```
+tsd install
+```
+
+- compile TypeScript
+  
+```
+tsc
+```
+
+
+
+# Test
+
+```
+mocha
+```
+
 
 ### Related
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
