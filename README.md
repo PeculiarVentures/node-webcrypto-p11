@@ -6,8 +6,8 @@ A WebCrypto Polyfill for Node in typescript built on Graphene
 ## Clone Repo
 
 ```
-git clone https://github.com/PeculiarVentures/node-webcrypto-ossl
-cd node-webcrypto-ossl
+git clone https://github.com/PeculiarVentures/node-webcrypto-p11
+cd node-webcrypto-p11
 ```
 
 ## Install Global Dependencies
