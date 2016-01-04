@@ -42,21 +42,19 @@ npm install mocha -g
   `/usr/lib/softhsm/libsofthsm.so`
   
 
-## Install node-webcrypto-p11
+## Install & and Compile node-webcrypto-p11
 
 ```
 npm install
 ```
 
-If it has errors you can do next
-
-- download TypeScript dependencies
+* If you experience any errors make sure you have downloaded TypeScript dependencies
 
 ```
 tsd install
 ```
 
-- compile TypeScript
+- Compile TypeScript
   
 ```
 tsc
