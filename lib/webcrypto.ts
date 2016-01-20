@@ -34,7 +34,7 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
         if (!slot)
             throw new Error("Slot by index " + params.slot + " is not found");
         let session = this.session = slot.session;
-        session.start();
+        session.start(2 | 4);
         session.login(params.pin);
         this.subtle = new subtle.P11SubtleCrypto(session);
     }

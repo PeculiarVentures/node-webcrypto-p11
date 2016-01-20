@@ -11,6 +11,14 @@ export interface IAlgorithmBase {
     wrapKey(session: graphene.Session, key: key.CryptoKey, wrappingKey: key.CryptoKey, alg: iwc.IAlgorithmIdentifier): Buffer;
     unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: key.CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey;
     deriveKey(session: graphene.Session, algorithm: iwc.IAlgorithmIdentifier, baseKey: key.CryptoKey, derivedKeyType: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): key.CryptoKey;
+    exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object;
+    importKey(
+        session: graphene.Session,
+        format: string,
+        keyData: Buffer,
+        algorithm: iwc.IAlgorithmIdentifier,
+        extractable: boolean,
+        keyUsages: string[]): CryptoKey;
 }
 
 export class AlgorithmBase {
@@ -45,6 +53,20 @@ export class AlgorithmBase {
     }
 
     static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: key.CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: iwc.IAlgorithmIdentifier, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
+        throw new Error("Method is not supported");
+    }
+
+    exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object {
+        throw new Error("Method is not supported");
+    }
+
+    importKey(
+        session: graphene.Session,
+        format: string,
+        keyData: Buffer,
+        algorithm: iwc.IAlgorithmIdentifier,
+        extractable: boolean,
+        keyUsages: string[]): CryptoKey {
         throw new Error("Method is not supported");
     }
 

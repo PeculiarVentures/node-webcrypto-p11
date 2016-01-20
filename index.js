@@ -1,3 +1,3 @@
-var gwc = require("./src/gwc");
+var gwc = require("./src/webcrypto");
 
-console.log(gwc); 
+module.exports = gwc.default;

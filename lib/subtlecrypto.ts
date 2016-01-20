@@ -257,5 +257,59 @@ export class P11SubtleCrypto implements iwc.ISubtleCrypto {
             resolve(key);
         });
     }
+    
+    exportKey(format: string, key: CryptoKey): Promise {
+        let that = this;
+
+        return new Promise(function(resolve, reject) {
+            let data = alg.AlgorithmBase.exportKey(format, key);
+            if (Buffer.isBuffer(data)) {
+                let ubuf = new Uint8Array(<any>data);
+                resolve(ubuf.buffer);
+            }
+            else
+                resolve(data);
+        });
+    }
+
+    importKey(
+        format: string,
+        keyData: iwc.TBuffer,
+        algorithm: iwc.IAlgorithmIdentifier,
+        extractable: boolean,
+        keyUsages: string[]
+    ): Promise {
+        let that = this;
+        return new Promise(function(resolve, reject) {
+            let _alg = prepare_algorithm(algorithm);
+            let _data = prepare_data(keyData);
+
+            let AlgClass: alg.IAlgorithmBase = null;
+            switch (_alg.name.toLowerCase()) {
+                case rsa.RsaPKCS1.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = rsa.RsaPKCS1;
+                    break;
+                case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = rsa.RsaOAEP;
+                    break;
+                case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdsa;
+                    break;
+                case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdh;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesCBC;
+                    break;
+                case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = aes.AesGCM;
+                    break;
+                default:
+                    throw new TypeError("Unsupported algorithm in use");
+            }
+            let key = AlgClass.importKey(that.session, format, _data, _alg, extractable, keyUsages);
+            resolve(key);
+        });
+    }
 
 }

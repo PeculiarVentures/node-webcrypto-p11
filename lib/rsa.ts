@@ -31,6 +31,10 @@ export class Rsa extends alg.AlgorithmBase {
             publicKey: new RsaKey(_key.publicKey, alg)
         };
     }
+    
+    exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object {
+        throw new Error("Method is not supported");
+    }
 
     static checkRsaGenParams(alg: IRsaKeyGenParams) {
         if (!alg.modulusLength)
