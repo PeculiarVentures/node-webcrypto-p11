@@ -50,24 +50,22 @@ npm install mocha -g
 
 ```
 npm install
+tsd install
+tsc
+node-gyp configure build
 ```
 
 > If you experience any errors make sure you have downloaded TypeScript dependencies
 
-```
-tsd install
-tsc
-```
 
-
-## Test
+### Test
 
 ```
 mocha
 ```
 
 
-## Related
+### Related
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
  - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
  - [Graphene](https://github.com/PeculiarVentures/graphene)
