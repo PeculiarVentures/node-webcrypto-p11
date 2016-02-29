@@ -52,7 +52,7 @@ npm install mocha -g
 npm install
 ```
 
-* If you experience any errors make sure you have downloaded TypeScript dependencies
+> If you experience any errors make sure you have downloaded TypeScript dependencies
 
 ```
 tsd install
