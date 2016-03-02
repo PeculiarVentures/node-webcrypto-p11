@@ -1,15 +1,49 @@
 var assert = require('assert');
+var config = require('./config');
+var crypto = require("../built/webcrypto.js");
+var WebCrypto = crypto.WebCrypto;
 
 describe("RSA", function () {
     var webcrypto;
-    var keys;
     
-    var TEST_MESSAGE = new Buffer("This is test message for crypto functions");
+    function s2ab(text) {
+        var uint = new Uint8Array(text.length);
+        for (var i = 0, j = text.length; i < j; ++i) {
+            uint[i] = text.charCodeAt(i);
+        }
+        return uint;
+    }
+    
+    var TEST_MESSAGE = s2ab("1234567890123456");
 
-    before(function(done){
-        webcrypto = global.webcrypto;
-        keys = global.keys;
+    before(function (done) {
+        webcrypto = new WebCrypto(config);
+        assert.equal(!!webcrypto, true, "WebCrypto is not initialized");
         done();
+    })
+    
+    after(function (done) {
+        webcrypto.close();
+        done();
+    })
+    
+    it("RSA generate", function (done) {
+        webcrypto.subtle.generateKey({
+            name:"RSASSA-PKCS1-v1_5",
+            modulusLength: 1024,
+            publicExponent: new Uint8Array([1, 0, 1]), 
+            hash: {
+                name: "SHA-1"
+            }}, 
+            true, 
+            ["sign", "verify"]
+        )
+        .then(function(keys){
+            assert.equal(!!keys.privateKey, true, "Has no private key");
+            assert.equal(!!keys.publicKey, true, "Has no public key");
+            assert.equal(keys.privateKey.extractable, true);
+        })
+        .then(done, done);
     })
 
     it("RSA PKCS1 1.5 sign/verify", function (done) {

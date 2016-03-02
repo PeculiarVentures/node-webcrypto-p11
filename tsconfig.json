@@ -2,11 +2,12 @@
         "compilerOptions": {
                 "module": "commonjs",
                 "target": "es5",
-                "outDir": "src",
+                "outDir": "built",
                 "rootDir": "lib",
-                "listFiles": false
+                "noImplicitAny": true,
+                "removeComments": true
         },
         "exclude":[
-                "node_modules"
+                "node_modules", "built"
         ]
 }

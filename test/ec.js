@@ -1,4 +1,7 @@
 var assert = require('assert');
+var config = require('./config');
+var crypto = require("../built/webcrypto.js");
+var WebCrypto = crypto.WebCrypto;
 
 describe("EC", function () {
     var webcrypto;

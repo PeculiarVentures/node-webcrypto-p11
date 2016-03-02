@@ -1,42 +1,41 @@
-import {Module, Session, Slot} from "graphene-pk11";
-import * as iwc from "./iwebcrypto";
-import * as subtle from "./subtlecrypto";
+import {Module, Session, Slot, SessionFlag} from "graphene-pk11";
+import {P11SubtleCrypto} from "./subtlecrypto";
 
 /**
  * PKCS11 with WebCrypto Interface
  */
-export default class P11WebCrypto implements iwc.IWebCrypto {
+export class WebCrypto implements Crypto, RandomSource {
 
     private module: Module;
     private session: Session;
     private slot: Slot;
     private initialized: boolean;
 
-    public subtle: iwc.ISubtleCrypto = null;
+    public subtle: SubtleCrypto = null;
 
     /**
      * Generates cryptographically random values
-     * @param array Initialize array
+     * @param  {ArrayBufferView} array
+     * @returns ArrayBufferView
      */
-    getRandomValues(array): any {
-        return this.session.generateRandom(array.byteLength);
+    getRandomValues(array: ArrayBufferView): ArrayBufferView {
+        return new Uint8Array(this.session.generateRandom(array.byteLength));
     }
 
     /**
-     * Constructor
-     * @param params Init params
+     * @param  {P11WebCryptoParams} params PKCS11 module init parameters
      */
     constructor(params: P11WebCryptoParams) {
         let mod = this.module = Module.load(params.library, params.name);
         mod.initialize();
-        let slots = mod.getSlots();
-        let slot = this.slot = slots[params.slot];
+        this.initialized = true;
+
+        let slot = mod.getSlots(params.slot);
         if (!slot)
-            throw new Error("Slot by index " + params.slot + " is not found");
-        let session = this.session = slot.session;
-        session.start(2 | 4);
-        session.login(params.pin);
-        this.subtle = new subtle.P11SubtleCrypto(session);
+            throw new Error(`Slot by index ${params.slot} is not found`);
+        this.session = slot.open(params.slotFlags);
+        this.session.login(params.pin);
+        this.subtle = new P11SubtleCrypto(this.session);
     }
 
     /**
@@ -45,7 +44,7 @@ export default class P11WebCrypto implements iwc.IWebCrypto {
     close() {
         if (this.initialized) {
             this.session.logout();
-            this.session.stop();
+            this.session.close();
             this.module.finalize();
         }
     }
@@ -64,6 +63,7 @@ interface P11WebCryptoParams extends Object {
      * Index of slot
      */
     slot: number;
+    slotFlags?: number;
     /**
      * PIN of slot
      */

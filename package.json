@@ -11,11 +11,12 @@
     "url": "git+https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "devDependencies": {
-    "mocha": "^2.3.3"
+    "mocha": "^2.4.5",
+    "typescript": "^1.8.2"
   },
   "dependencies": {
-    "graphene-pk11": "^1.0.0",
-    "typescript": "1.7.3"
+    "graphene-pk11": "^2.0.0",
+    "base64url": "^1.0.6"
   },
   "keywords": [
     "crypto",

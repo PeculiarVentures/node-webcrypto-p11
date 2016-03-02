@@ -1,6 +1,6 @@
 module.exports = {
-	library: "/usr/safenet/lunaclient/lib/libCryptoki2_64.so",
-	name: "Luna 5",
+	library: "/usr/local/lib/softhsm/libsofthsm2.so",
+	name: "SoftHSM v2.0",
 	slot: 0,
-	pin: ""
+	pin: "12345"
 }
