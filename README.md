@@ -21,50 +21,51 @@ npm install tsd -g
 npm install mocha -g
 ```
 
-### SoftHSM (optional)
-- Get and install SoftHSM
+### SoftHSM2 (assumes Ubuntu - optional)
+* Install SoftHSM2
 
     `apt-get install softhsm`
 
-- Specify where your configuration file is
-
-    `export SOFTHSM2_CONF=/etc/softhsm/softhsm.conf`
-
-- Fix the configuation file to specify correct path to it's db
-
-    `%s:/lib\/lib/lib`
-
-- Initialize the first slot
+* Initialize the first slot
 
     `softhsm2-util --init-token --slot 0 --label "My token 1"`
 
-- The pkcs11 module you can now use can be found here:
+* The PKCS1 #11 module you can now use can be found here:
 
-  `/usr/lib/softhsm/libsofthsm.so`
+  `/usr/local/lib/softhsm/libsofthsm.so`
+  
+* Adjust permissions so the user your code will be able to access the PKCS #11 module:
+
+  ```
+  sudo chmod –R 755 /var/lib/softhsm
+  sudo chmod –R 755 /usr/local/lib/softhsm
+  chown root:softhsmusers /var/lib/softhsm
+  chown root:softhsmusers /usr/local/lib/softhsm
+  ```
+ 
+  **NOTE**: This may be more generous than needed. It works out to : 0755 = User:rwx Group:r-x World:r-x. 
   
 
 ### Install & Compile 
 
 ```
 npm install
-```
-
-* If you experience any errors make sure you have downloaded TypeScript dependencies
-
-```
 tsd install
 tsc
+node-gyp configure build
 ```
 
+> If you experience any errors make sure you have downloaded TypeScript dependencies
 
-## Test
+
+### Test
 
 ```
 mocha
 ```
 
 
-## Related
+### Related
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
  - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
  - [Graphene](https://github.com/PeculiarVentures/graphene)
