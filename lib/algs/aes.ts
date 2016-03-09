@@ -14,7 +14,7 @@ export var ALG_NAME_AES_KW = "AES-KW";
 
 class AesError extends error.WebCryptoError { }
 
-export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]) {
+export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplate {
     return {
         token: false,
         class: ObjectClass.SECRET_KEY,
@@ -22,6 +22,7 @@ export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, 
         label: `AES-${alg.length}`,
         id: new Buffer(new Date().getTime().toString()),
         extractable: extractable,
+        sensitive: false,
         derive: false,
         sign: keyUsages.indexOf(KU_SIGN) !== -1,
         verify: keyUsages.indexOf(KU_VERIFY) !== -1,
@@ -230,7 +231,7 @@ export class AesGCM extends Aes {
     static ALGORITHM_NAME: string = ALG_NAME_AES_GCM;
 
     static wc2pk11(alg: IAesGcmAlgorithmParams): IAlgorithm {
-        let aad = new Buffer(new Uint8Array(alg.additionalData));
+        let aad = alg.additionalData ? new Buffer(new Uint8Array(alg.additionalData)) : null;
         let params = new AesGcmParams(alg.iv, aad, alg.tagLength);
         return { name: "AES_GCM", params: params };
     }

@@ -3,19 +3,32 @@ var config = require('./config');
 var crypto = require("../built/webcrypto.js");
 var WebCrypto = crypto.WebCrypto;
 
-describe("EC", function () {
+describe("EC", function() {
     var webcrypto;
     var keys;
 
-    before(function (done) {
-        webcrypto = global.webcrypto;
-        keys = global.keys;
+    function s2ab(text) {
+        var uint = new Uint8Array(text.length);
+        for (var i = 0, j = text.length; i < j; ++i) {
+            uint[i] = text.charCodeAt(i);
+        }
+        return uint;
+    }
+
+    var TEST_MESSAGE = s2ab("1234567890123456");
+
+    before(function(done) {
+        webcrypto = new WebCrypto(config);
+        assert.equal(!!webcrypto, true, "WebCrypto is not initialized");
         done();
     })
 
-    var TEST_MESSAGE = new Buffer("This is test message for crypto functions");
+    after(function(done) {
+        webcrypto.close();
+        done();
+    })
 
-    it("Ecdsa", function (done) {
+    it("Ecdsa", function(done) {
 
         var key = null;
         webcrypto.subtle.generateKey(
@@ -25,12 +38,11 @@ describe("EC", function () {
             },
             false, 						//whether the key is extractable (i.e. can be used in exportKey)
             ["sign", "verify"] 			//can be any combination of "sign" and "verify"
-            )
-            .then(function (k) {
+        )
+            .then(function(k) {
                 assert.equal(k.privateKey !== null, true, "Has no private key");
                 assert.equal(k.publicKey !== null, true, "Has no public key");
                 key = k;
-                keys.push(key)
                 return webcrypto.subtle.sign(
                     {
                         name: "ECDSA",
@@ -39,7 +51,7 @@ describe("EC", function () {
                     key.privateKey,
                     TEST_MESSAGE)
             })
-            .then(function (sig) {
+            .then(function(sig) {
                 assert.equal(sig !== null, true, "Has no signature value");
                 assert.notEqual(sig.length, 0, "Has empty signature value");
                 return webcrypto.subtle.verify(
@@ -50,15 +62,15 @@ describe("EC", function () {
                     key.publicKey,
                     sig,
                     TEST_MESSAGE
-                    )
+                )
             })
-            .then(function (v) {
+            .then(function(v) {
                 assert.equal(v, true, "Ecdsa signature is not valid");
             })
             .then(done, done);
     })
 
-    it("Ecdh", function (done) {
+    it("Ecdh", function(done) {
 
         var key = null;
         webcrypto.subtle.generateKey(
@@ -68,12 +80,11 @@ describe("EC", function () {
             },
             false, //whether the key is extractable (i.e. can be used in exportKey)
             ["deriveKey"] //can be any combination of "deriveKey"
-            )
-            .then(function (k) {
+        )
+            .then(function(k) {
                 assert.equal(k.privateKey !== null, true, "Has no private key");
                 assert.equal(k.publicKey !== null, true, "Has no public key");
                 key = k;
-                keys.push(key)
                 return webcrypto.subtle.deriveKey(
                     {
                         name: "ECDH",
@@ -88,9 +99,9 @@ describe("EC", function () {
                     },
                     false, //whether the derived key is extractable (i.e. can be used in exportKey)
                     ["encrypt", "decrypt"] //limited to the options in that algorithm's importKey
-                    )
+                )
             })
-            .then(function (key) {
+            .then(function(key) {
                 assert.equal(key !== null, true, "Has no derived Key value");
             })
             .then(done, done);

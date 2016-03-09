@@ -8,10 +8,7 @@ import * as error from "./error";
 import * as alg from "./algs/alg";
 import * as aes from "./algs/aes";
 import * as rsa from "./algs/rsa";
-// import * as ec from "./ec";
-
-
-// import * as iwc from "./iwebcrypto";
+import * as ec from "./algs/ec";
 
 /**
  * converts alg to Algorithm
@@ -69,12 +66,12 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
                     AlgClass = aes.AesCBC;
                     break;
-                // case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                //     AlgClass = ec.Ecdsa;
-                //     break;
-                // case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
-                //     AlgClass = ec.Ecdh;
-                //     break;
+                case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdsa;
+                    break;
+                case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdh;
+                    break;
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
             }
@@ -103,9 +100,9 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
                     AlgClass = rsa.RsaPSS;
                     break;
-                // case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                //     AlgClass = ec.Ecdsa;
-                //     break;
+                case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdsa;
+                    break;
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
             }
@@ -135,9 +132,9 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 case rsa.RsaPSS.ALGORITHM_NAME.toLowerCase():
                     AlgClass = rsa.RsaPSS;
                     break;
-                //     case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
-                //         AlgClass = ec.Ecdsa;
-                //         break;
+                case ec.Ecdsa.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdsa;
+                    break;
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
             }
@@ -189,9 +186,9 @@ export class P11SubtleCrypto implements SubtleCrypto {
 
             let AlgClass: alg.IAlgorithmBase = null;
             switch (_alg.name.toLowerCase()) {
-                // case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
-                //     AlgClass = rsa.RsaOAEP;
-                //     break;
+                case rsa.RsaOAEP.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = rsa.RsaOAEP;
+                    break;
                 case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
                     AlgClass = aes.AesGCM;
                     break;
@@ -265,20 +262,23 @@ export class P11SubtleCrypto implements SubtleCrypto {
         let that = this;
 
         return new Promise(function(resolve, reject) {
-            // let _alg1 = prepare_algorithm(algorithm);
-            // let _alg2 = prepare_algorithm(derivedKeyType);
+            let _alg1 = prepare_algorithm(algorithm);
+            let _alg2 = prepare_algorithm(derivedKeyType);
 
-            // let AlgClass: alg.IAlgorithmBase = null;
-            // switch (_alg1.name.toLowerCase()) {
-            //     case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
-            //         AlgClass = ec.Ecdh;
-            //         break;
-            //     default:
-            //         throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
-            // }
-            // let key: CryptoKey = AlgClass.deriveKey(that.session, algorithm, baseKey, derivedKeyType, extractable, keyUsages);
-            // resolve(key);
-            reject("not implemented");
+            let AlgClass: alg.IAlgorithmBase = null;
+            switch (_alg1.name.toLowerCase()) {
+                case ec.Ecdh.ALGORITHM_NAME.toLowerCase():
+                    AlgClass = ec.Ecdh;
+                    break;
+                default:
+                    throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg1.name);
+            }
+            AlgClass.deriveKey(that.session, algorithm, baseKey, derivedKeyType, extractable, keyUsages, (err, key) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(key);
+            });
         });
     }
 
