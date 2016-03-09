@@ -53,7 +53,20 @@ export abstract class AlgorithmBase {
 
     static sign(session: Session, alg: Algorithm, key: CryptoKey, data: Buffer, callback: (err: Error, signature: Buffer) => void): void {
         try {
-            throw new Error(error.ERROR_NOT_SUPPORTED_METHOD);
+            this.checkAlgorithmIdentifier(alg);
+            this.onCheck("sign", "alg", alg);
+            this.onCheck("sign", "key", key);
+            this.onCheck("sign", "data", data);
+            let p11Alg = this.wc2pk11(alg, key);
+
+            let signer = session.createSign(p11Alg, (<P11CryptoKey>key).key);
+            signer.update(data, (err: Error) => {
+                if (err)
+                    callback(err, null);
+                else
+                    signer.final(callback);
+            });
+
         } catch (e) {
             callback(e, null);
         }
@@ -61,7 +74,21 @@ export abstract class AlgorithmBase {
 
     static verify(session: Session, alg: Algorithm, key: CryptoKey, signature: Buffer, data: Buffer, callback: (err: Error, verify: boolean) => void): void {
         try {
-            throw new Error(error.ERROR_NOT_SUPPORTED_METHOD);
+            this.checkAlgorithmIdentifier(alg);
+            this.onCheck("verify", "alg", alg);
+            this.onCheck("verify", "key", key);
+            this.onCheck("verify", "data", data);
+            this.onCheck("verify", "signature", signature);
+            let p11Alg = this.wc2pk11(alg, key);
+
+            let signer = session.createVerify(p11Alg, (<P11CryptoKey>key).key);
+            signer.update(data, (err: Error) => {
+                if (err)
+                    callback(err, null);
+                else
+                    signer.final(signature, callback);
+            });
+
         } catch (e) {
             callback(e, null);
         }
@@ -69,10 +96,11 @@ export abstract class AlgorithmBase {
 
     static encrypt(session: Session, alg: Algorithm, key: CryptoKey, data: Buffer, callback: (err: Error, enc: Buffer) => void): void {
         try {
+            this.checkAlgorithmIdentifier(alg);
             this.onCheck("encrypt", "alg", alg);
             this.onCheck("encrypt", "key", key);
             this.onCheck("encrypt", "data", data);
-            let p11Alg = this.wc2pk11(alg);
+            let p11Alg = this.wc2pk11(alg, key);
 
             let cipher = session.createCipher(p11Alg, (<P11CryptoKey>key).key);
             let msg = new Buffer(0);
@@ -102,10 +130,11 @@ export abstract class AlgorithmBase {
 
     static decrypt(session: Session, alg: Algorithm, key: CryptoKey, data: Buffer, callback: (err: Error, dec: Buffer) => void): void {
         try {
+            this.checkAlgorithmIdentifier(alg);
             this.onCheck("decrypt", "alg", alg);
             this.onCheck("decrypt", "key", key);
             this.onCheck("decrypt", "data", data);
-            let p11Alg = this.wc2pk11(alg);
+            let p11Alg = this.wc2pk11(alg, key);
 
             let cipher = session.createDecipher(p11Alg, (<P11CryptoKey>key).key);
             let msg = new Buffer(0);
@@ -209,7 +238,7 @@ export abstract class AlgorithmBase {
         this.checkKey(key, KT_SECRET);
     }
 
-    protected static wc2pk11(alg: Algorithm): IAlgorithm {
+    protected static wc2pk11(alg: Algorithm, key: CryptoKey): IAlgorithm {
         throw new Error("Not implemented");
     }
 } 

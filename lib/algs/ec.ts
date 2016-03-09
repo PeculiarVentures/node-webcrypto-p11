@@ -1,223 +1,269 @@
-// import * as graphene from "graphene-pk11";
-// let ECDSA = graphene.ECDSA;
-// let Enums = graphene.Enums;
+import {
+    Session,
+    IAlgorithm,
+    AesGcmParams,
+    SecretKey,
+    KeyGenMechanism,
+    MechanismEnum,
+    Key,
+    ITemplate,
+    ObjectClass,
+    KeyType,
+    EcdhParams,
+    NamedCurve,
+    EcKdf} from "graphene-pk11";
+import * as error from "../error";
+import * as aes from "./aes";
+import * as base64url from "base64url";
 
-// import * as Aes from "./aes";
+import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
+import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, KU_DERIVE, ITemplatePair} from "../key";
 
-// import * as alg from "./alg";
-// import * as iwc from "./iwebcrypto";
-// import {CryptoKey} from "./key";
+let ALG_NAME_ECDH = "ECDH";
+let ALG_NAME_ECDSA = "ECDSA";
 
-// let ALG_NAME_ECDH = "ECDH";
-// let ALG_NAME_ECDSA = "ECDSA";
+function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
+    const label = `EC-${alg.namedCurve}`;
+    const id = new Buffer(new Date().getTime().toString());
+    const keyType = KeyType.ECDSA;
+    return {
+        privateKey: {
+            token: false,
+            class: ObjectClass.PRIVATE_KEY,
+            keyType: keyType,
+            private: true,
+            label: label,
+            id: id,
+            extractable: extractable,
+            derive: keyUsages.indexOf(KU_DERIVE) !== -1,
+            sign: keyUsages.indexOf(KU_SIGN) !== -1,
+            decrypt: keyUsages.indexOf(KU_DECRYPT) !== -1,
+            unwrap: keyUsages.indexOf(KU_UNWRAP) !== -1
+        },
+        publicKey: {
+            token: false,
+            class: ObjectClass.PUBLIC_KEY,
+            keyType: keyType,
+            label: label,
+            id: id,
+            derive: keyUsages.indexOf(KU_DERIVE) !== -1,
+            verify: keyUsages.indexOf(KU_VERIFY) !== -1,
+            encrypt: keyUsages.indexOf(KU_ENCRYPT) !== -1,
+            wrap: keyUsages.indexOf(KU_WRAP) !== -1,
+        }
+    };
+}
 
-// let HASH_ALGS = ["SHA-1", "SHA-224", "SHA-256", "SHA-384", "SHA-512"];
+export interface IEcKeyGenAlgorithm extends Algorithm {
+    namedCurve: string;
+}
 
-// export class Ec extends alg.AlgorithmBase {
-//     static generateKey(session: graphene.Session, alg: IEcKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkKeyGenParams(alg);
+export interface IEcAlgorithmParams extends Algorithm {
+    namedCurve: string;
+    public?: CryptoKey;
+}
 
-//         let _namedCurve = "";
-//         switch (alg.namedCurve) {
-//             case "P-192":
-//                 _namedCurve = "secp192r1";
-//                 break;
-//             case "P-256":
-//                 _namedCurve = "secp256r1";
-//                 break;
-//             case "P-384":
-//                 _namedCurve = "secp384r1";
-//                 break;
-//             case "P-521":
-//                 _namedCurve = "secp521r1";
-//                 break;
-//             default:
-//                 throw new Error("Unsupported namedCurve in use");
-//         }
+export interface IEcdsaAlgorithmParams extends IEcAlgorithmParams {
+    hash: {
+        name: string;
+    };
+}
 
-//         let _key = ECDSA.Ecdsa.generate(session, null, {
-//             "label": label,
-//             "namedCurve": _namedCurve,
-//             "token": true,
-//             "extractable": extractable,
-//             "keyUsages": keyUsages,
-//         });
+export class Ec extends AlgorithmBase {
 
-//         return {
-//             "privateKey": new EcKey(_key.privateKey, alg),
-//             "publicKey": new EcKey(_key.publicKey, alg)
-//         };
-//     }
+    static generateKey(session: Session, alg: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey | CryptoKeyPair) => void): void {
+        try {
+            let _alg: IEcKeyGenAlgorithm = <any>alg;
+            this.checkAlgorithmIdentifier(alg);
+            this.checkAlgorithmHashedParams(<IAlgorithmHashed>alg);
+            this.checkKeyGenAlgorithm(_alg);
 
-//     static checkKeyGenParams(alg: IEcKeyGenParams) {
-//         this.checkAlgorithmParams(alg);
-//     }
+            let template = create_template(_alg, extractable, keyUsages);
 
-//     static checkAlgorithmHashedParams(alg: iwc.IAlgorithmIdentifier) {
-//         super.checkAlgorithmHashedParams(alg);
-//         let _alg = alg.hash;
-//         _alg.name = _alg.name.toUpperCase();
-//         if (HASH_ALGS.indexOf(_alg.name) === -1)
-//             throw new Error("AlgorithmHashedParams: Unknow hash algorithm in use");
-//     }
+            // EC params
+            let _namedCurve = "";
+            switch (_alg.namedCurve) {
+                case "P-192":
+                    _namedCurve = "secp192r1";
+                    break;
+                case "P-256":
+                    _namedCurve = "secp256r1";
+                    break;
+                case "P-384":
+                    _namedCurve = "secp384r1";
+                    break;
+                case "P-521":
+                    _namedCurve = "secp521r1";
+                    break;
+                default:
+                    throw new Error("Unsupported namedCurve in use");
+            }
+            template.publicKey.pointEC = NamedCurve.getByName(_namedCurve).value;
 
-//     static checkAlgorithmParams(alg: IEcAlgorithmParams) {
-//         this.checkAlgorithmIdentifier(alg);
-//         if (!alg.namedCurve)
-//             throw new TypeError("EcParams: namedCurve: Missing required property");
-//         switch (alg.namedCurve.toUpperCase()) {
-//             case "P-192":
-//             case "P-256":
-//             case "P-384":
-//             case "P-521":
-//                 break;
-//             default:
-//                 throw new TypeError("EcParams: namedCurve: Wrong value. Can be P-256, P-384, or P-521");
-//         }
-//         alg.namedCurve = alg.namedCurve.toUpperCase();
-//     }
+            // PKCS11 generation
+            session.generateKeyPair(KeyGenMechanism.RSA, template.publicKey, template.privateKey, (err, keys) => {
+                try {
+                    if (err)
+                        callback(err, null);
+                    else {
+                        let wcKeyPair: CryptoKeyPair = {
+                            privateKey: new P11CryptoKey(keys.privateKey, _alg),
+                            publicKey: new P11CryptoKey(keys.publicKey, _alg)
+                        };
+                        callback(null, wcKeyPair);
+                    }
+                }
+                catch (e) {
+                    callback(e, null);
+                }
+            });
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
 
-//     static wc2pk11(alg: IEcAlgorithmParams) {
-//         throw new Error("Not realized");
-//     }
-// }
+    static checkKeyGenAlgorithm(alg: IEcKeyGenAlgorithm) {
+        this.checkAlgorithmParams(alg);
+    }
 
-// export interface IEcKeyGenParams extends iwc.IAlgorithmIdentifier {
-//     namedCurve: string;
-// }
+    static checkAlgorithmParams(alg: IEcAlgorithmParams) {
+        this.checkAlgorithmIdentifier(alg);
+        if (!alg.namedCurve)
+            throw new TypeError("EcParams: namedCurve: Missing required property");
+        switch (alg.namedCurve.toUpperCase()) {
+            case "P-192":
+            case "P-256":
+            case "P-384":
+            case "P-521":
+                break;
+            default:
+                throw new TypeError("EcParams: namedCurve: Wrong value. Can be P-256, P-384, or P-521");
+        }
+        alg.namedCurve = alg.namedCurve.toUpperCase();
+    }
 
-// export interface IEcAlgorithmParams extends iwc.IAlgorithmIdentifier {
-//     namedCurve: string;
-//     public?: CryptoKey;
-// }
+    static checkAlgorithmHashedParams(alg: IAlgorithmHashed) {
+        super.checkAlgorithmHashedParams(alg);
+        let _alg = alg.hash;
+        _alg.name = _alg.name.toUpperCase();
+        if (RSA_HASH_ALGS.indexOf(_alg.name) === -1)
+            throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
+    }
 
-// export interface IEcdsaAlgorithmParams extends IEcAlgorithmParams {
-//     hash: {
-//         name: string;
-//     };
-// }
+}
 
-// export class EcKey extends CryptoKey {
-//     namedCurve: string;
+export class Ecdsa extends Ec {
+    static ALGORITHM_NAME: string = ALG_NAME_ECDSA;
 
-//     constructor(key, alg: IEcKeyGenParams) {
-//         super(key, alg);
-//         this.namedCurve = alg.namedCurve;
-//         // TODO: get params from key if alg params is empty
-//     }
-// }
+    static wc2pk11(alg: IEcdsaAlgorithmParams, key: CryptoKey): IAlgorithm {
+        let _alg: string = null;
+        switch (alg.hash.name.toUpperCase()) {
+            case "SHA-1":
+                _alg = "ECDSA_SHA1";
+                break;
+            case "SHA-224":
+                _alg = "ECDSA_SHA224";
+                break;
+            case "SHA-256":
+                _alg = "ECDSA_SHA256";
+                break;
+            case "SHA-384":
+                _alg = "ECDSA_SHA384";
+                break;
+            case "SHA-512":
+                _alg = "ECDSA_SHA512";
+                break;
+            default:
+                throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, (<IAlgorithmHashed>key.algorithm).hash.name);
+        }
+        return { name: _alg, params: null };
+    }
 
-// export class Ecdsa extends Ec {
-//     static ALGORITHM_NAME: string = ALG_NAME_ECDSA;
+    static onCheck(method: string, paramName: string, paramValue: any): void {
+        switch (method) {
+            case "sign":
+                switch (paramName) {
+                    case "alg":
+                        this.checkAlgorithmHashedParams(paramValue);
+                        break;
+                    case "key":
+                        this.checkPrivateKey(paramValue);
+                        break;
+                    case "data":
+                        break;
+                }
+                break;
+            case "verify":
+                switch (paramName) {
+                    case "alg":
+                        break;
+                    case "key":
+                        this.checkAlgorithmHashedParams(paramValue);
+                        this.checkPublicKey(paramValue);
+                        break;
+                    case "data":
+                        break;
+                }
+                break;
+        }
+    }
 
-//     static wc2pk11(alg: IEcdsaAlgorithmParams) {
-//         let _alg = null;
-//         switch (alg.hash.name.toUpperCase()) {
-//             case "SHA-1":
-//                 _alg = "ECDSA_SHA1";
-//                 break;
-//             case "SHA-224":
-//                 _alg = "ECDSA_SHA224";
-//                 break;
-//             case "SHA-256":
-//                 _alg = "ECDSA_SHA256";
-//                 break;
-//             case "SHA-384":
-//                 _alg = "ECDSA_SHA384";
-//                 break;
-//             case "SHA-512":
-//                 _alg = "ECDSA_SHA512";
-//                 break;
-//             default:
-//                 throw new TypeError("Unknown Hash agorithm name in use");
-//         }
-//         return _alg;
-//     }
+}
 
-//     static sign(session: graphene.Session, alg: IEcdsaAlgorithmParams, key: CryptoKey, data: Buffer) {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkAlgorithmHashedParams(alg);
-//         this.checkPrivateKey(key);
-//         let _alg = this.wc2pk11(alg);
+export class Ecdh extends Ec {
+    static ALGORITHM_NAME: string = ALG_NAME_ECDH;
 
-//         let signer = session.createSign(_alg, key.key);
-//         signer.update(data);
-//         let signature = signer.final();
+    static deriveKey(session: Session, algorithm: Algorithm, baseKey: CryptoKey, derivedKeyType: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static deriveKey(session: Session, algorithm: IEcdsaAlgorithmParams, baseKey: CryptoKey, derivedKeyType: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static deriveKey(session: Session, algorithm: IEcdsaAlgorithmParams, baseKey: CryptoKey, derivedKeyType: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
+        try {
+            // check algorithm
+            this.checkAlgorithmParams(algorithm);
+            if (!algorithm.public)
+                throw new TypeError("EcParams: public: Missing required property");
+            this.checkPublicKey(algorithm.public);
 
-//         return signature;
-//     }
+            // check baseKey
+            this.checkPrivateKey(baseKey);
 
-//     static verify(session: graphene.Session, alg: IEcdsaAlgorithmParams, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkAlgorithmHashedParams(alg);
-//         this.checkPublicKey(key);
-//         let _alg = this.wc2pk11(alg);
+            // check derivedKeyType
+            if (typeof derivedKeyType !== "object")
+                throw TypeError("derivedKeyType: AlgorithmIdentifier: Algorithm must be an Object");
+            if (!(derivedKeyType.name && typeof (derivedKeyType.name) === "string"))
+                throw TypeError("derivedKeyType: AlgorithmIdentifier: Missing required property name");
+            let AesClass: any = null;
+            switch (derivedKeyType.name.toLowerCase()) {
+                case aes.AesGCM.ALGORITHM_NAME.toLowerCase():
+                    AesClass = aes.AesGCM;
+                    break;
+                case aes.AesCBC.ALGORITHM_NAME.toLowerCase():
+                    AesClass = aes.AesCBC;
+                    break;
+                default:
+                    throw new Error("derivedKeyType: Unknown Algorithm name in use");
+            }
+            AesClass.checkKeyGenAlgorithm(<aes.IAesKeyGenAlgorithm>derivedKeyType);
 
-//         let signer = session.createVerify(_alg, key.key);
-//         signer.update(data);
-//         let res = signer.final(signature);
+            let template: ITemplate = aes.create_template(<aes.IAesKeyGenAlgorithm>derivedKeyType, extractable, keyUsages);
+            // template.valueLen = (<aes.IAesKeyGenAlgorithm>derivedKeyType).length / 8;
+            // derive key
+            let dKey: Key = session.deriveKey(
+                {
+                    name: "ECDH1_DERIVE",
+                    params: new EcdhParams(
+                        EcKdf.NULL,
+                        null,
+                        (<P11CryptoKey>algorithm.public).key.getAttribute({ pointEC: null }).pointEC // CKA_EC_POINT
+                    )
+                },
+                (<P11CryptoKey>baseKey).key,
+                template
+            );
 
-//         return res;
-//     }
-// }
-
-// export class Ecdh extends Ec {
-//     static ALGORITHM_NAME: string = ALG_NAME_ECDH;
-
-//     static deriveKey(session: graphene.Session, alg: IEcdsaAlgorithmParams, baseKey: CryptoKey, derivedKeyType: Aes.IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): CryptoKey {
-//         // check algorithm
-//         this.checkAlgorithmParams(alg);
-//         if (!alg.public)
-//             throw new TypeError("EcParams: public: Missing required property");
-//         this.checkPublicKey(alg.public);
-
-//         // check baseKey
-//         this.checkPrivateKey(baseKey);
-
-//         // check derivedKeyType
-//         if (typeof derivedKeyType !== "object")
-//             throw TypeError("derivedKeyType: AlgorithmIdentifier: Algorithm must be an Object");
-//         if (!(derivedKeyType.name && typeof (derivedKeyType.name) === "string"))
-//             throw TypeError("derivedKeyType: AlgorithmIdentifier: Missing required property name");
-//         let AesClass = null;
-//         switch (derivedKeyType.name.toLowerCase()) {
-//             case Aes.AesGCM.ALGORITHM_NAME.toLowerCase():
-//                 Aes.AesGCM.checkKeyGenParams(<Aes.IAesKeyGenAlgorithm>derivedKeyType);
-//                 AesClass = Aes.AesGCM;
-//                 break;
-//             default:
-//                 throw new Error("derivedKeyType: Unknown Algorithm name in use");
-//         }
-
-//         // derive key
-//         let dKey: graphene.Key = session.deriveKey(
-//             {
-//                 name: "ECDH1_DERIVE",
-//                 params: new graphene.ECDSA.EcdhParams(
-//                     0x00000001, // CKD_NULL
-//                     null,
-//                     alg.public.key.getBinaryAttribute(0x00000181) // CKA_EC_POINT
-//                 )
-//             },
-//             baseKey.key,
-//             {
-//                 "class": Enums.ObjectClass.SecretKey,
-//                 "sensitive": true,
-//                 "private": true,
-//                 "token": false,
-//                 "keyType": Enums.KeyType.AES,
-//                 "valueLen": derivedKeyType.length / 8,
-//                 "encrypt": keyUsages.indexOf["encrypt"] > -1,
-//                 "decrypt": keyUsages.indexOf["decrypt"] > -1,
-//                 "sign": keyUsages.indexOf["sign"] > -1,
-//                 "verify": keyUsages.indexOf["verify"] > -1,
-//                 "wrap": keyUsages.indexOf["wrapKey"] > -1,
-//                 "unwrap": keyUsages.indexOf["unwrapKey"] > -1,
-//                 "derive": keyUsages.indexOf["deriveKey"] > -1
-//             }
-//         );
-
-//         return new AesClass(dKey, derivedKeyType);
-//     }
-// }
+            callback(null, new P11CryptoKey(dKey, derivedKeyType));
+        } catch (e) {
+            callback(e, null);
+        }
+    }
+}

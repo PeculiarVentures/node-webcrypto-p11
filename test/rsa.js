@@ -61,9 +61,7 @@ describe("RSA", function () {
         .then(function(k){
             assert.equal(k.privateKey !== null, true, "Has no private key");
             assert.equal(k.publicKey !== null, true, "Has no public key");
-            console.log("Extractable", k.privateKey.extractable);
             key = k;
-            keys.push(key)
             return webcrypto.subtle.sign({name: "RSASSA-PKCS1-v1_5"}, key.privateKey, TEST_MESSAGE) 
         })
         .then(function(sig){
@@ -93,7 +91,6 @@ describe("RSA", function () {
             assert.equal(k.privateKey !== null, true, "Has no private key");
             assert.equal(k.publicKey !== null, true, "Has no public key");
             key = k;
-            keys.push(key);
             return webcrypto.subtle.encrypt({name: "RSA-OAEP"}, key.publicKey, TEST_MESSAGE) 
         })
         .then(function(enc){
@@ -124,7 +121,6 @@ describe("RSA", function () {
             assert.equal(k.privateKey !== null, true, "Has no private key");
             assert.equal(k.publicKey !== null, true, "Has no public key");
             key = k;
-            keys.push(key);
             return webcrypto.subtle.generateKey({
                 name: "AES-GCM",
                 length: 128, //can be  128, 192, or 256

@@ -1,16 +1,16 @@
 import {
-Session,
-IAlgorithm,
-AesGcmParams,
-SecretKey,
-KeyGenMechanism,
-MechanismEnum,
-Key,
-ITemplate,
-ObjectClass,
-KeyType,
-RsaOaepParams,
-RsaMgf} from "graphene-pk11";
+    Session,
+    IAlgorithm,
+    AesGcmParams,
+    SecretKey,
+    KeyGenMechanism,
+    MechanismEnum,
+    Key,
+    ITemplate,
+    ObjectClass,
+    KeyType,
+    RsaOaepParams,
+    RsaMgf} from "graphene-pk11";
 import * as error from "../error";
 import * as base64url from "base64url";
 
@@ -104,11 +104,28 @@ abstract class Rsa extends AlgorithmBase {
             throw new TypeError("RsaKeyGenParams: publicExponent: Missing or not a Uint8Array");
     }
 
-    static wc2pk11(alg: Algorithm): IAlgorithm {
-        let _alg: IAlgorithmHashed = <any>alg;
-        this.checkAlgorithmHashedParams(_alg);
+    static checkAlgorithmHashedParams(alg: IAlgorithmHashed) {
+        super.checkAlgorithmHashedParams(alg);
+        let _alg = alg.hash;
+        _alg.name = _alg.name.toUpperCase();
+        if (RSA_HASH_ALGS.indexOf(_alg.name) === -1)
+            throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
+    }
+
+}
+//     exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object {
+//         throw new Error("Method is not supported");
+//     }
+
+
+// }
+
+export class RsaPKCS1 extends Rsa {
+    static ALGORITHM_NAME: string = ALG_NAME_RSA_PKCS1;
+
+    static wc2pk11(alg: Algorithm, key: CryptoKey): IAlgorithm {
         let res: string = null;
-        switch (_alg.hash.name.toUpperCase()) {
+        switch ((<IAlgorithmHashed>key.algorithm).hash.name.toUpperCase()) {
             case "SHA-1":
                 res = "SHA1_RSA_PKCS";
                 break;
@@ -125,74 +142,37 @@ abstract class Rsa extends AlgorithmBase {
                 res = "SHA512_RSA_PKCS";
                 break;
             default:
-                throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.hash.name);
+                throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, (<IAlgorithmHashed>alg).hash.name);
         }
         return { name: res, params: null };
     }
 
-    static checkAlgorithmHashedParams(alg: IAlgorithmHashed) {
-        super.checkAlgorithmHashedParams(alg);
-        let _alg = alg.hash;
-        _alg.name = _alg.name.toUpperCase();
-        if (RSA_HASH_ALGS.indexOf(_alg.name) === -1)
-            throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
-    }
-
-    static sign(session: Session, alg: Algorithm, key: CryptoKey, data: Buffer, callback: (err: Error, signature: Buffer) => void): void {
-        try {
-            this.checkAlgorithmIdentifier(alg);
-            this.checkPrivateKey(key);
-            let _alg = this.wc2pk11(key.algorithm);
-
-            let signer = session.createSign(<IAlgorithm>_alg, (<P11CryptoKey>key).key);
-            signer.update(data, (err: Error) => {
-                if (err)
-                    callback(err, null);
-                else
-                    signer.final(callback);
-            });
-
-        } catch (e) {
-            callback(e, null);
+    static onCheck(method: string, paramName: string, paramValue: any): void {
+        switch (method) {
+            case "sign":
+                switch (paramName) {
+                    case "alg":
+                        break;
+                    case "key":
+                        this.checkPrivateKey(paramValue);
+                        break;
+                    case "data":
+                        break;
+                }
+                break;
+            case "verify":
+                switch (paramName) {
+                    case "alg":
+                        break;
+                    case "key":
+                        this.checkPublicKey(paramValue);
+                        break;
+                    case "data":
+                        break;
+                }
+                break;
         }
     }
-
-    static verify(session: Session, alg: Algorithm, key: CryptoKey, signature: Buffer, data: Buffer, callback: (err: Error, verify: boolean) => void): void {
-        try {
-            this.checkAlgorithmIdentifier(alg);
-            this.checkPublicKey(key);
-            let _alg = this.wc2pk11(key.algorithm);
-
-            let signer = session.createVerify(<IAlgorithm>_alg, (<P11CryptoKey>key).key);
-            signer.update(data, (err: Error) => {
-                if (err)
-                    callback(err, null);
-                else
-                    signer.final(signature, callback);
-            });
-
-        } catch (e) {
-            callback(e, null);
-        }
-    }
-
-}
-//     exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object {
-//         throw new Error("Method is not supported");
-//     }
-
-//     static checkAlgorithmHashedParams(alg: iwc.IAlgorithmIdentifier) {
-//         super.checkAlgorithmHashedParams(alg);
-//         let _alg = alg.hash;
-//         _alg.name = _alg.name.toUpperCase();
-//         if (HASH_ALGS.indexOf(_alg.name) === -1)
-//             throw new Error("AlgorithmHashedParams: Unknow hash algorithm in use");
-//     }
-
-// }
-
-export class RsaPKCS1 extends Rsa {
-    static ALGORITHM_NAME: string = ALG_NAME_RSA_PKCS1;
 }
 
 export class RsaOAEP extends Rsa {
@@ -203,8 +183,6 @@ export class RsaOAEP extends Rsa {
             case "encrypt":
                 switch (paramName) {
                     case "alg":
-                        this.checkAlgorithmIdentifier(paramValue);
-                        this.checkAlgorithmHashedParams(paramValue);
                         break;
                     case "key":
                         this.checkPublicKey(paramValue);
@@ -216,8 +194,6 @@ export class RsaOAEP extends Rsa {
             case "decrypt":
                 switch (paramName) {
                     case "alg":
-                        this.checkAlgorithmIdentifier(paramValue);
-                        this.checkAlgorithmHashedParams(paramValue);
                         break;
                     case "key":
                         this.checkPrivateKey(paramValue);
@@ -229,9 +205,9 @@ export class RsaOAEP extends Rsa {
         }
     }
 
-    static wc2pk11(alg: IAlgorithmHashed): IAlgorithm {
+    static wc2pk11(alg: Algorithm, key: CryptoKey): IAlgorithm {
         let params: RsaOaepParams = null;
-        switch (alg.hash.name.toUpperCase()) {
+        switch ((<IAlgorithmHashed>key.algorithm).hash.name.toUpperCase()) {
             case "SHA-1":
                 params = new RsaOaepParams(MechanismEnum.SHA1, RsaMgf.MGF1_SHA1);
                 break;
@@ -248,7 +224,7 @@ export class RsaOAEP extends Rsa {
                 params = new RsaOaepParams(MechanismEnum.SHA512, RsaMgf.MGF1_SHA512);
                 break;
             default:
-                throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, alg.hash.name);
+                throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, (<IAlgorithmHashed>key.algorithm).hash.name);
         }
         let res = { name: "RSA_PKCS_OAEP", params: params };
         return res;
@@ -266,30 +242,6 @@ export class RsaPSS extends Rsa {
 
 //         let keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
 //         return keyPair;
-//     }
-
-//     static sign(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer) {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkPrivateKey(key);
-//         let _alg = this.wc2pk11(key.algorithm);
-
-//         let signer = session.createSign(_alg, key.key);
-//         signer.update(data);
-//         let signature = signer.final();
-
-//         return signature;
-//     }
-
-//     static verify(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, signature: Buffer, data: Buffer): boolean {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkPublicKey(key);
-//         let _alg = this.wc2pk11(key.algorithm);
-
-//         let signer = session.createVerify(_alg, key.key);
-//         signer.update(data);
-//         let res = signer.final(signature);
-
-//         return res;
 //     }
 
 // }
@@ -312,31 +264,6 @@ export class RsaPSS extends Rsa {
 
 //         let keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
 //         return keyPair;
-//     }
-
-//     static wc2pk11(alg) {
-//         let params = null;
-//         switch (alg.hash.name.toUpperCase()) {
-//             case "SHA-1":
-//                 params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA1, Enums.MGF1.SHA1);
-//                 break;
-//             case "SHA-224":
-//                 params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA224, Enums.MGF1.SHA224);
-//                 break;
-//             case "SHA-256":
-//                 params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA256, Enums.MGF1.SHA256);
-//                 break;
-//             case "SHA-384":
-//                 params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA384, Enums.MGF1.SHA384);
-//                 break;
-//             case "SHA-512":
-//                 params = new RSA.RsaOAEPParams(Enums.Mechanism.SHA512, Enums.MGF1.SHA512);
-//                 break;
-//             default:
-//                 throw new Error("Unknown hash name in use");
-//         }
-//         let res = { name: "RSA_PKCS_OAEP", params: params };
-//         return res;
 //     }
 
 //     static encrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {

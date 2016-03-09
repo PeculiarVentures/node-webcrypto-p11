@@ -14,14 +14,14 @@ export var ALG_NAME_AES_KW = "AES-KW";
 
 class AesError extends error.WebCryptoError { }
 
-function create_template(alg: IAesKeyGenAlgorithm, keyUsages: string[]) {
+export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]) {
     return {
         token: false,
         class: ObjectClass.SECRET_KEY,
         keyType: KeyType.AES,
         label: `AES-${alg.length}`,
         id: new Buffer(new Date().getTime().toString()),
-        extractable: true,
+        extractable: extractable,
         derive: false,
         sign: keyUsages.indexOf(KU_SIGN) !== -1,
         verify: keyUsages.indexOf(KU_VERIFY) !== -1,
@@ -29,7 +29,6 @@ function create_template(alg: IAesKeyGenAlgorithm, keyUsages: string[]) {
         decrypt: keyUsages.indexOf(KU_DECRYPT) !== -1,
         wrap: keyUsages.indexOf(KU_WRAP) !== -1,
         unwrap: keyUsages.indexOf(KU_UNWRAP) !== -1,
-        valueLen: alg.length / 8
     };
 }
 
@@ -42,7 +41,9 @@ abstract class Aes extends AlgorithmBase {
             this.checkKeyGenAlgorithm(_alg);
 
             // PKCS11 generation
-            session.generateKey(KeyGenMechanism.AES, create_template(_alg, keyUsages), (err, key) => {
+            let template: ITemplate = create_template(_alg, extractable, keyUsages);
+            template.valueLen = (<IAesKeyGenAlgorithm>alg).length / 8;
+            session.generateKey(KeyGenMechanism.AES, template, (err, key) => {
                 try {
                     if (err)
                         callback(err, null);
@@ -66,7 +67,6 @@ abstract class Aes extends AlgorithmBase {
             case "encrypt":
                 switch (paramName) {
                     case "alg":
-                        this.checkAlgorithmParams(paramValue);
                         break;
                     case "key":
                         this.checkSecretKey(paramValue);
@@ -78,7 +78,6 @@ abstract class Aes extends AlgorithmBase {
             case "decrypt":
                 switch (paramName) {
                     case "alg":
-                        this.checkAlgorithmParams(paramValue);
                         break;
                     case "key":
                         this.checkSecretKey(paramValue);
@@ -173,9 +172,8 @@ abstract class Aes extends AlgorithmBase {
                 name: algorithm.name,
                 length: value.length * 8
             };
-            let template: ITemplate = create_template(_alg, keyUsages);
+            let template: ITemplate = create_template(_alg, extractable, keyUsages);
             template.value = value;
-            delete template.valueLen;
 
             // create session object
             let sobj = session.create(template);
@@ -210,7 +208,7 @@ abstract class Aes extends AlgorithmBase {
             throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
     }
 
-    static wc2pk11(alg: Algorithm): IAlgorithm {
+    static wc2pk11(alg: Algorithm, key: CryptoKey): IAlgorithm {
         throw new Error("Not realized");
     }
 }
@@ -264,7 +262,7 @@ export class AesGCM extends Aes {
 export class AesCBC extends Aes {
     static ALGORITHM_NAME: string = ALG_NAME_AES_CBC;
 
-    static wc2pk11(alg: IAesGcmAlgorithmParams): IAlgorithm {
+    static wc2pk11(alg: IAesGcmAlgorithmParams, key: CryptoKey): IAlgorithm {
         return { name: "AES_CBC_PAD", params: alg.iv };
     }
 
