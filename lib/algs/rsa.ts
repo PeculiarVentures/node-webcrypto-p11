@@ -17,9 +17,9 @@ import * as base64url from "base64url";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
 import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, ITemplatePair} from "../key";
 
-let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
+export let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 let ALG_NAME_RSA_PSS = "RSA-PSS";
-let ALG_NAME_RSA_OAEP = "RSA-OAEP";
+export let ALG_NAME_RSA_OAEP = "RSA-OAEP";
 
 
 function create_template(alg: IRsaKeyGenAlgorithm, keyUsages: string[]): ITemplatePair {
@@ -112,13 +112,35 @@ abstract class Rsa extends AlgorithmBase {
             throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
     }
 
+    protected static exportJwkPublicKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
+        try {
+            this.checkPublicKey(key);
+            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+                publicExponent: null,
+                modulus: null
+            })
+            callback(null, pkey);
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static exportKey(session: Session, format: string, key: CryptoKey, callback: (err: Error, data: Buffer | IJwk) => void): void {
+        try {
+            switch (format.toLowerCase()) {
+                case "jwk":
+                    this.exportJwkPublicKey(session, key, callback);
+                default:
+                    throw new Error(`Not supported format '${format}'`);
+            }
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
 }
-//     exportKey(session: graphene.Session, format: string, key: CryptoKey): Buffer | Object {
-//         throw new Error("Method is not supported");
-//     }
-
-
-// }
 
 export class RsaPKCS1 extends Rsa {
     static ALGORITHM_NAME: string = ALG_NAME_RSA_PKCS1;
@@ -234,121 +256,3 @@ export class RsaOAEP extends Rsa {
 export class RsaPSS extends Rsa {
     static ALGORITHM_NAME: string = ALG_NAME_RSA_PSS;
 }
-
-//     static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkRsaGenParams(alg);
-//         this.checkAlgorithmHashedParams(alg);
-
-//         let keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
-//         return keyPair;
-//     }
-
-// }
-
-// export class RsaPSS extends Rsa {
-//     static ALGORITHM_NAME: string = ALG_NAME_RSA_PSS;
-
-//     static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
-//         throw new Error("not realized in this implementation");
-//     }
-// }
-
-// export class RsaOAEP extends Rsa {
-//     static ALGORITHM_NAME: string = ALG_NAME_RSA_OAEP;
-
-//     static generateKey(session: graphene.Session, alg: IRsaKeyGenParams, extractable: boolean, keyUsages: string[], label?: string): iwc.ICryptoKeyPair {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkRsaGenParams(alg);
-//         this.checkAlgorithmHashedParams(alg);
-
-//         let keyPair: iwc.ICryptoKeyPair = super.generateKey.apply(this, arguments);
-//         return keyPair;
-//     }
-
-//     static encrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkPublicKey(key);
-//         let _alg = this.wc2pk11(key.algorithm);
-
-//         // TODO: Remove <any>
-//         let enc = session.createEncrypt(<any>_alg, key.key);
-//         let msg = new Buffer(0);
-//         msg = Buffer.concat([msg, enc.update(data)]);
-//         msg = Buffer.concat([msg, enc.final()]);
-//         return msg;
-//     }
-
-//     static decrypt(session: graphene.Session, alg: iwc.IAlgorithmIdentifier, key: CryptoKey, data: Buffer): Buffer {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkPrivateKey(key);
-//         let _alg = this.wc2pk11(key.algorithm);
-
-//         // TODO: Remove <any>
-//         let dec = session.createDecrypt(<any>_alg, key.key);
-//         let msg = new Buffer(0);
-//         msg = Buffer.concat([msg, dec.update(data)]);
-//         msg = Buffer.concat([msg, dec.final()]);
-//         return msg;
-//     }
-
-//     static wrapKey(session: graphene.Session, key: CryptoKey, wrappingKey: CryptoKey, alg: iwc.IAlgorithmIdentifier): Buffer {
-//         this.checkAlgorithmIdentifier(alg);
-//         this.checkAlgorithmHashedParams(alg);
-//         this.checkSecretKey(key);
-//         this.checkPublicKey(wrappingKey);
-//         let _alg = this.wc2pk11(alg);
-
-//         let wrappedKey: Buffer = session.wrapKey(wrappingKey.key, _alg, key.key);
-//         return wrappedKey;
-//     }
-
-//     static unwrapKey(session: graphene.Session, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: iwc.IAlgorithmIdentifier, unwrappedAlgorithm: aes.IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): iwc.ICryptoKey {
-//         this.checkAlgorithmIdentifier(unwrapAlgorithm);
-//         this.checkAlgorithmHashedParams(unwrapAlgorithm);
-//         this.checkPrivateKey(unwrappingKey);
-//         let _alg = this.wc2pk11(unwrapAlgorithm);
-
-//         // convert unwrappedAlgorithm to PKCS11 Algorithm
-//         let AlgClass = null;
-//         switch (unwrappedAlgorithm.name) {
-//             // case aes.ALG_NAME_AES_CTR:
-//             // case aes.ALG_NAME_AES_CMAC:
-//             // case aes.ALG_NAME_AES_CFB:
-//             // case aes.ALG_NAME_AES_KW:
-//             case aes.ALG_NAME_AES_CBC:
-//                 aes.Aes.checkKeyGenParams(<any>unwrappedAlgorithm);
-//                 AlgClass = aes.AesCBC;
-//                 break;
-//             case aes.ALG_NAME_AES_GCM:
-//                 aes.Aes.checkKeyGenParams(<any>unwrappedAlgorithm);
-//                 AlgClass = aes.AesGCM;
-//                 break;
-//             default:
-//                 throw new Error("Unsupported algorithm in use");
-//         }
-
-
-//         let unwrappedKey: graphene.Key = session.unwrapKey(
-//             unwrappingKey.key,
-//             _alg,
-//             {
-//                 "class": Enums.ObjectClass.SecretKey,
-//                 "sensitive": true,
-//                 "private": true,
-//                 "token": false,
-//                 "keyType": Enums.KeyType.AES,
-//                 "valueLen": unwrappedAlgorithm.length / 8,
-//                 "encrypt": keyUsages.indexOf["encrypt"] > -1,
-//                 "decrypt": keyUsages.indexOf["decrypt"] > -1,
-//                 "sign": keyUsages.indexOf["sign"] > -1,
-//                 "verify": keyUsages.indexOf["verify"] > -1,
-//                 "wrap": keyUsages.indexOf["wrapKey"] > -1,
-//                 "unwrap": keyUsages.indexOf["unwrapKey"] > -1,
-//                 "derive": keyUsages.indexOf["deriveKey"] > -1
-//             },
-//             wrappedKey
-//         );
-//         return new AlgClass(unwrappedKey, unwrappedAlgorithm);
-//     }
-// }
