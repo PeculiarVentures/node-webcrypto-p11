@@ -98,10 +98,9 @@ export class Ec extends AlgorithmBase {
                 default:
                     throw new Error("Unsupported namedCurve in use");
             }
-            template.publicKey.pointEC = NamedCurve.getByName(_namedCurve).value;
-
+            template.publicKey.paramsEC = NamedCurve.getByName(_namedCurve).value;
             // PKCS11 generation
-            session.generateKeyPair(KeyGenMechanism.RSA, template.publicKey, template.privateKey, (err, keys) => {
+            session.generateKeyPair(KeyGenMechanism.EC, template.publicKey, template.privateKey, (err, keys) => {
                 try {
                     if (err)
                         callback(err, null);
