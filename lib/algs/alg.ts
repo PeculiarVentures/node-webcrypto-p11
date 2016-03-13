@@ -2,14 +2,18 @@ import {Session, IAlgorithm} from "graphene-pk11";
 import {P11CryptoKey, KT_PRIVATE, KT_PUBLIC, KT_SECRET} from "../key";
 import * as error from "../error";
 
+export type KeyUsages = "sign" | "verify" | "encrypt" | "decrypt" | "wrapKey" | "unwrapKey" | "deriveKey";
+
 export interface IJwk {
+    kty: string;
+    ext: boolean;
+    usage?: string;
+    key_ops?: string[];
 }
 
-export interface IJwkSecret {
-    kty: string;
+export interface IJwkSecret extends IJwk {
     k: string;
     alg: string;
-    ext: boolean;
 }
 
 export interface IAlgorithmHashed extends Algorithm {

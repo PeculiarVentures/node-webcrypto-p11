@@ -21,8 +21,27 @@ export let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 let ALG_NAME_RSA_PSS = "RSA-PSS";
 export let ALG_NAME_RSA_OAEP = "RSA-OAEP";
 
+interface IJwkRsaKey extends IJwk {
+    alg: string;
+}
 
-function create_template(alg: IRsaKeyGenAlgorithm, keyUsages: string[]): ITemplatePair {
+interface IJwkRsaPublicKey extends IJwkRsaKey {
+    e: string;
+    n: string;
+}
+
+interface IJwkRsaPrivateKey extends IJwkRsaKey {
+    e: string;
+    n: string;
+    d: string;
+    q: string;
+    p: string;
+    dq: string;
+    dp: string;
+    qi: string;
+}
+
+function create_template(alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
     const id = new Buffer(new Date().getTime().toString());
     return {
@@ -33,7 +52,7 @@ function create_template(alg: IRsaKeyGenAlgorithm, keyUsages: string[]): ITempla
             private: true,
             label: label,
             id: id,
-            extractable: true,
+            extractable: extractable,
             derive: false,
             sign: keyUsages.indexOf(KU_SIGN) !== -1,
             decrypt: keyUsages.indexOf(KU_DECRYPT) !== -1,
@@ -66,7 +85,7 @@ abstract class Rsa extends AlgorithmBase {
             this.checkAlgorithmHashedParams(<IAlgorithmHashed>alg);
             this.checkKeyGenAlgorithm(_alg);
 
-            let template = create_template(_alg, keyUsages);
+            let template = create_template(_alg, extractable, keyUsages);
 
             // RSA params
             template.publicKey.publicExponent = new Buffer(_alg.publicExponent),
@@ -124,9 +143,10 @@ abstract class Rsa extends AlgorithmBase {
                 modulus: null
             });
             let alg: string = this.jwkAlgName(<IAlgorithmHashed>key.algorithm);
-            let jwk = {
+            let jwk: IJwkRsaPublicKey = {
                 kty: "RSA",
                 alg: alg,
+                ext: true,
                 key_ops: key.usages,
                 e: base64url(pkey.publicExponent),
                 n: base64url(pkey.modulus)
@@ -152,9 +172,10 @@ abstract class Rsa extends AlgorithmBase {
                 coefficient: null
             });
             let alg: string = this.jwkAlgName(<IAlgorithmHashed>key.algorithm);
-            let jwk = {
+            let jwk: IJwkRsaPrivateKey = {
                 kty: "RSA",
                 alg: alg,
+                ext: true,
                 key_ops: key.usages,
                 e: base64url(pkey.publicExponent),
                 n: base64url(pkey.modulus),
@@ -176,10 +197,62 @@ abstract class Rsa extends AlgorithmBase {
         try {
             switch (format.toLowerCase()) {
                 case "jwk":
-                    if (key.type = "private")
+                    if (key.type === "private")
                         this.exportJwkPrivateKey(session, key, callback);
                     else
                         this.exportJwkPublicKey(session, key, callback);
+                default:
+                    throw new Error(`Not supported format '${format}'`);
+            }
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importJwkPrivateKey(session: Session, jwk: IJwkRsaPrivateKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
+        try {
+            let template = create_template(algorithm, extractable, keyUsages).privateKey;
+            template.publicExponent = base64url.toBuffer(jwk.e);
+            template.modulus = base64url.toBuffer(jwk.n);
+            template.privateExponent = base64url.toBuffer(jwk.d);
+            template.prime1 = base64url.toBuffer(jwk.p);
+            template.prime2 = base64url.toBuffer(jwk.q);
+            template.exp1 = base64url.toBuffer(jwk.dp);
+            template.exp2 = base64url.toBuffer(jwk.dq);
+            template.coefficient = base64url.toBuffer(jwk.qi);
+            let p11key = session.create(template);
+            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importJwkPublicKey(session: Session, jwk: IJwkRsaPublicKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
+        try {
+            let template = create_template(algorithm, extractable, keyUsages).publicKey;
+            template.publicExponent = base64url.toBuffer(jwk.e);
+            template.modulus = base64url.toBuffer(jwk.n);
+            let p11key = session.create(template);
+            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
+        try {
+            switch (format.toLowerCase()) {
+                case "jwk":
+                    let jwk: any = keyData;
+                    if (jwk.d)
+                        this.importJwkPrivateKey(session, jwk, algorithm, extractable, keyUsages, callback);
+                    else
+                        this.importJwkPublicKey(session, jwk, algorithm, extractable, keyUsages, callback);
                 default:
                     throw new Error(`Not supported format '${format}'`);
             }

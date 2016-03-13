@@ -70,7 +70,7 @@ describe("EC", function() {
             .then(done, done);
     })
 
-    it("ECDSA export JWK", function(done) {
+    it("ECDSA JWK export/import", function(done) {
         webcrypto.subtle.generateKey(
             {
                 name: "ECDSA",
@@ -92,6 +92,22 @@ describe("EC", function() {
                 assert.equal(!!jwk.x, true);
                 assert.equal(!!jwk.y, true);
                 assert.equal(jwk.y.length === jwk.x.length, true);
+                return webcrypto.subtle.importKey(
+                    "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                    jwk,
+                    {   //these are the algorithm options
+                        name: "ECDSA",
+                        namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
+                    },
+                    false, //whether the key is extractable (i.e. can be used in exportKey)
+                    ["verify"] //"verify" for public key import, "sign" for private key imports
+                )
+            })
+            .then(function(key) {
+                assert.equal(!!key, true);
+                assert.equal(key.type, "public");
+                assert.equal(key.algorithm.name, "ECDSA");
+                assert.equal(key.algorithm.namedCurve, "P-256");
             })
             .then(done, done);
     })

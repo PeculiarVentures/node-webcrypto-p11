@@ -339,6 +339,18 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 case aes.ALG_NAME_AES_GCM:
                     KeyClass = aes.AesGCM;
                     break;
+                case rsa.ALG_NAME_RSA_PKCS1:
+                    KeyClass = rsa.RsaPKCS1;
+                    break;
+                case rsa.ALG_NAME_RSA_OAEP:
+                    KeyClass = rsa.RsaOAEP;
+                    break;
+                case ec.ALG_NAME_ECDSA:
+                    KeyClass = ec.Ecdsa;
+                    break;
+                case ec.ALG_NAME_ECDH:
+                    KeyClass = ec.Ecdh;
+                    break;
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
             }

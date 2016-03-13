@@ -46,6 +46,56 @@ describe("RSA", function () {
         .then(done, done);
     })
 
+    it("RSA PKCS1 JWK export/import", function (done) {
+        var key = null;
+        webcrypto.subtle.generateKey(
+            {
+                name: "RSASSA-PKCS1-v1_5",
+                modulusLength: 1024,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: {
+                        name: "SHA-256"
+                    }
+            },
+            true,
+            ["sign", "verify"]
+        )
+        .then(function(k) {
+            assert.equal(k.privateKey !== null, true, "Has no private key");
+            assert.equal(k.publicKey !== null, true, "Has no public key");
+            key = k;
+            return webcrypto.subtle.exportKey("jwk", key.privateKey)
+        })
+        .then(function(jwk) {
+            assert.equal(!!jwk, true);
+            assert.equal(jwk.kty, "RSA");
+            assert.equal(!!jwk.e, true);
+            assert.equal(!!jwk.n, true);
+            assert.equal(!!jwk.d, true);
+            assert.equal(!!jwk.q, true);
+            assert.equal(!!jwk.p, true);
+            assert.equal(!!jwk.p, true);
+            assert.equal(!!jwk.dp, true);
+            assert.equal(!!jwk.dq, true);
+            assert.equal(!!jwk.qi, true);
+            return webcrypto.subtle.importKey(
+                "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                jwk,
+                {   //these are the algorithm options
+                    name: "RSASSA-PKCS1-v1_5",
+                    hash: { name: "SHA-256" }, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+                },
+                false, //whether the key is extractable (i.e. can be used in exportKey)
+                ["sign"] //"verify" for public key import, "sign" for private key imports
+            )
+        })
+        .then(function(key) {
+            assert.equal(!!key, true);
+            assert.equal(key.usages.length, 1);
+        })
+        .then(done, done);    
+    });
+    
     it("RSA PKCS1 1.5 sign/verify", function (done) {
         var key = null;
 		webcrypto.subtle.generateKey({

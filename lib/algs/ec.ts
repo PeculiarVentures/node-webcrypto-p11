@@ -23,6 +23,22 @@ import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UN
 export let ALG_NAME_ECDH = "ECDH";
 export let ALG_NAME_ECDSA = "ECDSA";
 
+type EcCurveName = "P-192" | "P-256" | "P-384" | "P-521";
+
+interface IJwkEcKey extends IJwk {
+    crv: EcCurveName;
+}
+interface IJwkEcPrivateKey extends IJwkEcKey {
+    d: string;
+    x?: string;
+    y?: string;
+}
+
+interface IJwkEcPublicKey extends IJwkEcKey {
+    x: string;
+    y: string;
+}
+
 function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
     const id = new Buffer(new Date().getTime().toString());
@@ -56,7 +72,7 @@ function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsage
 }
 
 export interface IEcKeyGenAlgorithm extends Algorithm {
-    namedCurve: string;
+    namedCurve: EcCurveName;
 }
 
 export interface IEcAlgorithmParams extends Algorithm {
@@ -162,7 +178,7 @@ export class Ec extends AlgorithmBase {
             });
             let curve = this.getNamedCurve((<IEcKeyGenAlgorithm>key.algorithm).namedCurve);
             let ecPoint = EcUtils.decodePoint(pkey.pointEC, curve);
-            let jwk = {
+            let jwk: IJwkEcPublicKey = {
                 kty: "EC",
                 crv: (<IEcKeyGenAlgorithm>key.algorithm).namedCurve,
                 ext: true,
@@ -205,6 +221,55 @@ export class Ec extends AlgorithmBase {
                         this.exportJwkPrivateKey(session, key, callback);
                     else
                         this.exportJwkPublicKey(session, key, callback);
+                default:
+                    throw new Error(`Not supported format '${format}'`);
+            }
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importJwkPrivateKey(session: Session, jwk: IJwkEcPrivateKey, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
+        try {
+            let namedCurve = this.getNamedCurve(jwk.crv);
+            let template = create_template(algorithm, extractable, keyUsages).privateKey;
+            template.paramsEC = namedCurve.value;
+            template.value = base64url.toBuffer(jwk.d);
+            let p11key = session.create(template);
+            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importJwkPublicKey(session: Session, jwk: IJwkEcPublicKey, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
+        try {
+            let namedCurve = this.getNamedCurve(jwk.crv);
+            let template = create_template(algorithm, extractable, keyUsages).publicKey;
+            template.paramsEC = namedCurve.value;
+            let pointEc = EcUtils.encodePoint({ x: base64url.toBuffer(jwk.x), y: base64url.toBuffer(jwk.y) }, namedCurve);
+            template.pointEC = pointEc;
+            let p11key = session.create(template);
+            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void;
+    static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
+        try {
+            switch (format.toLowerCase()) {
+                case "jwk":
+                    let jwk: any = keyData;
+                    if (jwk.d)
+                        this.importJwkPrivateKey(session, jwk, algorithm, extractable, keyUsages, callback);
+                    else
+                        this.importJwkPublicKey(session, jwk, algorithm, extractable, keyUsages, callback);
                 default:
                     throw new Error(`Not supported format '${format}'`);
             }
@@ -383,7 +448,10 @@ class EcUtils {
             throw new Error("Point coordinates do not match field size");
         }
         let b = Buffer.concat([new Buffer([4]), xb, yb]);
-        return b;
+
+        // ASN1 encode OCTET_STRING
+        let octet = Buffer.concat([new Buffer([4]), this.encodeAsn1Length(b.length), b]);
+        return octet;
     }
 
     public static trimZeroes(b: Buffer): Buffer {
@@ -396,5 +464,22 @@ class EcUtils {
         }
 
         return b.slice(i, b.length);
+    }
+
+    public static encodeAsn1Length(length: number): Buffer {
+        let enc: number[] = [];
+        if (length !== (length & 0x7F)) {
+            let code = length.toString(16);
+            let _length = Math.round(code.length / 2);
+            enc[0] = _length | 0x80;
+            if (Math.floor(code.length % 2) > 0)
+                code = "0" + code;
+            for (let i = 0; i < code.length; i = i + 2) {
+                enc[1 + (i / 2)] = parseInt(code.substring(i, i + 2), 16);
+            }
+        } else {
+            enc[0] = length;
+        }
+        return new Buffer(enc);
     }
 }
