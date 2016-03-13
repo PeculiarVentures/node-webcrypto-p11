@@ -157,61 +157,62 @@ describe("RSA", function () {
     it("RSA OAEP wrap/unwrap", function (done) {
         var key = null;
         var skey = null;
-		webcrypto.subtle.generateKey({
-            name:"RSA-OAEP",
+        webcrypto.subtle.generateKey({
+            name: "RSA-OAEP",
             modulusLength: 1024,
-            publicExponent: new Uint8Array([1, 0, 1]), 
+            publicExponent: new Uint8Array([1, 0, 1]),
             hash: {
                 name: "SHA-1"
-            }}, 
-            false, 
+            }
+        },
+            false,
             ["wrapKey", "unwrapKey"]
         )
-        .then(function(k){
-            assert.equal(k.privateKey !== null, true, "Has no private key");
-            assert.equal(k.publicKey !== null, true, "Has no public key");
-            key = k;
-            return webcrypto.subtle.generateKey({
-                name: "AES-GCM",
-                length: 128, //can be  128, 192, or 256
-            },
-            true, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt"]); 
-        })
-        .then(function(sk){
-            skey = sk;
-            assert.equal(skey.key !== null, true, "Has no secret key");
-            return webcrypto.subtle.wrapKey(
-                "raw",
-                skey, 
-                key.publicKey, 
-                {
-                    name: "RSA-OAEP",
-                    hash: {name: "SHA-1"}
-                })        
-        })
-        .then(function(dec){
-            return webcrypto.subtle.unwrapKey(
-                "raw", //the import format, must be "raw" (only available sometimes)
-                dec, //the key you want to unwrap
-                key.privateKey, //the private key with "unwrapKey" usage flag
-                {   //these are the wrapping key's algorithm options
-                    name: "RSA-OAEP",
-                    modulusLength: 1024,
-                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-                    hash: {name: "SHA-1"},
-                },
-                {   //this what you want the wrapped key to become (same as when wrapping)
+            .then(function(k) {
+                assert.equal(k.privateKey !== null, true, "Has no private key");
+                assert.equal(k.publicKey !== null, true, "Has no public key");
+                key = k;
+                return webcrypto.subtle.generateKey({
                     name: "AES-GCM",
-                    length: 128
+                    length: 128, //can be  128, 192, or 256
                 },
-                false, //whether the key is extractable (i.e. can be used in exportKey)
-                ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
-            )
-        })
-        .then(function(sk){
-            assert.equal(sk.key !== null, true, "Has no secret key");
-        })
+                    true, //whether the key is extractable (i.e. can be used in exportKey)
+                    ["encrypt", "decrypt"]);
+            })
+            .then(function(sk) {
+                skey = sk;
+                assert.equal(skey.key !== null, true, "Has no secret key");
+                return webcrypto.subtle.wrapKey(
+                    "jwk",
+                    skey,
+                    key.publicKey,
+                    {
+                        name: "RSA-OAEP",
+                        hash: { name: "SHA-1" }
+                    })
+            })
+            .then(function(dec) {
+                return webcrypto.subtle.unwrapKey(
+                    "jwk", //the import format, must be "raw" (only available sometimes)
+                    dec, //the key you want to unwrap
+                    key.privateKey, //the private key with "unwrapKey" usage flag
+                    {   //these are the wrapping key's algorithm options
+                        name: "RSA-OAEP",
+                        modulusLength: 1024,
+                        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                        hash: { name: "SHA-1" },
+                    },
+                    {   //this what you want the wrapped key to become (same as when wrapping)
+                        name: "AES-GCM",
+                        length: 128
+                    },
+                    false, //whether the key is extractable (i.e. can be used in exportKey)
+                    ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
+                )
+            })
+            .then(function(sk) {
+                assert.equal(sk.key !== null, true, "Has no secret key");
+            })
         .then(done, done);
     })
 })

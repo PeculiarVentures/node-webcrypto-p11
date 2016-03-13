@@ -167,9 +167,20 @@ export abstract class AlgorithmBase {
     }
 
     static wrapKey(session: Session, format: string, key: CryptoKey, wrappingKey: CryptoKey, alg: Algorithm, callback: (err: Error, wkey: Buffer) => void): void {
-        let that = this;
         try {
-            this.exportKey(session, format, key, (err: Error, data: any) => {
+        let that = this;
+            let KeyClass: IAlgorithmBase = null;
+            switch (key.algorithm.name.toUpperCase()) {
+                case aes.ALG_NAME_AES_CBC:
+                    KeyClass = aes.AesCBC;
+                    break;
+                case aes.ALG_NAME_AES_GCM:
+                    KeyClass = aes.AesGCM;
+                    break;
+                default:
+                    throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, key.algorithm.name);
+            }
+            KeyClass.exportKey(session, format, key, (err: Error, data: any) => {
                 if (err) {
                     callback(err, null);
                 }
@@ -276,4 +287,8 @@ export abstract class AlgorithmBase {
     protected static wc2pk11(alg: Algorithm, key: CryptoKey): IAlgorithm {
         throw new Error("Not implemented");
     }
-} 
+}
+
+import * as aes from "./aes";
+import * as rsa from "./rsa";
+import * as ec from "./ec";
