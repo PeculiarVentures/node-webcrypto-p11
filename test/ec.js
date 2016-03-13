@@ -129,6 +129,11 @@ describe("EC", function() {
             })
             .then(function(key) {
                 assert.equal(key !== null, true, "Has no derived Key value");
+                assert.equal(key.algorithm.name, "AES-GCM");
+                assert.equal(key.algorithm.length, 128);
+                assert.equal(key.type, "secret");
+                assert.equal(key.extractable, false);
+                assert.equal(key.usages.length, 2);
             })
             .then(done, done);
     })

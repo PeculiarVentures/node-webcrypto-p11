@@ -309,9 +309,9 @@ export class Ecdh extends Ec {
             AesClass.checkKeyGenAlgorithm(<aes.IAesKeyGenAlgorithm>derivedKeyType);
 
             let template: ITemplate = aes.create_template(<aes.IAesKeyGenAlgorithm>derivedKeyType, extractable, keyUsages);
-            // template.valueLen = (<aes.IAesKeyGenAlgorithm>derivedKeyType).length / 8;
+            template.valueLen = (<aes.IAesKeyGenAlgorithm>derivedKeyType).length / 8;
             // derive key
-            let dKey: Key = session.deriveKey(
+            session.deriveKey(
                 {
                     name: "ECDH1_DERIVE",
                     params: new EcdhParams(
@@ -321,10 +321,13 @@ export class Ecdh extends Ec {
                     )
                 },
                 (<P11CryptoKey>baseKey).key,
-                template
-            );
-
-            callback(null, new P11CryptoKey(dKey, derivedKeyType));
+                template,
+                (err, key) => {
+                    if (err)
+                        callback(err, null);
+                    else
+                        callback(null, new P11CryptoKey(key, derivedKeyType));
+                });
         } catch (e) {
             callback(e, null);
         }
