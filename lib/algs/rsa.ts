@@ -112,14 +112,60 @@ abstract class Rsa extends AlgorithmBase {
             throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, _alg.name);
     }
 
+    protected static jwkAlgName(alg: IAlgorithmHashed): string {
+        throw new Error("Not implemented");
+    }
+
     protected static exportJwkPublicKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
         try {
             this.checkPublicKey(key);
             let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
                 publicExponent: null,
                 modulus: null
-            })
-            callback(null, pkey);
+            });
+            let alg: string = this.jwkAlgName(<IAlgorithmHashed>key.algorithm);
+            let jwk = {
+                kty: "RSA",
+                alg: alg,
+                key_ops: key.usages,
+                e: base64url(pkey.publicExponent),
+                n: base64url(pkey.modulus)
+            };
+            callback(null, jwk);
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    protected static exportJwkPrivateKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
+        try {
+            this.checkPrivateKey(key);
+            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+                publicExponent: null,
+                modulus: null,
+                privateExponent: null,
+                prime1: null,
+                prime2: null,
+                exp1: null,
+                exp2: null,
+                coefficient: null
+            });
+            let alg: string = this.jwkAlgName(<IAlgorithmHashed>key.algorithm);
+            let jwk = {
+                kty: "RSA",
+                alg: alg,
+                key_ops: key.usages,
+                e: base64url(pkey.publicExponent),
+                n: base64url(pkey.modulus),
+                d: base64url(pkey.privateExponent),
+                p: base64url(pkey.prime1),
+                q: base64url(pkey.prime2),
+                dp: base64url(pkey.exp1),
+                dq: base64url(pkey.exp2),
+                qi: base64url(pkey.coefficient)
+            };
+            callback(null, jwk);
         }
         catch (e) {
             callback(e, null);
@@ -130,7 +176,10 @@ abstract class Rsa extends AlgorithmBase {
         try {
             switch (format.toLowerCase()) {
                 case "jwk":
-                    this.exportJwkPublicKey(session, key, callback);
+                    if (key.type = "private")
+                        this.exportJwkPrivateKey(session, key, callback);
+                    else
+                        this.exportJwkPublicKey(session, key, callback);
                 default:
                     throw new Error(`Not supported format '${format}'`);
             }
@@ -169,6 +218,11 @@ export class RsaPKCS1 extends Rsa {
         return { name: res, params: null };
     }
 
+    protected static jwkAlgName(alg: IAlgorithmHashed): string {
+        let algName = /(\d+)$/.exec(alg.hash.name)[1];
+        return `RS${algName === "1" ? "" : algName}`;
+    }
+
     static onCheck(method: string, paramName: string, paramValue: any): void {
         switch (method) {
             case "sign":
@@ -199,6 +253,11 @@ export class RsaPKCS1 extends Rsa {
 
 export class RsaOAEP extends Rsa {
     static ALGORITHM_NAME: string = ALG_NAME_RSA_OAEP;
+
+    protected static jwkAlgName(alg: IAlgorithmHashed): string {
+        let algName = /(\d+)$/.exec(alg.hash.name)[1];
+        return `RSA-OAEP${algName === "1" ? "" : ("-" + algName)}`;
+    }
 
     static onCheck(method: string, paramName: string, paramValue: any): void {
         switch (method) {
