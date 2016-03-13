@@ -325,9 +325,9 @@ export class Ecdsa extends Ec {
             case "verify":
                 switch (paramName) {
                     case "alg":
+                        this.checkAlgorithmHashedParams(paramValue);
                         break;
                     case "key":
-                        this.checkAlgorithmHashedParams(paramValue);
                         this.checkPublicKey(paramValue);
                         break;
                     case "data":
