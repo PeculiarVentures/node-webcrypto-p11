@@ -300,12 +300,18 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 case rsa.ALG_NAME_RSA_OAEP:
                     KeyClass = rsa.RsaOAEP;
                     break;
+                case ec.ALG_NAME_ECDSA:
+                    KeyClass = ec.Ecdsa;
+                    break;
+                case ec.ALG_NAME_ECDH:
+                    KeyClass = ec.Ecdh;
+                    break;
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, key.algorithm.name);
             }
             KeyClass.exportKey(that.session, format, key, (err: Error, data: any) => {
                 if (err)
-                    reject(err)
+                    reject(err);
                 else {
                     if (Buffer.isBuffer(data)) {
                         // raw | spki | pkcs8
