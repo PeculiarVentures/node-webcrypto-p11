@@ -70,6 +70,32 @@ describe("EC", function() {
             .then(done, done);
     })
 
+    it("ECDSA export JWK", function(done) {
+        webcrypto.subtle.generateKey(
+            {
+                name: "ECDSA",
+                namedCurve: "P-256", 	//can be "P-256", "P-384", or "P-521"
+            },
+            true, 						//whether the key is extractable (i.e. can be used in exportKey)
+            ["sign", "verify"] 			//can be any combination of "sign" and "verify"
+        )
+            .then(function(keys) {
+                assert.equal(!!keys.privateKey, true, "Has no private key");
+                assert.equal(!!keys.publicKey, true, "Has no public key");
+                assert.equal(keys.privateKey.extractable, true);
+                return webcrypto.subtle.exportKey("jwk", keys.publicKey);
+            })
+            .then(function(jwk) {
+                assert.equal(!!jwk, true);
+                assert.equal(jwk.kty, "EC");
+                assert.equal(jwk.crv, "P-256");
+                assert.equal(!!jwk.x, true);
+                assert.equal(!!jwk.y, true);
+                assert.equal(jwk.y.length === jwk.x.length, true);
+            })
+            .then(done, done);
+    })
+
     it("Ecdh", function(done) {
 
         var key = null;

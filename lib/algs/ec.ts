@@ -165,6 +165,7 @@ export class Ec extends AlgorithmBase {
             let jwk = {
                 kty: "EC",
                 crv: (<IEcKeyGenAlgorithm>key.algorithm).namedCurve,
+                ext: true,
                 key_ops: key.usages,
                 x: base64url(ecPoint.x),
                 y: base64url(ecPoint.y),
@@ -185,6 +186,7 @@ export class Ec extends AlgorithmBase {
             let jwk = {
                 kty: "EC",
                 crv: (<IEcKeyGenAlgorithm>key.algorithm).namedCurve,
+                ext: true,
                 key_ops: key.usages,
                 d: base64url(pkey.value)
             };
