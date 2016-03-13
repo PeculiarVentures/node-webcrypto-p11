@@ -90,53 +90,6 @@ abstract class Aes extends AlgorithmBase {
         }
     }
 
-    static wrapKey(session: Session, format: string, key: CryptoKey, wrappingKey: CryptoKey, alg: Algorithm, callback: (err: Error, wkey: Buffer) => void): void {
-        let that = this;
-        try {
-            this.exportKey(session, format, key, (err: Error, data: any) => {
-                if (err) {
-                    callback(err, null);
-                }
-                else {
-                    if (!Buffer.isBuffer(data)) {
-                        // JWK to Buffer
-                        data = new Buffer(JSON.stringify(data));
-                    }
-                }
-                that.encrypt(session, alg, wrappingKey, data, callback);
-            });
-        }
-        catch (e) {
-            callback(e, null);
-        }
-    }
-
-    static unwrapKey(session: Session, format: string, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: Algorithm, unwrappedAlgorithm: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
-        let that = this;
-        try {
-            this.decrypt(session, unwrapAlgorithm, unwrappingKey, wrappedKey, (err: Error, dec: Buffer) => {
-                if (err) {
-                    callback(err, null);
-                }
-                else {
-                    try {
-                        let ikey: IJwk | Buffer = <Buffer>dec;
-                        if (format === "jwk") {
-                            ikey = JSON.parse(dec.toString());
-                        }
-                        that.importKey(session, format, ikey, unwrappedAlgorithm, extractable, keyUsages, callback);
-                    }
-                    catch (e) {
-                        callback(e, null);
-                    }
-                }
-            });
-        }
-        catch (e) {
-            callback(e, null);
-        }
-    }
-
     static exportKey(session: Session, format: string, key: CryptoKey, callback: (err: Error, data: Buffer | IJwk) => void): void {
         try {
             let vals = (<P11CryptoKey>key).key.getAttribute({ value: null, valueLen: null });
@@ -159,6 +112,7 @@ abstract class Aes extends AlgorithmBase {
             callback(e, null);
         }
     }
+
     static importKey(session: Session, format: string, keyData: IJwk | Buffer, algorithm: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
         try {
             // get key value
