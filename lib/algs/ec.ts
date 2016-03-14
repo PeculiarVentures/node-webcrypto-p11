@@ -45,7 +45,7 @@ function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsage
     const keyType = KeyType.ECDSA;
     return {
         privateKey: {
-            token: false,
+            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PRIVATE_KEY,
             keyType: keyType,
             private: true,
@@ -58,7 +58,7 @@ function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsage
             unwrap: keyUsages.indexOf(KU_UNWRAP) !== -1
         },
         publicKey: {
-            token: false,
+            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PUBLIC_KEY,
             keyType: keyType,
             label: label,

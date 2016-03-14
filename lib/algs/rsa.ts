@@ -47,7 +47,7 @@ function create_template(alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsag
     const id = new Buffer(new Date().getTime().toString());
     return {
         privateKey: {
-            token: false,
+            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PRIVATE_KEY,
             keyType: KeyType.RSA,
             private: true,
@@ -60,7 +60,7 @@ function create_template(alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsag
             unwrap: keyUsages.indexOf(KU_UNWRAP) !== -1
         },
         publicKey: {
-            token: false,
+            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PUBLIC_KEY,
             keyType: KeyType.RSA,
             label: label,

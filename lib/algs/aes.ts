@@ -16,13 +16,12 @@ class AesError extends error.WebCryptoError { }
 
 export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplate {
     return {
-        token: false,
+        token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
         class: ObjectClass.SECRET_KEY,
         keyType: KeyType.AES,
         label: `AES-${alg.length}`,
         id: new Buffer(new Date().getTime().toString()),
         extractable: extractable,
-        sensitive: false,
         derive: false,
         sign: keyUsages.indexOf(KU_SIGN) !== -1,
         verify: keyUsages.indexOf(KU_VERIFY) !== -1,
