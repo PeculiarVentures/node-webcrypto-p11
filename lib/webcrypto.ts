@@ -23,20 +23,19 @@ export class WebCrypto implements Crypto, RandomSource {
     }
 
     /**
-     * @param  {P11WebCryptoParams} params PKCS11 module init parameters
+     * @param  {P11WebCryptoParams} props PKCS11 module init parameters
      */
-    constructor(params: P11WebCryptoParams) {
-        let mod = this.module = Module.load(params.library, params.name);
+    constructor(props: P11WebCryptoParams) {
+        let mod = this.module = Module.load(props.library, props.name);
         mod.initialize();
         this.initialized = true;
-
-        let slot = mod.getSlots(params.slot);
+        let slot = mod.getSlots(props.slot);
         if (!slot)
-            throw new Error(`Slot by index ${params.slot} is not found`);
-        this.session = slot.open(params.slotFlags);
-        this.session.login(params.pin);
-        for (let i in params.vendors) {
-            Mechanism.vendor(params.vendors[i]);
+            throw new Error(`Slot by index ${props.slot} is not found`);
+        this.session = slot.open(props.slotFlags);
+        this.session.login(props.pin);
+        for (let i in props.vendors) {
+            Mechanism.vendor(props.vendors[i]);
         }
         this.subtle = new P11SubtleCrypto(this.session);
     }
@@ -75,4 +74,5 @@ interface P11WebCryptoParams extends Object {
      * list of vendor json files
      */
     vendors: string[];
+    token: boolean;
 }

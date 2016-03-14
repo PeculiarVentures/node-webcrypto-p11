@@ -2,7 +2,7 @@
   "name": "node-webcrypto-p11",
   "version": "1.0.0",
   "description": "A WebCrypto Polyfill built on PKCS11",
-  "main": "index.js",
+  "main": "built/webcrypto.js",
   "scripts": {
     "test": "mocha"
   },
