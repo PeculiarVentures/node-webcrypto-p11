@@ -10,7 +10,7 @@ var WebCrypto = (function () {
         var slot = mod.getSlots(props.slot);
         if (!slot)
             throw new Error("Slot by index " + props.slot + " is not found");
-        this.session = slot.open(props.slotFlags);
+        this.session = slot.open(props.sessionFlags);
         this.session.login(props.pin);
         for (var i in props.vendors) {
             graphene_pk11_1.Mechanism.vendor(props.vendors[i]);

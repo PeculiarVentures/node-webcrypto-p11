@@ -32,7 +32,7 @@ export class WebCrypto implements Crypto, RandomSource {
         let slot = mod.getSlots(props.slot);
         if (!slot)
             throw new Error(`Slot by index ${props.slot} is not found`);
-        this.session = slot.open(props.slotFlags);
+        this.session = slot.open(props.sessionFlags);
         this.session.login(props.pin);
         for (let i in props.vendors) {
             Mechanism.vendor(props.vendors[i]);
@@ -65,7 +65,7 @@ interface P11WebCryptoParams extends Object {
      * Index of slot
      */
     slot: number;
-    slotFlags?: number;
+    sessionFlags?: number;
     /**
      * PIN of slot
      */
@@ -73,6 +73,5 @@ interface P11WebCryptoParams extends Object {
     /**
      * list of vendor json files
      */
-    vendors: string[];
-    token: boolean;
+    vendors?: string[];
 }
