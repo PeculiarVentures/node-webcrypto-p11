@@ -35,6 +35,11 @@ describe("Subtle", function() {
             })
             .then(done, done);
     }
+    
+    it("random", function(){
+       var rnd = webcrypto.getRandomValues(new Uint8Array(16));
+       assert.equal(rnd.length, 16);
+    });
 
     it("Digest SHA-1", function(done) {
         test_digest("sha-1", 20, done);
