@@ -35,7 +35,7 @@ export class WebCrypto implements Crypto, RandomSource {
             throw new Error(`Slot by index ${params.slot} is not found`);
         this.session = slot.open(params.slotFlags);
         this.session.login(params.pin);
-        for (let i in params.vendors){
+        for (let i in params.vendors) {
             Mechanism.vendor(params.vendors[i]);
         }
         this.subtle = new P11SubtleCrypto(this.session);

@@ -14,7 +14,7 @@ import * as ec from "./algs/ec";
  * converts alg to Algorithm
  */
 function prepare_algorithm(alg: string | Algorithm): Algorithm {
-    let _alg: Algorithm = (alg instanceof String) ? { name: alg } : alg;
+    let _alg: Algorithm = (typeof alg === "string") ? { name: alg } : alg;
     if (typeof _alg !== "object")
         throw new error.AlgorithmError(`Algorithm must be an Object`);
     if (!(_alg.name && typeof (_alg.name) === "string"))
@@ -389,7 +389,29 @@ export class P11SubtleCrypto implements SubtleCrypto {
     digest(algorithm: string | Algorithm, data: ArrayBufferView): any {
         let that = this;
         return new Promise(function(resolve, reject) {
-            reject(new Error("Method is not implemented"));
+            let alg = prepare_algorithm(algorithm);
+            let hashAlg = alg.name.toUpperCase();
+            switch (hashAlg) {
+                case "SHA-1":
+                case "SHA-224":
+                case "SHA-256":
+                case "SHA-384":
+                case "SHA-512":
+                    hashAlg = hashAlg.replace("-", "");
+            }
+            let digest = that.session.createDigest(hashAlg);
+            let buf = ab2b(data);
+            digest.update(buf, (err) => {
+                if (err)
+                    reject(err);
+                else
+                    digest.final((err, md) => {
+                        if (err)
+                            reject(err);
+                        else
+                            resolve(b2ab(md));
+                    });
+            });
         });
     }
 

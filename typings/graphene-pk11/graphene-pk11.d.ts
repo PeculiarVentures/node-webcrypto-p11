@@ -2553,9 +2553,10 @@ declare module "graphene-pk11" {
         lib: Pkcs11;
         constructor(session: Session, alg: MechanismType, lib: Pkcs11);
         protected init(alg: MechanismType): void;
-        update(text: string): void;
-        update(data: Buffer): void;
+        update(data: string | Buffer): void;
+        update(data: string | Buffer, callback: (error: Error) => void): void;
         final(): Buffer;
+        final(callback: (error: Error, digest: Buffer) => void): void;
     }
 
     class Sign {
