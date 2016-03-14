@@ -16,6 +16,7 @@ import * as base64url from "base64url";
 
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
 import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, ITemplatePair} from "../key";
+import * as aes from "./aes";
 
 export let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 let ALG_NAME_RSA_PSS = "RSA-PSS";
@@ -356,6 +357,40 @@ export class RsaOAEP extends Rsa {
                         break;
                 }
                 break;
+        }
+    }
+
+    static wrapKey(session: Session, format: string, key: CryptoKey, wrappingKey: CryptoKey, alg: Algorithm, callback: (err: Error, wkey: Buffer) => void): void {
+        try {
+            if (format === "raw") {
+                let _alg = this.wc2pk11(alg, wrappingKey);
+                session.wrapKey(_alg, (<P11CryptoKey>wrappingKey).key, (<P11CryptoKey>key).key, callback);
+            }
+            else
+                super.wrapKey.apply(this, arguments);
+        }
+        catch (e) {
+            callback(e, null);
+        }
+    }
+
+    static unwrapKey(session: Session, format: string, wrappedKey: Buffer, unwrappingKey: CryptoKey, unwrapAlgorithm: Algorithm, unwrappedAlgorithm: Algorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void): void {
+        try {
+            if (format === "raw") {
+                let _alg = this.wc2pk11(unwrapAlgorithm, unwrappingKey);
+                let template = aes.create_template(<aes.IAesKeyGenAlgorithm>unwrappedAlgorithm, extractable, keyUsages);
+                session.unwrapKey(_alg, (<P11CryptoKey>unwrappingKey).key, wrappedKey, template, (err, p11key) => {
+                    if (err)
+                        callback(err, null);
+                    else
+                        callback(null, new P11CryptoKey(p11key, unwrappedAlgorithm));
+                });
+            }
+            else
+                super.unwrapKey.apply(this, arguments);
+        }
+        catch (e) {
+            callback(e, null);
         }
     }
 

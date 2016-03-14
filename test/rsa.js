@@ -154,7 +154,7 @@ describe("RSA", function () {
         .then(done, done);
     })
     
-    it("RSA OAEP wrap/unwrap", function (done) {
+    function test_wrap(format, done){
         var key = null;
         var skey = null;
         webcrypto.subtle.generateKey({
@@ -183,7 +183,7 @@ describe("RSA", function () {
                 skey = sk;
                 assert.equal(skey.key !== null, true, "Has no secret key");
                 return webcrypto.subtle.wrapKey(
-                    "jwk",
+                    format,
                     skey,
                     key.publicKey,
                     {
@@ -193,7 +193,7 @@ describe("RSA", function () {
             })
             .then(function(dec) {
                 return webcrypto.subtle.unwrapKey(
-                    "jwk", //the import format, must be "raw" (only available sometimes)
+                    format, //the import format, must be "raw" (only available sometimes)
                     dec, //the key you want to unwrap
                     key.privateKey, //the private key with "unwrapKey" usage flag
                     {   //these are the wrapping key's algorithm options
@@ -213,6 +213,14 @@ describe("RSA", function () {
             .then(function(sk) {
                 assert.equal(sk.key !== null, true, "Has no secret key");
             })
-        .then(done, done);
+            .then(done, done);
+    }
+    
+    it("RSA OAEP wrap/unwrap JWK", function (done) {
+        test_wrap("jwk", done);
+    })
+    
+    it("RSA OAEP wrap/unwrap RAW", function (done) {
+        test_wrap("raw", done);
     })
 })
