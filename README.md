@@ -49,7 +49,7 @@ npm install mocha -g
 ### Install 
 
 ```                          
-nom install
+npm install
 ```
 
 ### Install Graphene
