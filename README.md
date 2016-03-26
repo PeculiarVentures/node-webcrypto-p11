@@ -1,9 +1,10 @@
 # node-webcrypto-p11
+
 We wanted to be able to write Javascript that used crypto on both the client and the server but we did not want to rely on Javascript implementations of crypto. The only native cryptography availible in browser is [Web Crypto](caniuse.com/#search=cryptography), this resulted in us creating a [native polyfil for WebCrypto based on Openssl](https://github.com/PeculiarVentures/node-webcrypto-ossl).
 
 We also wanted to be able to utilize Hardware Security Modules and smart cards on the server side, so we made a [library called Graphene that made it possible to use PKCS#11 devices from within Nodejs](https://github.com/PeculiarVentures/graphene). 
 
-We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is node-webcrypto-11, if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
+We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is `node-webcrypto-11`, if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
 
 For example to generate a key you this is all it takes:
 
@@ -34,6 +35,27 @@ webcrypto.subtle.generateKey({
             assert.equal(keys.privateKey.extractable, true);
         })
 ```
+
+## Table Of Contents
+
+* [WARNING](#warning)
+* [Installing](#installing)
+  * [Clone Repo](#clone-repo)
+  * [Install Dependencies](#install-dependencies)
+  * [Install SoftHSM2](#install-softhsm2)
+  * [Install Graphene](#install-graphene)
+  * [Install](#install)
+  * [Test](#test)
+* [Threat Model](#threat-model)
+  * [Assumptions](#assumptions)
+  * [Threats From Weak Cryptography](#threats-from-weak-cryptography)
+* [Bug Reporting](#bug-reporting)
+* [Related](#related)
+
+## WARNING
+
+**At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.**
+
 ## Installation
 
 ### Clone Repo
@@ -43,7 +65,7 @@ git clone https://github.com/PeculiarVentures/node-webcrypto-p11
 cd node-webcrypto-p11
 ```
 
-### Dependencies
+### Install Dependencies
 - typescript (TypeScript compiler)
 - tsd (TypeScript Defenition compiler)
 - mocha (test)
@@ -54,7 +76,10 @@ npm install tsd -g
 npm install mocha -g
 ```
 
-### SoftHSM2 (assumes Ubuntu - optional)
+### Install SoftHSM2
+
+**NOTE**: SoftHSM2 is optional, the bellow steps assume Ubuntu
+
 * Install SoftHSM2
 
     `apt-get install softhsm`
@@ -77,13 +102,6 @@ npm install mocha -g
   ```
  
   **NOTE**: This may be more generous than needed. It works out to : 0755 = User:rwx Group:r-x World:r-x. 
-  
-
-### Install 
-
-```                          
-npm install
-```
 
 ### Install Graphene
 ```
@@ -98,6 +116,11 @@ npm install
 cd ../../
 ```
 
+### Install 
+
+```                          
+npm install
+```
 ### Test
 
 ```
@@ -116,8 +139,11 @@ module.exports = {
     vendors: []     // list of vendor files, optional
 }
 ```
+## Bug Reporting
+Please report bugs either as pull requests or as issues in the issue tracker. Backwater has a full disclosure vulnerability policy. Please do NOT attempt to report any security vulnerability in this code privately to anybody.
 
-### Related
+
+## Related
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
  - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
  - [Graphene](https://github.com/PeculiarVentures/graphene)
