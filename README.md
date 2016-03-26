@@ -49,7 +49,7 @@ webcrypto.subtle.generateKey({
 * [Threat Model](#threat-model)
   * [Assumptions](#assumptions)
   * [Threats From Weak Cryptography](#threats-from-weak-cryptography)
-  * [Threats From Improper use of Cryptography](#threats-from-improper-use-of-cryptography)
+  * [Threats From Improper Use Of Cryptography](#threats-from-improper-use-of-cryptography)
 * [Bug Reporting](#bug-reporting)
 * [Related](#related)
 
