@@ -4,7 +4,7 @@ We wanted to be able to write Javascript that used crypto on both the client and
 
 We also wanted to be able to utilize Hardware Security Modules and smart cards on the server side, so we made a [library called Graphene that made it possible to use PKCS#11 devices from within Nodejs](https://github.com/PeculiarVentures/graphene). 
 
-We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is `node-webcrypto-11`, if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
+We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is `node-webcrypto-p11`. This means if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
 
 For example to generate a key you this is all it takes:
 
