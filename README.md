@@ -1,5 +1,9 @@
 # node-webcrypto-p11
-A WebCrypto Polyfill for Node in typescript built on Graphene
+A WebCrypto Polyfill for Node in typescript built on Graphene.
+
+We wanted to be able to write Javascript that used crypto on both the client and the server but we did not want to rely on Javascript implementations of crypto. The only native cryptography availible in browser is [Web Crypto](caniuse.com/#search=cryptography), this resulted in us creating a [native polyfil for WebCrypto based on Openssl](https://github.com/PeculiarVentures/node-webcrypto-ossl).
+
+We also wanted to be able to utilize Hardware Security Modules and smart cards on the server side, so we made a [library called that made using PKCS#11 devices from within Nodejs](https://github.com/PeculiarVentures/graphene). We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is node-webcrypto-11, if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
 
 ## Installation
 
