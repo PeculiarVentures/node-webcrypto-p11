@@ -5,6 +5,35 @@ We wanted to be able to write Javascript that used crypto on both the client and
 
 We also wanted to be able to utilize Hardware Security Modules and smart cards on the server side, so we made a [library called that made using PKCS#11 devices from within Nodejs](https://github.com/PeculiarVentures/graphene). We also thought that in most cases people did not care about interacting with the token directly and would prefer a higher level API they were already familiar with. That library is node-webcrypto-11, if you have code or libraries based on WebCrypto (for example the excelent [js-jose](https://github.com/square/js-jose)) with only a change in a constructor you can work with PKCS#11 devices.
 
+For example to generate a key you this is all it takes:
+
+```
+var config = {
+    library: "/usr/local/lib/softhsm/libsofthsm2.so",
+    name: "SoftHSM v2.0",
+    slot: 0,
+    sessionFlags: 4, // SERIAL_SESSION
+    pin: "12345"
+}
+
+var WebCrypto = new WebCrypto(config);
+
+webcrypto.subtle.generateKey({
+            name:"RSASSA-PKCS1-v1_5",
+            modulusLength: 1024,
+            publicExponent: new Uint8Array([1, 0, 1]), 
+            hash: {
+                name: "SHA-1"
+            }}, 
+            true, 
+            ["sign", "verify"]
+        )
+        .then(function(keys){
+            assert.equal(!!keys.privateKey, true, "Has no private key");
+            assert.equal(!!keys.publicKey, true, "Has no public key");
+            assert.equal(keys.privateKey.extractable, true);
+        })
+```
 ## Installation
 
 ### Clone Repo
