@@ -49,6 +49,7 @@ webcrypto.subtle.generateKey({
 * [Threat Model](#threat-model)
   * [Assumptions](#assumptions)
   * [Threats From Weak Cryptography](#threats-from-weak-cryptography)
+  * [Threats From Improper use of Cryptography](#threats-from-improper-use-of-cryptography)
 * [Bug Reporting](#bug-reporting)
 * [Related](#related)
 
@@ -139,6 +140,25 @@ module.exports = {
     vendors: []     // list of vendor files, optional
 }
 ```
+
+The threat model is defined in terms of what each possible attacker can achieve. The list is intended to be exhaustive.
+
+### Assumptions
+
+TODO: ADD ASSUMPTIONS
+
+### Threats From A node-webcrypto-ossl Defect
+
+TODO: ADD THREATS FROM HANCOCK SERVICE COMPROMISE
+
+### Threats From Weak Cryptography
+
+TODO: ADD THREATS FROM WEAK CRYPTOGRAPHY
+
+### Threats From Improper use of Cryptography
+
+TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
+
 ## Bug Reporting
 Please report bugs either as pull requests or as issues in the issue tracker. Backwater has a full disclosure vulnerability policy. Please do NOT attempt to report any security vulnerability in this code privately to anybody.
 
