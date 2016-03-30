@@ -170,3 +170,5 @@ Please report bugs either as pull requests or as issues in the issue tracker. Ba
  - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
  - [Graphene](https://github.com/PeculiarVentures/graphene)
  - [WebCrypto Examples](https://github.com/diafygi/webcrypto-examples)
+ - [OpenCryptoKi](https://sourceforge.net/projects/opencryptoki/)
+ - [SoftHSM](https://github.com/opendnssec/SoftHSMv2)
