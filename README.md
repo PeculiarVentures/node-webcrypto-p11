@@ -50,6 +50,8 @@ webcrypto.subtle.generateKey({
   * [Test](#test)
 * [Threat Model](#threat-model)
   * [Assumptions](#assumptions)
+  * [Threats From A node-webcrypto-p11 Defect](#threats-from-a-node-webcrypto-p11-defect)
+  * [Threats From A HSM Defect](#threats-from-a-hsm-defect)
   * [Threats From Weak Cryptography](#threats-from-weak-cryptography)
   * [Threats From Improper Use Of Cryptography](#threats-from-improper-use-of-cryptography)
 * [Bug Reporting](#bug-reporting)
@@ -149,9 +151,13 @@ The threat model is defined in terms of what each possible attacker can achieve.
 
 TODO: ADD ASSUMPTIONS
 
-### Threats From A node-webcrypto-ossl Defect
+### Threats From A node-webcrypto-p11 Defect
 
-TODO: ADD THREATS FROM HANCOCK SERVICE COMPROMISE
+TODO: ADD THREATS FROM A node-webcrypto-p11 DEFECT
+
+### Threats From A HSM Defect
+
+TODO: ADD THREATS FROM A HSM DEFECT
 
 ### Threats From Weak Cryptography
 
