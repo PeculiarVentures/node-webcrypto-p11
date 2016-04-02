@@ -2,6 +2,7 @@ import {Session, IAlgorithm, AesGcmParams, SecretKey, KeyGenMechanism, Mechanism
 import * as error from "../error";
 import * as base64url from "base64url";
 
+import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
 import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP} from "../key";
 
@@ -14,13 +15,16 @@ export var ALG_NAME_AES_KW = "AES-KW";
 
 class AesError extends error.WebCryptoError { }
 
-export function create_template(alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplate {
+export function create_template(session: Session, alg: IAesKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplate {
+
+    let id = utils.GUID(session);
     return {
         token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+        sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
         class: ObjectClass.SECRET_KEY,
         keyType: KeyType.AES,
         label: `AES-${alg.length}`,
-        id: new Buffer(new Date().getTime().toString()),
+        id: new Buffer(id),
         extractable: extractable,
         derive: false,
         sign: keyUsages.indexOf(KU_SIGN) !== -1,
@@ -41,7 +45,7 @@ abstract class Aes extends AlgorithmBase {
             this.checkKeyGenAlgorithm(_alg);
 
             // PKCS11 generation
-            let template: ITemplate = create_template(_alg, extractable, keyUsages);
+            let template: ITemplate = create_template(session, _alg, extractable, keyUsages);
             template.valueLen = (<IAesKeyGenAlgorithm>alg).length / 8;
             session.generateKey(KeyGenMechanism.AES, template, (err, key) => {
                 try {
@@ -126,7 +130,7 @@ abstract class Aes extends AlgorithmBase {
                 name: algorithm.name,
                 length: value.length * 8
             };
-            let template: ITemplate = create_template(_alg, extractable, keyUsages);
+            let template: ITemplate = create_template(session, _alg, extractable, keyUsages);
             template.value = value;
 
             // create session object

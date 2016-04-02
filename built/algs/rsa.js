@@ -7,23 +7,26 @@ var __extends = (this && this.__extends) || function (d, b) {
 var graphene_pk11_1 = require("graphene-pk11");
 var error = require("../error");
 var base64url = require("base64url");
+var utils = require("../utils");
 var alg_1 = require("./alg");
 var key_1 = require("../key");
 var aes = require("./aes");
 exports.ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
 var ALG_NAME_RSA_PSS = "RSA-PSS";
 exports.ALG_NAME_RSA_OAEP = "RSA-OAEP";
-function create_template(alg, extractable, keyUsages) {
+function create_template(session, alg, extractable, keyUsages) {
     var label = "RSA-" + alg.modulusLength;
-    var id = new Buffer(new Date().getTime().toString());
+    var id_pk = new Buffer(utils.GUID(session));
+    var id_pubk = new Buffer(utils.GUID(session));
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+            sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
             class: graphene_pk11_1.ObjectClass.PRIVATE_KEY,
             keyType: graphene_pk11_1.KeyType.RSA,
             private: true,
             label: label,
-            id: id,
+            id: id_pk,
             extractable: extractable,
             derive: false,
             sign: keyUsages.indexOf(key_1.KU_SIGN) !== -1,
@@ -35,7 +38,7 @@ function create_template(alg, extractable, keyUsages) {
             class: graphene_pk11_1.ObjectClass.PUBLIC_KEY,
             keyType: graphene_pk11_1.KeyType.RSA,
             label: label,
-            id: id,
+            id: id_pubk,
             verify: keyUsages.indexOf(key_1.KU_VERIFY) !== -1,
             encrypt: keyUsages.indexOf(key_1.KU_ENCRYPT) !== -1,
             wrap: keyUsages.indexOf(key_1.KU_WRAP) !== -1,
@@ -53,7 +56,7 @@ var Rsa = (function (_super) {
             this.checkAlgorithmIdentifier(alg);
             this.checkAlgorithmHashedParams(alg);
             this.checkKeyGenAlgorithm(_alg_1);
-            var template = create_template(_alg_1, extractable, keyUsages);
+            var template = create_template(session, _alg_1, extractable, keyUsages);
             template.publicKey.publicExponent = new Buffer(_alg_1.publicExponent),
                 template.publicKey.modulusBits = _alg_1.modulusLength;
             session.generateKeyPair(graphene_pk11_1.KeyGenMechanism.RSA, template.publicKey, template.privateKey, function (err, keys) {
@@ -169,7 +172,7 @@ var Rsa = (function (_super) {
     };
     Rsa.importJwkPrivateKey = function (session, jwk, algorithm, extractable, keyUsages, callback) {
         try {
-            var template = create_template(algorithm, extractable, keyUsages).privateKey;
+            var template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.publicExponent = base64url.toBuffer(jwk.e);
             template.modulus = base64url.toBuffer(jwk.n);
             template.privateExponent = base64url.toBuffer(jwk.d);
@@ -187,7 +190,7 @@ var Rsa = (function (_super) {
     };
     Rsa.importJwkPublicKey = function (session, jwk, algorithm, extractable, keyUsages, callback) {
         try {
-            var template = create_template(algorithm, extractable, keyUsages).publicKey;
+            var template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.publicExponent = base64url.toBuffer(jwk.e);
             template.modulus = base64url.toBuffer(jwk.n);
             var p11key = session.create(template);
@@ -330,7 +333,7 @@ var RsaOAEP = (function (_super) {
         try {
             if (format === "raw") {
                 var _alg = this.wc2pk11(unwrapAlgorithm, unwrappingKey);
-                var template = aes.create_template(unwrappedAlgorithm, extractable, keyUsages);
+                var template = aes.create_template(session, unwrappedAlgorithm, extractable, keyUsages);
                 session.unwrapKey(_alg, unwrappingKey.key, wrappedKey, template, function (err, p11key) {
                     if (err)
                         callback(err, null);

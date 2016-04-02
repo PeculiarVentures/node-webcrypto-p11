@@ -23,6 +23,7 @@ export class P11CryptoKey implements CryptoKey {
     type: string;
     extractable: boolean;
     algorithm: any;
+    id: string;
     usages: string[] = [];
 
     private _key: Key | PrivateKey | PublicKey | SecretKey;
@@ -46,6 +47,7 @@ export class P11CryptoKey implements CryptoKey {
                 throw new error.WebCryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
         }
         this.algorithm = alg;
+        this.id = this._key.getAttribute({id: null}).id.toString();
     }
 
     protected initPrivateKey(key: PrivateKey) {

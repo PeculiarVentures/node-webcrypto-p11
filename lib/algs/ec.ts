@@ -17,6 +17,7 @@ import * as error from "../error";
 import * as aes from "./aes";
 import * as base64url from "base64url";
 
+import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
 import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, KU_DERIVE, ITemplatePair} from "../key";
 
@@ -28,6 +29,7 @@ type EcCurveName = "P-192" | "P-256" | "P-384" | "P-521";
 interface IJwkEcKey extends IJwk {
     crv: EcCurveName;
 }
+
 interface IJwkEcPrivateKey extends IJwkEcKey {
     d: string;
     x?: string;
@@ -39,18 +41,20 @@ interface IJwkEcPublicKey extends IJwkEcKey {
     y: string;
 }
 
-function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
+function create_template(session: Session, alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
-    const id = new Buffer(new Date().getTime().toString());
+    const id_pk = new Buffer(utils.GUID(session));
+    const id_pubk = new Buffer(utils.GUID(session));
     const keyType = KeyType.ECDSA;
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+            sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
             class: ObjectClass.PRIVATE_KEY,
             keyType: keyType,
             private: true,
             label: label,
-            id: id,
+            id: id_pk,
             extractable: extractable,
             derive: keyUsages.indexOf(KU_DERIVE) !== -1,
             sign: keyUsages.indexOf(KU_SIGN) !== -1,
@@ -62,7 +66,7 @@ function create_template(alg: IEcKeyGenAlgorithm, extractable: boolean, keyUsage
             class: ObjectClass.PUBLIC_KEY,
             keyType: keyType,
             label: label,
-            id: id,
+            id: id_pubk,
             derive: keyUsages.indexOf(KU_DERIVE) !== -1,
             verify: keyUsages.indexOf(KU_VERIFY) !== -1,
             encrypt: keyUsages.indexOf(KU_ENCRYPT) !== -1,
@@ -115,7 +119,7 @@ export class Ec extends AlgorithmBase {
             this.checkAlgorithmIdentifier(alg);
             this.checkKeyGenAlgorithm(_alg);
 
-            let template = create_template(_alg, extractable, keyUsages);
+            let template = create_template(session, _alg, extractable, keyUsages);
 
             // EC params
             template.publicKey.paramsEC = this.getNamedCurve(_alg.namedCurve).value;
@@ -233,7 +237,7 @@ export class Ec extends AlgorithmBase {
     static importJwkPrivateKey(session: Session, jwk: IJwkEcPrivateKey, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
             let namedCurve = this.getNamedCurve(jwk.crv);
-            let template = create_template(algorithm, extractable, keyUsages).privateKey;
+            let template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.paramsEC = namedCurve.value;
             template.value = base64url.toBuffer(jwk.d);
             let p11key = session.create(template);
@@ -247,7 +251,7 @@ export class Ec extends AlgorithmBase {
     static importJwkPublicKey(session: Session, jwk: IJwkEcPublicKey, algorithm: IEcKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
             let namedCurve = this.getNamedCurve(jwk.crv);
-            let template = create_template(algorithm, extractable, keyUsages).publicKey;
+            let template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.paramsEC = namedCurve.value;
             let pointEc = EcUtils.encodePoint({ x: base64url.toBuffer(jwk.x), y: base64url.toBuffer(jwk.y) }, namedCurve);
             template.pointEC = pointEc;
@@ -373,7 +377,7 @@ export class Ecdh extends Ec {
             }
             AesClass.checkKeyGenAlgorithm(<aes.IAesKeyGenAlgorithm>derivedKeyType);
 
-            let template: ITemplate = aes.create_template(<aes.IAesKeyGenAlgorithm>derivedKeyType, extractable, keyUsages);
+            let template: ITemplate = aes.create_template(session, <aes.IAesKeyGenAlgorithm>derivedKeyType, extractable, keyUsages);
             template.valueLen = (<aes.IAesKeyGenAlgorithm>derivedKeyType).length / 8;
             // derive key
             session.deriveKey(

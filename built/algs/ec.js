@@ -8,22 +8,25 @@ var graphene_pk11_1 = require("graphene-pk11");
 var error = require("../error");
 var aes = require("./aes");
 var base64url = require("base64url");
+var utils = require("../utils");
 var alg_1 = require("./alg");
 var key_1 = require("../key");
 exports.ALG_NAME_ECDH = "ECDH";
 exports.ALG_NAME_ECDSA = "ECDSA";
-function create_template(alg, extractable, keyUsages) {
+function create_template(session, alg, extractable, keyUsages) {
     var label = "EC-" + alg.namedCurve;
-    var id = new Buffer(new Date().getTime().toString());
+    var id_pk = new Buffer(utils.GUID(session));
+    var id_pubk = new Buffer(utils.GUID(session));
     var keyType = graphene_pk11_1.KeyType.ECDSA;
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+            sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
             class: graphene_pk11_1.ObjectClass.PRIVATE_KEY,
             keyType: keyType,
             private: true,
             label: label,
-            id: id,
+            id: id_pk,
             extractable: extractable,
             derive: keyUsages.indexOf(key_1.KU_DERIVE) !== -1,
             sign: keyUsages.indexOf(key_1.KU_SIGN) !== -1,
@@ -35,7 +38,7 @@ function create_template(alg, extractable, keyUsages) {
             class: graphene_pk11_1.ObjectClass.PUBLIC_KEY,
             keyType: keyType,
             label: label,
-            id: id,
+            id: id_pubk,
             derive: keyUsages.indexOf(key_1.KU_DERIVE) !== -1,
             verify: keyUsages.indexOf(key_1.KU_VERIFY) !== -1,
             encrypt: keyUsages.indexOf(key_1.KU_ENCRYPT) !== -1,
@@ -73,7 +76,7 @@ var Ec = (function (_super) {
             var _alg_1 = alg;
             this.checkAlgorithmIdentifier(alg);
             this.checkKeyGenAlgorithm(_alg_1);
-            var template = create_template(_alg_1, extractable, keyUsages);
+            var template = create_template(session, _alg_1, extractable, keyUsages);
             template.publicKey.paramsEC = this.getNamedCurve(_alg_1.namedCurve).value;
             session.generateKeyPair(graphene_pk11_1.KeyGenMechanism.EC, template.publicKey, template.privateKey, function (err, keys) {
                 try {
@@ -181,7 +184,7 @@ var Ec = (function (_super) {
     Ec.importJwkPrivateKey = function (session, jwk, algorithm, extractable, keyUsages, callback) {
         try {
             var namedCurve = this.getNamedCurve(jwk.crv);
-            var template = create_template(algorithm, extractable, keyUsages).privateKey;
+            var template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.paramsEC = namedCurve.value;
             template.value = base64url.toBuffer(jwk.d);
             var p11key = session.create(template);
@@ -194,7 +197,7 @@ var Ec = (function (_super) {
     Ec.importJwkPublicKey = function (session, jwk, algorithm, extractable, keyUsages, callback) {
         try {
             var namedCurve = this.getNamedCurve(jwk.crv);
-            var template = create_template(algorithm, extractable, keyUsages).publicKey;
+            var template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.paramsEC = namedCurve.value;
             var pointEc = EcUtils.encodePoint({ x: base64url.toBuffer(jwk.x), y: base64url.toBuffer(jwk.y) }, namedCurve);
             template.pointEC = pointEc;
@@ -313,7 +316,7 @@ var Ecdh = (function (_super) {
                     throw new Error("derivedKeyType: Unknown Algorithm name in use");
             }
             AesClass.checkKeyGenAlgorithm(derivedKeyType);
-            var template = aes.create_template(derivedKeyType, extractable, keyUsages);
+            var template = aes.create_template(session, derivedKeyType, extractable, keyUsages);
             template.valueLen = derivedKeyType.length / 8;
             session.deriveKey({
                 name: "ECDH1_DERIVE",

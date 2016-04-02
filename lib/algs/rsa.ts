@@ -14,6 +14,7 @@ import {
 import * as error from "../error";
 import * as base64url from "base64url";
 
+import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
 import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, ITemplatePair} from "../key";
 import * as aes from "./aes";
@@ -42,17 +43,19 @@ interface IJwkRsaPrivateKey extends IJwkRsaKey {
     qi: string;
 }
 
-function create_template(alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
+function create_template(session: Session, alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
-    const id = new Buffer(new Date().getTime().toString());
+    const id_pk = new Buffer(utils.GUID(session));
+    const id_pubk = new Buffer(utils.GUID(session));
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+            sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
             class: ObjectClass.PRIVATE_KEY,
             keyType: KeyType.RSA,
             private: true,
             label: label,
-            id: id,
+            id: id_pk,
             extractable: extractable,
             derive: false,
             sign: keyUsages.indexOf(KU_SIGN) !== -1,
@@ -64,7 +67,7 @@ function create_template(alg: IRsaKeyGenAlgorithm, extractable: boolean, keyUsag
             class: ObjectClass.PUBLIC_KEY,
             keyType: KeyType.RSA,
             label: label,
-            id: id,
+            id: id_pubk,
             verify: keyUsages.indexOf(KU_VERIFY) !== -1,
             encrypt: keyUsages.indexOf(KU_ENCRYPT) !== -1,
             wrap: keyUsages.indexOf(KU_WRAP) !== -1,
@@ -86,7 +89,7 @@ abstract class Rsa extends AlgorithmBase {
             this.checkAlgorithmHashedParams(<IAlgorithmHashed>alg);
             this.checkKeyGenAlgorithm(_alg);
 
-            let template = create_template(_alg, extractable, keyUsages);
+            let template = create_template(session, _alg, extractable, keyUsages);
 
             // RSA params
             template.publicKey.publicExponent = new Buffer(_alg.publicExponent),
@@ -213,7 +216,7 @@ abstract class Rsa extends AlgorithmBase {
 
     static importJwkPrivateKey(session: Session, jwk: IJwkRsaPrivateKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
-            let template = create_template(algorithm, extractable, keyUsages).privateKey;
+            let template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.publicExponent = base64url.toBuffer(jwk.e);
             template.modulus = base64url.toBuffer(jwk.n);
             template.privateExponent = base64url.toBuffer(jwk.d);
@@ -232,7 +235,7 @@ abstract class Rsa extends AlgorithmBase {
 
     static importJwkPublicKey(session: Session, jwk: IJwkRsaPublicKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
-            let template = create_template(algorithm, extractable, keyUsages).publicKey;
+            let template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.publicExponent = base64url.toBuffer(jwk.e);
             template.modulus = base64url.toBuffer(jwk.n);
             let p11key = session.create(template);
@@ -378,7 +381,7 @@ export class RsaOAEP extends Rsa {
         try {
             if (format === "raw") {
                 let _alg = this.wc2pk11(unwrapAlgorithm, unwrappingKey);
-                let template = aes.create_template(<aes.IAesKeyGenAlgorithm>unwrappedAlgorithm, extractable, keyUsages);
+                let template = aes.create_template(session, <aes.IAesKeyGenAlgorithm>unwrappedAlgorithm, extractable, keyUsages);
                 session.unwrapKey(_alg, (<P11CryptoKey>unwrappingKey).key, wrappedKey, template, (err, p11key) => {
                     if (err)
                         callback(err, null);

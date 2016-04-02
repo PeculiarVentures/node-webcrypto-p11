@@ -28,6 +28,7 @@ var P11CryptoKey = (function () {
                 throw new error.WebCryptoError("Wrong incoming session object '" + graphene_pk11_1.ObjectClass[key.class] + "'");
         }
         this.algorithm = alg;
+        this.id = this._key.getAttribute({ id: null }).id.toString();
     }
     Object.defineProperty(P11CryptoKey.prototype, "key", {
         get: function () {

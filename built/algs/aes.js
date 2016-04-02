@@ -7,6 +7,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var graphene_pk11_1 = require("graphene-pk11");
 var error = require("../error");
 var base64url = require("base64url");
+var utils = require("../utils");
 var alg_1 = require("./alg");
 var key_1 = require("../key");
 exports.ALG_NAME_AES_CTR = "AES-CTR";
@@ -22,13 +23,15 @@ var AesError = (function (_super) {
     }
     return AesError;
 }(error.WebCryptoError));
-function create_template(alg, extractable, keyUsages) {
+function create_template(session, alg, extractable, keyUsages) {
+    var id = utils.GUID(session);
     return {
         token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+        sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
         class: graphene_pk11_1.ObjectClass.SECRET_KEY,
         keyType: graphene_pk11_1.KeyType.AES,
         label: "AES-" + alg.length,
-        id: new Buffer(new Date().getTime().toString()),
+        id: new Buffer(id),
         extractable: extractable,
         derive: false,
         sign: keyUsages.indexOf(key_1.KU_SIGN) !== -1,
@@ -50,7 +53,7 @@ var Aes = (function (_super) {
             var _alg_1 = alg;
             this.checkAlgorithmIdentifier(alg);
             this.checkKeyGenAlgorithm(_alg_1);
-            var template = create_template(_alg_1, extractable, keyUsages);
+            var template = create_template(session, _alg_1, extractable, keyUsages);
             template.valueLen = alg.length / 8;
             session.generateKey(graphene_pk11_1.KeyGenMechanism.AES, template, function (err, key) {
                 try {
@@ -129,7 +132,7 @@ var Aes = (function (_super) {
                 name: algorithm.name,
                 length: value.length * 8
             };
-            var template = create_template(_alg, extractable, keyUsages);
+            var template = create_template(session, _alg, extractable, keyUsages);
             template.value = value;
             var sobj = session.create(template);
             callback(null, new key_1.P11CryptoKey(sobj.toType(), _alg));
