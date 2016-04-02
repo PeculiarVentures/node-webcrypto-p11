@@ -1,4 +1,4 @@
-import {Key, PrivateKey, PublicKey, SecretKey, ObjectClass, ITemplate} from "graphene-pk11";
+import {Key, KeyType, PrivateKey, PublicKey, SecretKey, ObjectClass, ITemplate} from "graphene-pk11";
 
 import * as error from "./error";
 
@@ -47,7 +47,7 @@ export class P11CryptoKey implements CryptoKey {
                 throw new error.WebCryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
         }
         this.algorithm = alg;
-        this.id = this._key.getAttribute({id: null}).id.toString();
+        this.id = this._key.getAttribute({ id: null }).id.toString();
     }
 
     protected initPrivateKey(key: PrivateKey) {
@@ -82,7 +82,6 @@ export class P11CryptoKey implements CryptoKey {
         if (key.sign) this.usages.push(KU_SIGN);
         if (key.unwrap) this.usages.push(KU_UNWRAP);
     }
-
 
 }
 

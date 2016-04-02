@@ -1,6 +1,8 @@
 "use strict";
 var graphene_pk11_1 = require("graphene-pk11");
 var subtlecrypto_1 = require("./subtlecrypto");
+var key_storage_1 = require("./key_storage");
+var utils = require("./utils");
 var WebCrypto = (function () {
     function WebCrypto(props) {
         this.subtle = null;
@@ -16,9 +18,13 @@ var WebCrypto = (function () {
             graphene_pk11_1.Mechanism.vendor(props.vendors[i]);
         }
         this.subtle = new subtlecrypto_1.P11SubtleCrypto(this.session);
+        this.keyStorage = new key_storage_1.KeyStorage(this.session);
     }
     WebCrypto.prototype.getRandomValues = function (array) {
         return new Uint8Array(this.session.generateRandom(array.byteLength));
+    };
+    WebCrypto.prototype.getGUID = function () {
+        return utils.GUID(this.session);
     };
     WebCrypto.prototype.close = function () {
         if (this.initialized) {

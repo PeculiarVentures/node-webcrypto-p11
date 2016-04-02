@@ -1,5 +1,7 @@
 import {Module, Mechanism, Session, Slot, SessionFlag} from "graphene-pk11";
 import {P11SubtleCrypto} from "./subtlecrypto";
+import {KeyStorage} from "./key_storage";
+import * as utils from "./utils";
 
 /**
  * PKCS11 with WebCrypto Interface
@@ -13,6 +15,8 @@ export class WebCrypto implements Crypto, RandomSource {
 
     public subtle: SubtleCrypto = null;
 
+    keyStorage: KeyStorage;
+
     /**
      * Generates cryptographically random values
      * @param  {ArrayBufferView} array
@@ -20,6 +24,10 @@ export class WebCrypto implements Crypto, RandomSource {
      */
     getRandomValues(array: ArrayBufferView): ArrayBufferView {
         return new Uint8Array(this.session.generateRandom(array.byteLength));
+    }
+
+    getGUID() {
+        return utils.GUID(this.session);
     }
 
     /**
@@ -38,6 +46,7 @@ export class WebCrypto implements Crypto, RandomSource {
             Mechanism.vendor(props.vendors[i]);
         }
         this.subtle = new P11SubtleCrypto(this.session);
+        this.keyStorage = new KeyStorage(this.session);
     }
 
     /**
