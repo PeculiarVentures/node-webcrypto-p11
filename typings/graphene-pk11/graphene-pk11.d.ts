@@ -2270,6 +2270,12 @@ declare module "graphene-pk11" {
          */
         create(template: ITemplate): SessionObject;
         /**
+         * Copies an object, creating a new object for the copy
+         * @param {SessionObject} object the copied object
+         * @param {ITemplate} template template for new object
+         */
+        copy(object: SessionObject, template: ITemplate): SessionObject
+        /**
          * removes all session objects matched to template
          * - if template is null, removes all session objects
          * - returns a number of destroied session objects
