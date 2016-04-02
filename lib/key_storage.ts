@@ -57,7 +57,7 @@ export class KeyStorage {
         // don't copy object from token
         if (!_key.key.token) {
             this.session.copy(_key.key, {
-                token: false,
+                token: true,
                 id: new Buffer(key),
                 label: JSON.stringify(data.algorithm)
             });
