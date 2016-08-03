@@ -64,13 +64,7 @@ export abstract class AlgorithmBase {
             let p11Alg = this.wc2pk11(alg, key);
 
             let signer = session.createSign(p11Alg, (<P11CryptoKey>key).key);
-            signer.update(data, (err: Error) => {
-                if (err)
-                    callback(err, null);
-                else
-                    signer.final(callback);
-            });
-
+            signer.once(data, callback);
         } catch (e) {
             callback(e, null);
         }
@@ -86,12 +80,7 @@ export abstract class AlgorithmBase {
             let p11Alg = this.wc2pk11(alg, key);
 
             let signer = session.createVerify(p11Alg, (<P11CryptoKey>key).key);
-            signer.update(data, (err: Error) => {
-                if (err)
-                    callback(err, null);
-                else
-                    signer.final(signature, callback);
-            });
+            signer.once(data, signature, callback);
 
         } catch (e) {
             callback(e, null);
@@ -109,23 +98,7 @@ export abstract class AlgorithmBase {
             let cipher = session.createCipher(p11Alg, (<P11CryptoKey>key).key);
             let msg = new Buffer(0);
             // update
-            cipher.update(data, (err, enc) => {
-                if (err)
-                    callback(err, null);
-                else {
-                    msg = enc;
-                    // final
-                    cipher.final((err, enc) => {
-                        if (err)
-                            callback(err, null);
-                        else {
-                            // return
-                            msg = Buffer.concat([msg, enc]);
-                            callback(null, msg);
-                        }
-                    });
-                }
-            });
+            cipher.once(data, new Buffer(data.length + 4096), callback);
         }
         catch (e) {
             callback(e, null);
@@ -143,23 +116,7 @@ export abstract class AlgorithmBase {
             let cipher = session.createDecipher(p11Alg, (<P11CryptoKey>key).key);
             let msg = new Buffer(0);
             // update
-            cipher.update(data, (err, enc) => {
-                if (err)
-                    callback(err, null);
-                else {
-                    msg = enc;
-                    // final
-                    cipher.final((err, enc) => {
-                        if (err)
-                            callback(err, null);
-                        else {
-                            // return
-                            msg = Buffer.concat([msg, enc]);
-                            callback(null, msg);
-                        }
-                    });
-                }
-            });
+            cipher.once(data, new Buffer(data.length + 4096), callback);
         }
         catch (e) {
             callback(e, null);
@@ -168,7 +125,7 @@ export abstract class AlgorithmBase {
 
     static wrapKey(session: Session, format: string, key: CryptoKey, wrappingKey: CryptoKey, alg: Algorithm, callback: (err: Error, wkey: Buffer) => void): void {
         try {
-        let that = this;
+            let that = this;
             let KeyClass: IAlgorithmBase = null;
             switch (key.algorithm.name.toUpperCase()) {
                 case aes.ALG_NAME_AES_CBC:

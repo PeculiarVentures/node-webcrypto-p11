@@ -15,7 +15,7 @@
     "typescript": "^1.8.2"
   },
   "dependencies": {
-    "graphene-pk11": "^2.0.0",
+    "graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
     "base64url": "^1.0.6"
   },
   "keywords": [

@@ -46,7 +46,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
 
     generateKey(algorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
         let that = this;
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
 
             let AlgClass: alg.IAlgorithmBase = null;
@@ -87,7 +87,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     sign(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
 
             let _data: Buffer = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
@@ -119,7 +119,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     verify(algorithm: string | Algorithm, key: CryptoKey, signature: ArrayBufferView, data: ArrayBufferView): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _signature = ab2b(signature);
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
@@ -150,7 +150,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     encrypt(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
 
@@ -180,7 +180,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     decrypt(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
 
@@ -210,7 +210,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _alg = prepare_algorithm(wrapAlgorithm);
             let KeyClass: alg.IAlgorithmBase;
             switch (_alg.name) {
@@ -239,7 +239,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     unwrapKey(format: string, wrappedKey: ArrayBufferView, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let KeyClass: alg.IAlgorithmBase;
             switch (unwrappingKey.algorithm.name) {
                 case aes.ALG_NAME_AES_CBC:
@@ -267,7 +267,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     deriveKey(algorithm: string | Algorithm, baseKey: CryptoKey, derivedKeyType: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _alg1 = prepare_algorithm(algorithm);
             let _alg2 = prepare_algorithm(derivedKeyType);
 
@@ -291,7 +291,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     exportKey(format: string, key: CryptoKey): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let KeyClass: alg.IAlgorithmBase;
             switch (key.algorithm.name) {
                 case aes.ALG_NAME_AES_CBC:
@@ -335,7 +335,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
     importKey(format: string, keyData: any, algorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
         let that = this;
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let _alg = prepare_algorithm(algorithm);
             let KeyClass: alg.IAlgorithmBase;
             switch (_alg.name) {
@@ -381,14 +381,14 @@ export class P11SubtleCrypto implements SubtleCrypto {
 
     deriveBits(algorithm: string | Algorithm, baseKey: CryptoKey, length: number): any {
         let that = this;
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             reject(new Error("Method is not implemented"));
         });
     }
 
     digest(algorithm: string | Algorithm, data: ArrayBufferView): any {
         let that = this;
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             let alg = prepare_algorithm(algorithm);
             let hashAlg = alg.name.toUpperCase();
             switch (hashAlg) {
@@ -401,16 +401,11 @@ export class P11SubtleCrypto implements SubtleCrypto {
             }
             let digest = that.session.createDigest(hashAlg);
             let buf = ab2b(data);
-            digest.update(buf, (err) => {
+            digest.once(buf, (err, md) => {
                 if (err)
                     reject(err);
                 else
-                    digest.final((err, md) => {
-                        if (err)
-                            reject(err);
-                        else
-                            resolve(b2ab(md));
-                    });
+                    resolve(b2ab(md));
             });
         });
     }
