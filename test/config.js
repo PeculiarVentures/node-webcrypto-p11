@@ -1,5 +1,5 @@
 module.exports = {
-	library: "/usr/lib/softhsm/libsofthsm.so",
+	library: "/usr/lib/libsofthsm.so",
 	name: "SoftHSM",
 	slot: 0,
     sessionFlags: 4, // SERIAL_SESSION
