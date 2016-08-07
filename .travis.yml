@@ -3,7 +3,7 @@ node_js:
   - "6"
   - "5"
   - "4"
-  
+
 env:
   - CXX=clang
 
@@ -30,12 +30,18 @@ os:
 osx_image: xcode7.2
 
 before_install:
+  - export TSD_GITHUB_TOKEN=8591f447276e1caa1b9636b9c8053d768130464f
   - node --version
   - npm --version
   - gcc --version
+  - npm install node-gyp -g
+  - npm install typescript -g
+  - npm install tsd -g
+  - npm install mocha -g
 
 script:
   - npm install
+  - npm test
 
 cache:
   directories:
