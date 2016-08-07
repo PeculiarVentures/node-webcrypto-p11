@@ -15,6 +15,7 @@
 	"dependencies": {
 		"graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
 		"base64url": "^1.0.6",
+		"ref": "latest",
 		"typescript": "latest",
 		"tsd": "latest"
 	},
