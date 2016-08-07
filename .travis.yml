@@ -38,6 +38,7 @@ before_install:
   - echo 0:${PWD}/softhsm.db > ${SOFTHSM_CONF}
   - sudo apt-get install softhsm
   - softhsm --init-token --slot 0 --label token_label --pin 6789 --so-pin 12345
+  - find / -name "libsofthsm.so"
 
 script:
   - npm install
