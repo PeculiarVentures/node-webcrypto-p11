@@ -16,6 +16,8 @@
 		"graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
 		"base64url": "^1.0.6",
 		"ref": "latest",
+		"ref-array": "latest",
+		"ref-struct": "latest",
 		"typescript": "latest",
 		"tsd": "latest"
 	},
