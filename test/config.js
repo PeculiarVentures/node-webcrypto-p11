@@ -3,5 +3,5 @@ module.exports = {
 	name: "SoftHSM",
 	slot: 0,
     sessionFlags: 4, // SERIAL_SESSION
-	pin: "12345"
+	pin: "6789"
 }
