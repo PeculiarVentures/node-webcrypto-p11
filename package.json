@@ -5,7 +5,7 @@
 	"main": "built/webcrypto.js",
 	"scripts": {
 		"test": "mocha",
-		"install": "node-gyp rebuild && tsd install && tsc",
+		"install": "tsd install && tsc",
 		"pub": "npm version patch && npm publish && git push",
 		"sync": "git ac && git pull --rebase && git push"
 	},
@@ -17,8 +17,7 @@
 		"graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
 		"base64url": "^1.0.6",
 		"typescript": "latest",
-		"tsd": "latest",
-		"node-gyp": "latest"
+		"tsd": "latest"
 	},
 	"devDependencies": {
 		"mocha": "latest"
