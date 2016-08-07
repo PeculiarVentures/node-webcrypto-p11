@@ -17,7 +17,8 @@
 		"graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
 		"base64url": "^1.0.6",
 		"typescript": "latest",
-		"tsd": "latest"
+		"tsd": "latest",
+		"node-gyp": "latest"
 	},
 	"devDependencies": {
 		"mocha": "latest"
