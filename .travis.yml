@@ -34,6 +34,8 @@ before_install:
   - node --version
   - npm --version
   - gcc --version
+  - apt-get install softhsm
+  - softhsm2-util --init-token --slot 0 --label "My token 1"
 
 script:
   - npm install
