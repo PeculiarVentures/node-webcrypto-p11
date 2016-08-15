@@ -13,8 +13,8 @@
 		"url": "git+https://github.com/PeculiarVentures/node-webcrypto-p11.git"
 	},
 	"dependencies": {
-		"graphene-pk11": "git://github.com/PeculiarVentures/graphene.git",
-		"base64url": "^1.0.6",
+		"graphene-pk11": "latest",
+		"base64url": "latest",
 		"ffi": "latest",
 		"ref": "latest",
 		"ref-array": "latest",
