@@ -73,57 +73,14 @@ git clone https://github.com/PeculiarVentures/node-webcrypto-p11
 cd node-webcrypto-p11
 ```
 
-### Install Dependencies
-- typescript (TypeScript compiler)
-- tsd (TypeScript Defenition compiler)
-- mocha (test)
-
-```
-npm install typescript -g
-npm install tsd -g
-npm install mocha -g
-```
-
 ### Install SoftHSM2
 
 **NOTE**: SoftHSM2 is optional, the bellow steps assume Ubuntu
 
-* Install SoftHSM2
-
-    `apt-get install softhsm`
-
-* Initialize the first slot
-
-    `softhsm2-util --init-token --slot 0 --label "My token 1"`
-
-* The PKCS1 #11 module you can now use can be found here:
-
-  `/usr/local/lib/softhsm/libsofthsm.so`
-  
-* Adjust permissions so the user your code will be able to access the PKCS #11 module:
-
-  ```
-  sudo chmod –R 755 /var/lib/softhsm
-  sudo chmod –R 755 /usr/local/lib/softhsm
-  chown root:softhsmusers /var/lib/softhsm
-  chown root:softhsmusers /usr/local/lib/softhsm
-  ```
+For OSX see the [instructions here](https://github.com/opendnssec/SoftHSMv2/blob/develop/OSX-NOTES.md)
+For linux [instructions here](https://github.com/opendnssec/SoftHSMv2/blob/develop/README.md)
  
-  **NOTE**: This may be more generous than needed. It works out to : 0755 = User:rwx Group:r-x World:r-x. 
-
-### Install Graphene
-```
-cd node_modules
-// Remove graphene-pk11
-rm -rf graphene-pk11
-// download and setup new version of graphene
-git clone https://github.com/PeculiarVentures/graphene.git graphene-pk11
-cd graphene-pk11
-npm install
-// Move to root
-cd ../../
-```
-
+ 
 ### Install 
 
 ```                          
