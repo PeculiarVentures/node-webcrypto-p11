@@ -1,7 +1,7 @@
 module.exports = {
-	library: "/usr/lib/libsofthsm.so",
-	name: "SoftHSM",
+	library: "/usr/local/lib/softhsm/libsofthsm2.so",
+	name: "SoftHSMv2",
 	slot: 0,
     sessionFlags: 4, // SERIAL_SESSION
-	pin: "6789"
+	pin: "12345"
 }
