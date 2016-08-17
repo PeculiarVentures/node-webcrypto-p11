@@ -12,7 +12,7 @@ import {
     RsaOaepParams,
     RsaMgf} from "graphene-pk11";
 import * as error from "../error";
-import * as base64url from "base64url";
+import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
@@ -152,8 +152,8 @@ abstract class Rsa extends AlgorithmBase {
                 alg: alg,
                 ext: true,
                 key_ops: key.usages,
-                e: base64url(pkey.publicExponent),
-                n: base64url(pkey.modulus)
+                e: Base64Url.encode(pkey.publicExponent),
+                n: Base64Url.encode(pkey.modulus)
             };
             callback(null, jwk);
         }
@@ -181,14 +181,14 @@ abstract class Rsa extends AlgorithmBase {
                 alg: alg,
                 ext: true,
                 key_ops: key.usages,
-                e: base64url(pkey.publicExponent),
-                n: base64url(pkey.modulus),
-                d: base64url(pkey.privateExponent),
-                p: base64url(pkey.prime1),
-                q: base64url(pkey.prime2),
-                dp: base64url(pkey.exp1),
-                dq: base64url(pkey.exp2),
-                qi: base64url(pkey.coefficient)
+                e: Base64Url.encode(pkey.publicExponent),
+                n: Base64Url.encode(pkey.modulus),
+                d: Base64Url.encode(pkey.privateExponent),
+                p: Base64Url.encode(pkey.prime1),
+                q: Base64Url.encode(pkey.prime2),
+                dp: Base64Url.encode(pkey.exp1),
+                dq: Base64Url.encode(pkey.exp2),
+                qi: Base64Url.encode(pkey.coefficient)
             };
             callback(null, jwk);
         }
@@ -217,14 +217,14 @@ abstract class Rsa extends AlgorithmBase {
     static importJwkPrivateKey(session: Session, jwk: IJwkRsaPrivateKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
             let template = create_template(session, algorithm, extractable, keyUsages).privateKey;
-            template.publicExponent = base64url.toBuffer(jwk.e);
-            template.modulus = base64url.toBuffer(jwk.n);
-            template.privateExponent = base64url.toBuffer(jwk.d);
-            template.prime1 = base64url.toBuffer(jwk.p);
-            template.prime2 = base64url.toBuffer(jwk.q);
-            template.exp1 = base64url.toBuffer(jwk.dp);
-            template.exp2 = base64url.toBuffer(jwk.dq);
-            template.coefficient = base64url.toBuffer(jwk.qi);
+            template.publicExponent = Base64Url.decode(jwk.e);
+            template.modulus = Base64Url.decode(jwk.n);
+            template.privateExponent = Base64Url.decode(jwk.d);
+            template.prime1 = Base64Url.decode(jwk.p);
+            template.prime2 = Base64Url.decode(jwk.q);
+            template.exp1 = Base64Url.decode(jwk.dp);
+            template.exp2 = Base64Url.decode(jwk.dq);
+            template.coefficient = Base64Url.decode(jwk.qi);
             let p11key = session.create(template);
             callback(null, new P11CryptoKey(<any>p11key, algorithm));
         }
@@ -236,8 +236,8 @@ abstract class Rsa extends AlgorithmBase {
     static importJwkPublicKey(session: Session, jwk: IJwkRsaPublicKey, algorithm: IRsaKeyGenAlgorithm, extractable: boolean, keyUsages: string[], callback: (err: Error, key: CryptoKey) => void) {
         try {
             let template = create_template(session, algorithm, extractable, keyUsages).publicKey;
-            template.publicExponent = base64url.toBuffer(jwk.e);
-            template.modulus = base64url.toBuffer(jwk.n);
+            template.publicExponent = Base64Url.decode(jwk.e);
+            template.modulus = Base64Url.decode(jwk.n);
             let p11key = session.create(template);
             callback(null, new P11CryptoKey(<any>p11key, algorithm));
         }

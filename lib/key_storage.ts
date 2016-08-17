@@ -2,7 +2,7 @@ import {SessionObject, Session, Key, KeyType} from "graphene-pk11";
 import {WebCryptoError} from "./error";
 import {P11CryptoKey} from "./key";
 
-export class KeyStorage {
+export class P11KeyStorage implements NodeKeyStorage {
 
     protected session: Session;
 
@@ -52,7 +52,7 @@ export class KeyStorage {
 
     setItem(key: string, data: CryptoKey): void {
         if (!(data instanceof P11CryptoKey))
-            throw new WebCryptoError("Parameter 2 isnot P11CryptoKey");
+            throw new WebCryptoError("Parameter 2 is not P11CryptoKey");
         let _key = data as P11CryptoKey;
         // don't copy object from token
         if (!_key.key.token) {

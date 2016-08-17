@@ -6,15 +6,7 @@ var WebCrypto = crypto.WebCrypto;
 describe("RSA", function () {
     var webcrypto;
     
-    function s2ab(text) {
-        var uint = new Uint8Array(text.length);
-        for (var i = 0, j = text.length; i < j; ++i) {
-            uint[i] = text.charCodeAt(i);
-        }
-        return uint;
-    }
-    
-    var TEST_MESSAGE = s2ab("1234567890123456");
+    var TEST_MESSAGE = new Buffer("1234567890123456");
 
     before(function (done) {
         webcrypto = new WebCrypto(config);
@@ -149,12 +141,13 @@ describe("RSA", function () {
             return webcrypto.subtle.decrypt({name: "RSA-OAEP"}, key.privateKey, enc);
         })
         .then(function(dec){
-            assert.equal(dec.toString(), TEST_MESSAGE.toString(), "Rsa OAEP encrypt/decrypt is not valid")
+            assert.equal(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "Rsa OAEP encrypt/decrypt is not valid")
         })
         .then(done, done);
     })
     
     function test_wrap(format, done){
+        if (config.isSoftHSM()) return done();
         var key = null;
         var skey = null;
         webcrypto.subtle.generateKey({

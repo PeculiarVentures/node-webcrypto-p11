@@ -1,6 +1,6 @@
 import {Session, IAlgorithm, AesGcmParams, SecretKey, KeyGenMechanism, MechanismEnum, Key, ITemplate, ObjectClass, KeyType} from "graphene-pk11";
 import * as error from "../error";
-import * as base64url from "base64url";
+import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
@@ -101,7 +101,7 @@ abstract class Aes extends AlgorithmBase {
                     let aes: string = /AES-(\w+)/.exec((<IAesKeyGenAlgorithm>key.algorithm).name)[1];
                     let jwk: IJwkSecret = {
                         kty: "oct",
-                        k: base64url.encode(vals.value),
+                        k: Base64Url.encode(vals.value),
                         alg: `A${vals.valueLen * 8}${aes}`,
                         ext: true
                     };
@@ -121,7 +121,7 @@ abstract class Aes extends AlgorithmBase {
             // get key value
             let value: Buffer;
             if (format === "jwk")
-                value = base64url.toBuffer((<IJwkSecret>keyData).k);
+                value = Base64Url.decode((<IJwkSecret>keyData).k);
             else
                 value = <Buffer>keyData;
 

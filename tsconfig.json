@@ -1,13 +1,25 @@
 {
-        "compilerOptions": {
-                "module": "commonjs",
-                "target": "es5",
-                "outDir": "built",
-                "rootDir": "lib",
-                "noImplicitAny": true,
-                "removeComments": true
-        },
-        "exclude":[
-                "node_modules", "built"
-        ]
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "outDir": "built",
+        "rootDir": "lib",
+        "noImplicitAny": true,
+        "removeComments": true
+    },
+    "files": [
+        "typings/index.d.ts",
+        "lib/typings/promise.d.ts",
+        "lib/typings/node-webcrypto.d.ts",
+        "lib/error.ts",
+        "lib/algs/aes.ts",
+        "lib/algs/alg.ts",
+        "lib/algs/ec.ts",
+        "lib/algs/rsa.ts",
+        "lib/key.ts",
+        "lib/key_storage.ts",
+        "lib/subtlecrypto.ts",
+        "lib/utils.ts",
+        "lib/webcrypto.ts"
+    ]
 }

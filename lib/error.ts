@@ -28,8 +28,9 @@ export class WebCryptoError extends Error {
     constructor(template: string, ...args: any[]) {
         super();
         this.message = printf.apply(this, arguments);
-
-        this.stack = (new Error(this.message)).stack;
+        const error = new Error(this.message);
+        this.name = (this as any).constructor.name;
+        this.stack = error.stack;
     }
 }
 

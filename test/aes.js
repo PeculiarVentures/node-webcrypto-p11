@@ -6,15 +6,7 @@ var WebCrypto = crypto.WebCrypto;
 describe("Aes", function () {
     var webcrypto;
 
-    function s2ab(text) {
-        var uint = new Uint8Array(text.length);
-        for (var i = 0, j = text.length; i < j; ++i) {
-            uint[i] = text.charCodeAt(i);
-        }
-        return uint;
-    }
-
-    var TEST_MESSAGE = s2ab("1234567890123456");
+    var TEST_MESSAGE = new Buffer("1234567890123456");
 
     before(function (done) {
         webcrypto = new WebCrypto(config);
@@ -28,6 +20,8 @@ describe("Aes", function () {
     })
 
     it("Aes GCM", function (done) {
+        if (config.isSoftHSM()) return done();
+
         var key = null;
         var iv = webcrypto.getRandomValues(new Uint8Array(12));
         webcrypto.subtle.generateKey({
@@ -36,7 +30,7 @@ describe("Aes", function () {
         },
             false, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -57,7 +51,7 @@ describe("Aes", function () {
                     },
                     key, //from generateKey or importKey above
                     TEST_MESSAGE //ArrayBuffer of data you want to encrypt
-                    )
+                )
             })
             .then(function (enc) {
                 assert.equal(enc !== null, true, "Has no encrypted value");
@@ -71,10 +65,10 @@ describe("Aes", function () {
                     },
                     key, //from generateKey or importKey above
                     enc //ArrayBuffer of the data
-                    );
+                );
             })
             .then(function (dec) {
-                assert.equal(dec.toString(), TEST_MESSAGE.toString(), "AES-GCM encrypt/decrypt is not valid")
+                assert.equal(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "AES-GCM encrypt/decrypt is not valid")
             })
             .then(done, done);
     })
@@ -88,7 +82,7 @@ describe("Aes", function () {
         },
             false, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -102,7 +96,7 @@ describe("Aes", function () {
                     },
                     key, //from generateKey or importKey above
                     TEST_MESSAGE //ArrayBuffer of data you want to encrypt
-                    )
+                )
             })
             .then(function (enc) {
                 assert.equal(enc !== null, true, "Has no encrypted value");
@@ -114,9 +108,10 @@ describe("Aes", function () {
                     },
                     key, //from generateKey or importKey above
                     enc //ArrayBuffer of the data
-                    );
+                );
             })
             .then(function (dec) {
+                dec = new Buffer(dec);
                 assert.equal(dec.toString(), TEST_MESSAGE.toString(), "AES-CBC encrypt/decrypt is not valid")
             })
             .then(done, done);
@@ -130,7 +125,7 @@ describe("Aes", function () {
         },
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -151,7 +146,7 @@ describe("Aes", function () {
                     },
                     true,
                     ["encrypt", "decrypt"]
-                    );
+                );
             })
             .then(function (key) {
                 assert.equal(!!key, true);
@@ -168,7 +163,7 @@ describe("Aes", function () {
         },
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -181,13 +176,13 @@ describe("Aes", function () {
                 k = raw;
                 return webcrypto.subtle.importKey(
                     "raw",
-                    raw,
+                    new Uint8Array(raw),
                     {
                         name: "AES-CBC",
                     },
                     true,
                     ["encrypt", "decrypt"]
-                    );
+                );
             })
             .then(function (key) {
                 assert.equal(!!key, true);
@@ -210,7 +205,7 @@ describe("Aes", function () {
         },
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -241,14 +236,14 @@ describe("Aes", function () {
                     },
                     true, //whether the key is extractable (i.e. can be used in exportKey)
                     ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
-                    )
+                )
             })
             .then(function (key) {
                 assert.equal(!!key, true);
             })
             .then(done, done);
     })
-    
+
     it("AES wrap/unwrap raw", function (done) {
         var key = null;
         var iv = webcrypto.getRandomValues(new Uint8Array(16));
@@ -258,7 +253,7 @@ describe("Aes", function () {
         },
             true, //whether the key is extractable (i.e. can be used in exportKey)
             ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-            )
+        )
             .then(function (k) {
                 assert.equal(k.key !== null, true, "Has no key value");
                 key = k;
@@ -289,7 +284,7 @@ describe("Aes", function () {
                     },
                     true, //whether the key is extractable (i.e. can be used in exportKey)
                     ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
-                    )
+                )
             })
             .then(function (key) {
                 assert.equal(!!key, true);

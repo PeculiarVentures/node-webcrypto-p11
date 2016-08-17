@@ -7,15 +7,7 @@ describe("Subtle", function() {
     var webcrypto;
     var keys;
 
-    function s2ab(text) {
-        var uint = new Uint8Array(text.length);
-        for (var i = 0, j = text.length; i < j; ++i) {
-            uint[i] = text.charCodeAt(i);
-        }
-        return uint;
-    }
-
-    var TEST_MESSAGE = s2ab("1234567890123456");
+    var TEST_MESSAGE = new Buffer("1234567890123456");
 
     before(function(done) {
         webcrypto = new WebCrypto(config);
@@ -31,7 +23,7 @@ describe("Subtle", function() {
     function test_digest(alg, mdlen, done) {
         webcrypto.subtle.digest(alg, TEST_MESSAGE)
             .then(function(digest) {
-                assert.equal(digest.length, mdlen);
+                assert.equal(digest.byteLength, mdlen);
             })
             .then(done, done);
     }

@@ -1,4 +1,4 @@
 /.vscode
+/built
 /node_modules
-/src
-/test/config.js
+/typings

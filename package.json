@@ -1,10 +1,17 @@
 {
 	"name": "node-webcrypto-p11",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A WebCrypto Polyfill built on PKCS11",
 	"main": "built/webcrypto.js",
+	"engineStrict": true,
+	"engines": {
+		"node": ">=6.0.0",	
+		"typescript": ">=1.8.0",	
+		"typings": ">=1.0.0"	
+	},
 	"scripts": {
 		"test": "mocha",
+		"build": "typings install && tsc",
 		"pub": "npm version patch && npm publish && git push",
 		"sync": "git ac && git pull --rebase && git push"
 	},
@@ -14,24 +21,20 @@
 	},
 	"dependencies": {
 		"graphene-pk11": "latest",
-		"base64url": "latest",
-		"ffi": "latest",
-		"ref": "latest",
-		"ref-array": "latest",
-		"ref-struct": "latest",
-		"typescript": "latest",
-		"tsd": "latest"
-	},
-	"devDependencies": {
-		"mocha": "latest"
+		"base64url": "latest"
 	},
 	"keywords": [
 		"crypto",
 		"graphene",
-		"webcrypto"
+		"webcrypto",
+		"pkcs11",
+		"rsa",
+		"aes",
+		"ec",
+		"digest"
 	],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/PeculiarVentures/node-webcrypto-p11/issues"
 	},

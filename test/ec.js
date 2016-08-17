@@ -29,7 +29,7 @@ describe("EC", function() {
     })
 
     it("Ecdsa", function(done) {
-
+        if (config.isSoftHSM()) return done();
         var key = null;
         webcrypto.subtle.generateKey(
             {
@@ -60,7 +60,7 @@ describe("EC", function() {
                         hash: { name: "SHA-256" }, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
                     },
                     key.publicKey,
-                    sig,
+                    new Uint8Array(sig),
                     TEST_MESSAGE
                 )
             })

@@ -4,7 +4,7 @@ import * as error from "../error";
 
 export type KeyUsages = "sign" | "verify" | "encrypt" | "decrypt" | "wrapKey" | "unwrapKey" | "deriveKey";
 
-export interface IJwk {
+export interface IJwk extends JWK {
     kty: string;
     ext: boolean;
     usage?: string;

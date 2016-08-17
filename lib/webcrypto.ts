@@ -1,12 +1,12 @@
 import {Module, Mechanism, Session, Slot, SessionFlag} from "graphene-pk11";
 import {P11SubtleCrypto} from "./subtlecrypto";
-import {KeyStorage} from "./key_storage";
+import {P11KeyStorage} from "./key_storage";
 import * as utils from "./utils";
 
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class WebCrypto implements Crypto, RandomSource {
+export class WebCrypto implements NodeCrypto {
 
     private module: Module;
     private session: Session;
@@ -15,7 +15,7 @@ export class WebCrypto implements Crypto, RandomSource {
 
     public subtle: SubtleCrypto = null;
 
-    keyStorage: KeyStorage;
+    keyStorage: P11KeyStorage;
 
     /**
      * Generates cryptographically random values
@@ -46,7 +46,7 @@ export class WebCrypto implements Crypto, RandomSource {
             Mechanism.vendor(props.vendors[i]);
         }
         this.subtle = new P11SubtleCrypto(this.session);
-        this.keyStorage = new KeyStorage(this.session);
+        this.keyStorage = new P11KeyStorage(this.session);
     }
 
     /**

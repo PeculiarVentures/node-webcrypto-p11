@@ -15,7 +15,7 @@ import {
     EcKdf} from "graphene-pk11";
 import * as error from "../error";
 import * as aes from "./aes";
-import * as base64url from "base64url";
+import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
@@ -187,8 +187,8 @@ export class Ec extends AlgorithmBase {
                 crv: (<IEcKeyGenAlgorithm>key.algorithm).namedCurve,
                 ext: true,
                 key_ops: key.usages,
-                x: base64url(ecPoint.x),
-                y: base64url(ecPoint.y),
+                x: Base64Url.encode(ecPoint.x),
+                y: Base64Url.encode(ecPoint.y),
             };
             callback(null, jwk);
         }
@@ -208,7 +208,7 @@ export class Ec extends AlgorithmBase {
                 crv: (<IEcKeyGenAlgorithm>key.algorithm).namedCurve,
                 ext: true,
                 key_ops: key.usages,
-                d: base64url(pkey.value)
+                d: Base64Url.encode(pkey.value)
             };
             callback(null, jwk);
         }
@@ -239,7 +239,7 @@ export class Ec extends AlgorithmBase {
             let namedCurve = this.getNamedCurve(jwk.crv);
             let template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.paramsEC = namedCurve.value;
-            template.value = base64url.toBuffer(jwk.d);
+            template.value = Base64Url.decode(jwk.d);
             let p11key = session.create(template);
             callback(null, new P11CryptoKey(<any>p11key, algorithm));
         }
@@ -253,7 +253,7 @@ export class Ec extends AlgorithmBase {
             let namedCurve = this.getNamedCurve(jwk.crv);
             let template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.paramsEC = namedCurve.value;
-            let pointEc = EcUtils.encodePoint({ x: base64url.toBuffer(jwk.x), y: base64url.toBuffer(jwk.y) }, namedCurve);
+            let pointEc = EcUtils.encodePoint({ x: Base64Url.decode(jwk.x), y: Base64Url.decode(jwk.y) }, namedCurve);
             template.pointEC = pointEc;
             let p11key = session.create(template);
             callback(null, new P11CryptoKey(<any>p11key, algorithm));

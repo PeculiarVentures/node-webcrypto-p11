@@ -1,5 +1,3 @@
-/// <reference path="./promise.d.ts" />
-
 import * as graphene from "graphene-pk11";
 import {P11CryptoKey} from "./key";
 
@@ -13,7 +11,7 @@ import * as ec from "./algs/ec";
 /**
  * converts alg to Algorithm
  */
-function prepare_algorithm(alg: string | Algorithm): Algorithm {
+function prepare_algorithm(alg: TAlgorithm): Algorithm {
     let _alg: Algorithm = (typeof alg === "string") ? { name: alg } : alg;
     if (typeof _alg !== "object")
         throw new error.AlgorithmError(`Algorithm must be an Object`);
@@ -27,26 +25,23 @@ function prepare_algorithm(alg: string | Algorithm): Algorithm {
  * @param ab ArrayBuffer value wich must be converted to Buffer
  */
 function ab2b(data: ArrayBufferView) {
-    return new Buffer(new Uint8Array(data.buffer));
+    return new Buffer(data as Uint8Array);
 }
 
-function b2ab(data: Buffer): ArrayBufferView {
-    let ab = new Uint8Array(data.length);
-    for (let i = 0; i < data.length; i++)
-        ab[i] = data[i];
-    return ab;
+function b2ab(data: Buffer): ArrayBuffer {
+    return data.buffer;
 }
 
-export class P11SubtleCrypto implements SubtleCrypto {
+export class P11SubtleCrypto implements NodeSubtleCrypto {
     protected session: graphene.Session;
 
     constructor(session: graphene.Session) {
         this.session = session;
     }
 
-    generateKey(algorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
+    generateKey(algorithm: TAlgorithm, extractable: boolean, keyUsages: string[]) {
         let that = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise<CryptoKey | CryptoKeyPair>((resolve, reject) => {
             let _alg = prepare_algorithm(algorithm);
 
             let AlgClass: alg.IAlgorithmBase = null;
@@ -84,10 +79,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    sign(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
+    sign(algorithm: TAlgorithm, key: CryptoKey, data: NodeCryptoBuffer) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
 
             let _data: Buffer = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
@@ -116,10 +111,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    verify(algorithm: string | Algorithm, key: CryptoKey, signature: ArrayBufferView, data: ArrayBufferView): any {
+    verify(algorithm: TAlgorithm, key: CryptoKey, signature: NodeCryptoBuffer, data: NodeCryptoBuffer) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<boolean>((resolve, reject) => {
             let _signature = ab2b(signature);
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
@@ -147,10 +142,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    encrypt(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
+    encrypt(algorithm: TAlgorithm, key: CryptoKey, data: NodeCryptoBuffer) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
 
@@ -177,10 +172,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    decrypt(algorithm: string | Algorithm, key: CryptoKey, data: ArrayBufferView): any {
+    decrypt(algorithm: TAlgorithm, key: CryptoKey, data: ArrayBufferView) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
             let _data = ab2b(data);
             let _alg = prepare_algorithm(algorithm);
 
@@ -207,10 +202,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): any {
+    wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: TAlgorithm) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
             let _alg = prepare_algorithm(wrapAlgorithm);
             let KeyClass: alg.IAlgorithmBase;
             switch (_alg.name) {
@@ -236,10 +231,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    unwrapKey(format: string, wrappedKey: ArrayBufferView, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
+    unwrapKey(format: string, wrappedKey: NodeCryptoBuffer, unwrappingKey: CryptoKey, unwrapAlgorithm: TAlgorithm, unwrappedKeyAlgorithm: TAlgorithm, extractable: boolean, keyUsages: string[]) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<CryptoKey>((resolve, reject) => {
             let KeyClass: alg.IAlgorithmBase;
             switch (unwrappingKey.algorithm.name) {
                 case aes.ALG_NAME_AES_CBC:
@@ -264,10 +259,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    deriveKey(algorithm: string | Algorithm, baseKey: CryptoKey, derivedKeyType: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
+    deriveKey(algorithm: TAlgorithm, baseKey: CryptoKey, derivedKeyType: TAlgorithm, extractable: boolean, keyUsages: string[]) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<CryptoKey>((resolve, reject) => {
             let _alg1 = prepare_algorithm(algorithm);
             let _alg2 = prepare_algorithm(derivedKeyType);
 
@@ -288,10 +283,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    exportKey(format: string, key: CryptoKey): any {
+    exportKey(format: string, key: CryptoKey) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<JWK | ArrayBuffer>((resolve, reject) => {
             let KeyClass: alg.IAlgorithmBase;
             switch (key.algorithm.name) {
                 case aes.ALG_NAME_AES_CBC:
@@ -315,14 +310,13 @@ export class P11SubtleCrypto implements SubtleCrypto {
                 default:
                     throw new error.AlgorithmError(error.ERROR_WRONG_ALGORITHM, key.algorithm.name);
             }
-            KeyClass.exportKey(that.session, format, key, (err: Error, data: any) => {
+            KeyClass.exportKey(that.session, format, key, (err, data) => {
                 if (err)
                     reject(err);
                 else {
                     if (Buffer.isBuffer(data)) {
                         // raw | spki | pkcs8
-                        let ubuf = new Uint8Array(data);
-                        resolve(ubuf);
+                        resolve(data.buffer);
                     }
                     else
                         // jwk
@@ -332,10 +326,10 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    importKey(format: string, keyData: any, algorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): any {
+    importKey(format: string, keyData: JWK | NodeCryptoBuffer, algorithm: TAlgorithm, extractable: boolean, keyUsages: string[]) {
         let that = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise<CryptoKey>((resolve, reject) => {
             let _alg = prepare_algorithm(algorithm);
             let KeyClass: alg.IAlgorithmBase;
             switch (_alg.name) {
@@ -362,7 +356,7 @@ export class P11SubtleCrypto implements SubtleCrypto {
             }
 
             let data: any;
-            if (ArrayBuffer.isView(keyData)) {
+            if (keyData instanceof ArrayBuffer || ArrayBuffer.isView(keyData)) {
                 // raw | pkcs8 | spki
                 data = ab2b(keyData);
             }
@@ -379,16 +373,16 @@ export class P11SubtleCrypto implements SubtleCrypto {
         });
     }
 
-    deriveBits(algorithm: string | Algorithm, baseKey: CryptoKey, length: number): any {
+    deriveBits(algorithm: TAlgorithm, baseKey: CryptoKey, length: number) {
         let that = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
             reject(new Error("Method is not implemented"));
         });
     }
 
-    digest(algorithm: string | Algorithm, data: ArrayBufferView): any {
+    digest(algorithm: TAlgorithm, data: NodeCryptoBuffer) {
         let that = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise<ArrayBuffer>((resolve, reject) => {
             let alg = prepare_algorithm(algorithm);
             let hashAlg = alg.name.toUpperCase();
             switch (hashAlg) {
