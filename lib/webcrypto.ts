@@ -6,7 +6,7 @@ import * as utils from "./utils";
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class WebCrypto implements NodeCrypto {
+class WebCrypto implements NodeCrypto {
 
     private module: Module;
     private session: Session;
@@ -84,3 +84,4 @@ interface P11WebCryptoParams extends Object {
      */
     vendors?: string[];
 }
+module.exports = WebCrypto;

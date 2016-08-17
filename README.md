@@ -13,7 +13,7 @@ We then thought that in most cases others did not care about interacting with th
 
 For example to generate a key you this is all it takes:
 
-```
+```javascript
 var config = {
     library: "/usr/local/lib/softhsm/libsofthsm2.so",
     name: "SoftHSM v2.0",
@@ -22,7 +22,7 @@ var config = {
     pin: "12345"
 }
 
-var WebCrypto = new WebCrypto(config);
+var webcrypto = new WebCrypto(config);
 
 webcrypto.subtle.generateKey({
             name:"RSASSA-PKCS1-v1_5",
