@@ -4,7 +4,7 @@ import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
-import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP} from "../key";
+import {CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP} from "../key";
 
 export var ALG_NAME_AES_CTR = "AES-CTR";
 export var ALG_NAME_AES_CBC = "AES-CBC";
@@ -52,7 +52,7 @@ abstract class Aes extends AlgorithmBase {
                     if (err)
                         callback(err, null);
                     else {
-                        let wcKey = new P11CryptoKey(key, _alg);
+                        let wcKey = new CryptoKey(key, _alg);
                         callback(null, wcKey);
                     }
                 }
@@ -95,7 +95,7 @@ abstract class Aes extends AlgorithmBase {
 
     static exportKey(session: Session, format: string, key: CryptoKey, callback: (err: Error, data: Buffer | IJwk) => void): void {
         try {
-            let vals = (<P11CryptoKey>key).key.getAttribute({ value: null, valueLen: null });
+            let vals = (<CryptoKey>key).key.getAttribute({ value: null, valueLen: null });
             switch (format.toLowerCase()) {
                 case "jwk":
                     let aes: string = /AES-(\w+)/.exec((<IAesKeyGenAlgorithm>key.algorithm).name)[1];
@@ -136,7 +136,7 @@ abstract class Aes extends AlgorithmBase {
             // create session object
             let sobj = session.create(template);
             // return value as CryptoKey
-            callback(null, new P11CryptoKey(sobj.toType<SecretKey>(), _alg));
+            callback(null, new CryptoKey(sobj.toType<SecretKey>(), _alg));
         }
         catch (e) {
             callback(e, null);

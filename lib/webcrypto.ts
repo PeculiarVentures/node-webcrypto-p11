@@ -1,6 +1,6 @@
 import {Module, Mechanism, Session, Slot, SessionFlag} from "graphene-pk11";
-import {P11SubtleCrypto} from "./subtlecrypto";
-import {P11KeyStorage} from "./key_storage";
+import {SubtleCrypto} from "./subtlecrypto";
+import {KeyStorage} from "./key_storage";
 import * as utils from "./utils";
 
 /**
@@ -15,7 +15,7 @@ class WebCrypto implements NodeCrypto {
 
     public subtle: SubtleCrypto = null;
 
-    keyStorage: P11KeyStorage;
+    keyStorage: KeyStorage;
 
     /**
      * Generates cryptographically random values
@@ -45,8 +45,8 @@ class WebCrypto implements NodeCrypto {
         for (let i in props.vendors) {
             Mechanism.vendor(props.vendors[i]);
         }
-        this.subtle = new P11SubtleCrypto(this.session);
-        this.keyStorage = new P11KeyStorage(this.session);
+        this.subtle = new SubtleCrypto(this.session);
+        this.keyStorage = new KeyStorage(this.session);
     }
 
     /**

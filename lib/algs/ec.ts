@@ -19,7 +19,7 @@ import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
-import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, KU_DERIVE, ITemplatePair} from "../key";
+import {CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, KU_DERIVE, ITemplatePair} from "../key";
 
 export let ALG_NAME_ECDH = "ECDH";
 export let ALG_NAME_ECDSA = "ECDSA";
@@ -130,8 +130,8 @@ export class Ec extends AlgorithmBase {
                         callback(err, null);
                     else {
                         let wcKeyPair: CryptoKeyPair = {
-                            privateKey: new P11CryptoKey(keys.privateKey, _alg),
-                            publicKey: new P11CryptoKey(keys.publicKey, _alg)
+                            privateKey: new CryptoKey(keys.privateKey, _alg),
+                            publicKey: new CryptoKey(keys.publicKey, _alg)
                         };
                         callback(null, wcKeyPair);
                     }
@@ -177,7 +177,7 @@ export class Ec extends AlgorithmBase {
     protected static exportJwkPublicKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
         try {
             this.checkPublicKey(key);
-            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+            let pkey: ITemplate = (<CryptoKey>key).key.getAttribute({
                 pointEC: null
             });
             let curve = this.getNamedCurve((<IEcKeyGenAlgorithm>key.algorithm).namedCurve);
@@ -200,7 +200,7 @@ export class Ec extends AlgorithmBase {
     protected static exportJwkPrivateKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
         try {
             this.checkPrivateKey(key);
-            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+            let pkey: ITemplate = (<CryptoKey>key).key.getAttribute({
                 value: null
             });
             let jwk = {
@@ -241,7 +241,7 @@ export class Ec extends AlgorithmBase {
             template.paramsEC = namedCurve.value;
             template.value = Base64Url.decode(jwk.d);
             let p11key = session.create(template);
-            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+            callback(null, new CryptoKey(<any>p11key, algorithm));
         }
         catch (e) {
             callback(e, null);
@@ -256,7 +256,7 @@ export class Ec extends AlgorithmBase {
             let pointEc = EcUtils.encodePoint({ x: Base64Url.decode(jwk.x), y: Base64Url.decode(jwk.y) }, namedCurve);
             template.pointEC = pointEc;
             let p11key = session.create(template);
-            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+            callback(null, new CryptoKey(<any>p11key, algorithm));
         }
         catch (e) {
             callback(e, null);
@@ -386,16 +386,16 @@ export class Ecdh extends Ec {
                     params: new EcdhParams(
                         EcKdf.NULL,
                         null,
-                        (<P11CryptoKey>algorithm.public).key.getAttribute({ pointEC: null }).pointEC // CKA_EC_POINT
+                        (<CryptoKey>algorithm.public).key.getAttribute({ pointEC: null }).pointEC // CKA_EC_POINT
                     )
                 },
-                (<P11CryptoKey>baseKey).key,
+                (<CryptoKey>baseKey).key,
                 template,
                 (err, key) => {
                     if (err)
                         callback(err, null);
                     else
-                        callback(null, new P11CryptoKey(key, derivedKeyType));
+                        callback(null, new CryptoKey(key, derivedKeyType));
                 });
         } catch (e) {
             callback(e, null);

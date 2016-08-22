@@ -11,15 +11,6 @@
         "typings/index.d.ts",
         "lib/typings/promise.d.ts",
         "lib/typings/node-webcrypto.d.ts",
-        "lib/error.ts",
-        "lib/algs/aes.ts",
-        "lib/algs/alg.ts",
-        "lib/algs/ec.ts",
-        "lib/algs/rsa.ts",
-        "lib/key.ts",
-        "lib/key_storage.ts",
-        "lib/subtlecrypto.ts",
-        "lib/utils.ts",
         "lib/webcrypto.ts"
     ]
 }

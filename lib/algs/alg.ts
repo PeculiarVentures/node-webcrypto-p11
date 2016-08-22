@@ -1,5 +1,5 @@
 import {Session, IAlgorithm} from "graphene-pk11";
-import {P11CryptoKey, KT_PRIVATE, KT_PUBLIC, KT_SECRET} from "../key";
+import {CryptoKey, KT_PRIVATE, KT_PUBLIC, KT_SECRET} from "../key";
 import * as error from "../error";
 
 export type KeyUsages = "sign" | "verify" | "encrypt" | "decrypt" | "wrapKey" | "unwrapKey" | "deriveKey";
@@ -63,7 +63,7 @@ export abstract class AlgorithmBase {
             this.onCheck("sign", "data", data);
             let p11Alg = this.wc2pk11(alg, key);
 
-            let signer = session.createSign(p11Alg, (<P11CryptoKey>key).key);
+            let signer = session.createSign(p11Alg, (<CryptoKey>key).key);
             signer.once(data, callback);
         } catch (e) {
             callback(e, null);
@@ -79,7 +79,7 @@ export abstract class AlgorithmBase {
             this.onCheck("verify", "signature", signature);
             let p11Alg = this.wc2pk11(alg, key);
 
-            let signer = session.createVerify(p11Alg, (<P11CryptoKey>key).key);
+            let signer = session.createVerify(p11Alg, (<CryptoKey>key).key);
             signer.once(data, signature, callback);
 
         } catch (e) {
@@ -95,7 +95,7 @@ export abstract class AlgorithmBase {
             this.onCheck("encrypt", "data", data);
             let p11Alg = this.wc2pk11(alg, key);
 
-            let cipher = session.createCipher(p11Alg, (<P11CryptoKey>key).key);
+            let cipher = session.createCipher(p11Alg, (<CryptoKey>key).key);
             let msg = new Buffer(0);
             // update
             cipher.once(data, new Buffer(data.length + 4096), callback);
@@ -113,7 +113,7 @@ export abstract class AlgorithmBase {
             this.onCheck("decrypt", "data", data);
             let p11Alg = this.wc2pk11(alg, key);
 
-            let cipher = session.createDecipher(p11Alg, (<P11CryptoKey>key).key);
+            let cipher = session.createDecipher(p11Alg, (<CryptoKey>key).key);
             let msg = new Buffer(0);
             // update
             cipher.once(data, new Buffer(data.length + 4096), callback);
@@ -223,7 +223,7 @@ export abstract class AlgorithmBase {
     protected static checkKey(key: CryptoKey, type: string) {
         if (!key)
             throw new error.CryptoKeyError(`Key can not be null`);
-        if (!(key instanceof P11CryptoKey))
+        if (!(key instanceof CryptoKey))
             throw new error.CryptoKeyError(`CryptoKey os not instance of P11CryptoKey`);
         if (key.type !== type)
             throw new error.CryptoKeyError(`Wrong key type in use. Must be '${type}'`);

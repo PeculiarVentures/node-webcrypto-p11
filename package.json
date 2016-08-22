@@ -1,14 +1,9 @@
 {
 	"name": "node-webcrypto-p11",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A WebCrypto Polyfill built on PKCS11",
 	"main": "built/webcrypto.js",
 	"engineStrict": true,
-	"engines": {
-		"node": ">=6.0.0",	
-		"typescript": ">=1.8.0",	
-		"typings": ">=1.0.0"	
-	},
 	"scripts": {
 		"test": "mocha",
 		"build": "typings install && tsc",

@@ -16,7 +16,7 @@ import {Base64Url} from "../utils";
 
 import * as utils from "../utils";
 import {IAlgorithmHashed, AlgorithmBase, IJwk, IJwkSecret, RSA_HASH_ALGS} from "./alg";
-import {P11CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, ITemplatePair} from "../key";
+import {CryptoKey, KU_DECRYPT, KU_ENCRYPT, KU_SIGN, KU_VERIFY, KU_WRAP, KU_UNWRAP, ITemplatePair} from "../key";
 import * as aes from "./aes";
 
 export let ALG_NAME_RSA_PKCS1 = "RSASSA-PKCS1-v1_5";
@@ -102,8 +102,8 @@ abstract class Rsa extends AlgorithmBase {
                         callback(err, null);
                     else {
                         let wcKeyPair: CryptoKeyPair = {
-                            privateKey: new P11CryptoKey(keys.privateKey, _alg),
-                            publicKey: new P11CryptoKey(keys.publicKey, _alg)
+                            privateKey: new CryptoKey(keys.privateKey, _alg),
+                            publicKey: new CryptoKey(keys.publicKey, _alg)
                         };
                         callback(null, wcKeyPair);
                     }
@@ -142,7 +142,7 @@ abstract class Rsa extends AlgorithmBase {
     protected static exportJwkPublicKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
         try {
             this.checkPublicKey(key);
-            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+            let pkey: ITemplate = (<CryptoKey>key).key.getAttribute({
                 publicExponent: null,
                 modulus: null
             });
@@ -165,7 +165,7 @@ abstract class Rsa extends AlgorithmBase {
     protected static exportJwkPrivateKey(session: Session, key: CryptoKey, callback: (err: Error, data: IJwk) => void) {
         try {
             this.checkPrivateKey(key);
-            let pkey: ITemplate = (<P11CryptoKey>key).key.getAttribute({
+            let pkey: ITemplate = (<CryptoKey>key).key.getAttribute({
                 publicExponent: null,
                 modulus: null,
                 privateExponent: null,
@@ -226,7 +226,7 @@ abstract class Rsa extends AlgorithmBase {
             template.exp2 = Base64Url.decode(jwk.dq);
             template.coefficient = Base64Url.decode(jwk.qi);
             let p11key = session.create(template);
-            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+            callback(null, new CryptoKey(<any>p11key, algorithm));
         }
         catch (e) {
             callback(e, null);
@@ -239,7 +239,7 @@ abstract class Rsa extends AlgorithmBase {
             template.publicExponent = Base64Url.decode(jwk.e);
             template.modulus = Base64Url.decode(jwk.n);
             let p11key = session.create(template);
-            callback(null, new P11CryptoKey(<any>p11key, algorithm));
+            callback(null, new CryptoKey(<any>p11key, algorithm));
         }
         catch (e) {
             callback(e, null);
@@ -367,7 +367,7 @@ export class RsaOAEP extends Rsa {
         try {
             if (format === "raw") {
                 let _alg = this.wc2pk11(alg, wrappingKey);
-                session.wrapKey(_alg, (<P11CryptoKey>wrappingKey).key, (<P11CryptoKey>key).key, callback);
+                session.wrapKey(_alg, (<CryptoKey>wrappingKey).key, (<CryptoKey>key).key, callback);
             }
             else
                 super.wrapKey.apply(this, arguments);
@@ -382,11 +382,11 @@ export class RsaOAEP extends Rsa {
             if (format === "raw") {
                 let _alg = this.wc2pk11(unwrapAlgorithm, unwrappingKey);
                 let template = aes.create_template(session, <aes.IAesKeyGenAlgorithm>unwrappedAlgorithm, extractable, keyUsages);
-                session.unwrapKey(_alg, (<P11CryptoKey>unwrappingKey).key, wrappedKey, template, (err, p11key) => {
+                session.unwrapKey(_alg, (<CryptoKey>unwrappingKey).key, wrappedKey, template, (err, p11key) => {
                     if (err)
                         callback(err, null);
                     else
-                        callback(null, new P11CryptoKey(p11key, unwrappedAlgorithm));
+                        callback(null, new CryptoKey(p11key, unwrappedAlgorithm));
                 });
             }
             else

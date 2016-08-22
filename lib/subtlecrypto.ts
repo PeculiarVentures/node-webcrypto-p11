@@ -1,5 +1,5 @@
 import * as graphene from "graphene-pk11";
-import {P11CryptoKey} from "./key";
+import {CryptoKey} from "./key";
 
 import * as error from "./error";
 
@@ -32,7 +32,7 @@ function b2ab(data: Buffer): ArrayBuffer {
     return data.buffer;
 }
 
-export class P11SubtleCrypto implements NodeSubtleCrypto {
+export class SubtleCrypto implements NodeSubtleCrypto {
     protected session: graphene.Session;
 
     constructor(session: graphene.Session) {

@@ -19,7 +19,7 @@ export interface ITemplatePair {
     publicKey: ITemplate;
 }
 
-export class P11CryptoKey implements CryptoKey {
+export class CryptoKey implements NodeCryptoKey {
     type: string;
     extractable: boolean;
     algorithm: any;
