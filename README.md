@@ -2,6 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/PeculiarVentures/node-webcrypto-p11/master/LICENSE)
 [![Build Status](https://travis-ci.org/PeculiarVentures/node-webcrypto-p11.svg?branch=master)](https://travis-ci.org/PeculiarVentures/node-webcrypto-p11)
+[![Coverage Status](https://coveralls.io/repos/github/PeculiarVentures/node-webcrypto-p11/badge.svg?branch=master)](https://coveralls.io/github/PeculiarVentures/node-webcrypto-p11?branch=master)
 [![NPM version](https://badge.fury.io/js/node-webcrypto-p11.png)](http://badge.fury.io/node-webcrypto-p11)
 
 
