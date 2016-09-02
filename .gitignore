@@ -2,3 +2,6 @@
 /built
 /node_modules
 /typings
+/.nyc_output/
+/.waiting.html
+/coverage/
