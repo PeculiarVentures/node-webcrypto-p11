@@ -3,7 +3,7 @@ node_js:
   - "6"
   - "5"
   - "4"
-  
+
 env:
   - CXX=g++
 
@@ -35,15 +35,14 @@ before_install:
   - node --version
   - npm --version
   - gcc --version
-  - npm install typescript -g
-  - npm install typings -g
-  - npm install mocha -g
   - bash ./.travis.sh
-  - typings install
-  - tsc
+  - npm install coveralls
 
 script:
   - npm test
+
+after_success:
+  - npm run coveralls
 
 cache:
   directories:
