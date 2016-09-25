@@ -130,10 +130,11 @@ TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
 Please report bugs either as pull requests or as issues in the issue tracker. Backwater has a full disclosure vulnerability policy. Please do NOT attempt to report any security vulnerability in this code privately to anybody.
 
 
-## Related
+## Related 
  - [node-webcrypto-ossl](https://github.com/PeculiarVentures/node-webcrypto-ossl)
- - [MSR WebCrypto Polyfill](http://research.microsoft.com/en-us/downloads/29f9385d-da4c-479a-b2ea-2a7bb335d727/)
- - [Graphene](https://github.com/PeculiarVentures/graphene)
+ - [webcrypto-liner](https://github.com/PeculiarVentures/webcrypto-liner)
  - [WebCrypto Examples](https://github.com/diafygi/webcrypto-examples)
+ - [Graphene](https://github.com/PeculiarVentures/graphene)
+ - [pkcs11js](https://github.com/PeculiarVentures/pkcs11js)
  - [OpenCryptoKi](https://sourceforge.net/projects/opencryptoki/)
  - [SoftHSM](https://github.com/opendnssec/SoftHSMv2)
