@@ -1,3 +1,4 @@
+import * as webcrypto from "webcrypto-core";
 import {Session} from "graphene-pk11";
 
 export function GUID(session: Session): string {
@@ -31,7 +32,7 @@ export function GUID(session: Session): string {
 }
 
 export function b64_decode(b64url: string): Buffer {
-    return new Buffer(b64_decode(b64url));
+    return new Buffer(webcrypto.Base64Url.decode(b64url));
 }
 
 /**

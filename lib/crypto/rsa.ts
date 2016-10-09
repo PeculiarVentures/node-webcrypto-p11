@@ -42,7 +42,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             derive: false,
             sign: keyUsages.indexOf("sign") > -1,
             decrypt: keyUsages.indexOf("decrypt") > -1,
-            unwrap: keyUsages.indexOf("unwrap") > -1
+            unwrap: keyUsages.indexOf("unwrapKey") > -1
         },
         publicKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
@@ -52,7 +52,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             id: id_pubk,
             verify: keyUsages.indexOf("verify") > -1,
             encrypt: keyUsages.indexOf("encrypt") > -1,
-            wrap: keyUsages.indexOf("wrap") > -1,
+            wrap: keyUsages.indexOf("wrapKey") > -1,
         }
     };
 }
@@ -113,7 +113,7 @@ export abstract class RsaCrypto extends BaseCrypto {
                 e: Base64Url.encode(pkey.publicExponent as Uint8Array),
                 n: Base64Url.encode(pkey.modulus as Uint8Array)
             };
-            return jwk;
+            resolve(jwk);
         });
     }
 
@@ -151,17 +151,15 @@ export abstract class RsaCrypto extends BaseCrypto {
     static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
         return (super.exportKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
             .then(() => {
-                return new Promise((resolve, reject) => {
-                    switch (format.toLowerCase()) {
-                        case "jwk":
-                            if (key.type === "private")
-                                return this.exportJwkPrivateKey(key);
-                            else
-                                return this.exportJwkPublicKey(key);
-                        default:
-                            throw new Error(`Not supported format '${format}'`);
-                    }
-                });
+                switch (format.toLowerCase()) {
+                    case "jwk":
+                        if (key.type === "private")
+                            return this.exportJwkPrivateKey(key);
+                        else
+                            return this.exportJwkPublicKey(key);
+                    default:
+                        throw new Error(`Not supported format '${format}'`);
+                }
             });
     }
 
@@ -340,7 +338,7 @@ export class RsaOAEP extends RsaCrypto {
         return (super.encrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createCipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength / 8), (err, data) => {
+                    session!.createCipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {
                         if (err) reject(err);
                         else resolve(data.buffer);
                     });
@@ -352,7 +350,7 @@ export class RsaOAEP extends RsaCrypto {
         return (super.decrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createDecipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength / 8), (err, data) => {
+                    session!.createDecipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {
                         if (err) reject(err);
                         else resolve(data.buffer);
                     });

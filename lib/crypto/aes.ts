@@ -21,7 +21,6 @@ export function create_template(session: Session, alg: AesKeyGenParams, extracta
         label: `AES-${alg.length}`,
         id: new Buffer(id),
         extractable: extractable,
-        valueLen: alg.length >> 3,
         derive: false,
         sign: keyUsages.indexOf("sign") !== -1,
         verify: keyUsages.indexOf("verify") !== -1,
@@ -39,6 +38,7 @@ abstract class AesCrypto extends BaseCrypto {
             .then(() => {
                 return new Promise((resolve, reject) => {
                     let template = create_template(session!, algorithm, extractable, keyUsages);
+                    template.valueLen = algorithm.length >> 3,
 
                     // PKCS11 generation
                     session!.generateKey(KeyGenMechanism.AES, template, (err, aesKey) => {
@@ -76,7 +76,7 @@ abstract class AesCrypto extends BaseCrypto {
                             resolve(jwk);
                             break;
                         case "raw":
-                            resolve(vals.value!);
+                            resolve(vals.value!.buffer);
                         default:
                             throw new WebCryptoError(`Unknown format '${format}'`);
                     }
@@ -127,7 +127,7 @@ abstract class AesCrypto extends BaseCrypto {
     protected static getOutputBufferSize(keyAlg: AesKeyAlgorithm, enc: boolean, dataSize: number): number {
         const len = keyAlg.length >> 3;
         if (enc)
-            return Math.ceil(dataSize / len);
+            return (Math.ceil(dataSize / len) * len) + len;
         else
             return dataSize;
     }

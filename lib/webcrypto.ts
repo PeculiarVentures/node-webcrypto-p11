@@ -9,6 +9,11 @@ import * as utils from "./utils";
 
 const ERR_RANDOM_VALUE_LENGTH = "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (%1) exceeds the number of bytes of entropy available via this API (65536).";
 
+// Fix btoa and atob for NodeJS
+let _global = global as any;
+_global.btoa = (data: string) => new Buffer(data, "binary").toString("base64");
+_global.atob = (data: string) => new Buffer(data, "base64").toString("binary");
+
 /**
  * PKCS11 with WebCrypto Interface
  */

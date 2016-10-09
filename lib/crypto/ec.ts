@@ -37,7 +37,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
             label: label,
             id: id_pk,
             extractable: extractable,
-            derive: keyUsages.indexOf("derive") !== -1,
+            derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
             sign: keyUsages.indexOf("sign") !== -1,
             decrypt: keyUsages.indexOf("decrypt") !== -1,
             unwrap: keyUsages.indexOf("unwrapKey") !== -1
@@ -147,17 +147,15 @@ export class EcCrypto extends BaseCrypto {
     static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
         return (super.exportKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
             .then(() => {
-                return new Promise((resolve, reject) => {
-                    switch (format.toLowerCase()) {
-                        case "jwk":
-                            if (key.type === "private")
-                                return this.exportJwkPrivateKey(key);
-                            else
-                                return this.exportJwkPublicKey(key);
-                        default:
-                            throw new Error(`Not supported format '${format}'`);
-                    }
-                });
+                switch (format.toLowerCase()) {
+                    case "jwk":
+                        if (key.type === "private")
+                            return this.exportJwkPrivateKey(key);
+                        else
+                            return this.exportJwkPublicKey(key);
+                    default:
+                        throw new Error(`Not supported format '${format}'`);
+                }
             });
     }
 
@@ -273,7 +271,8 @@ export class Ecdh extends EcCrypto {
                             throw new AlgorithmError(AlgorithmError.UNSUPPORTED_ALGORITHM, derivedKeyType.name);
                     }
 
-                    let template: ITemplate = aes.create_template(session!, derivedKeyType, extractable, keyUsages);
+                    let template = aes.create_template(session!, derivedKeyType, extractable, keyUsages);
+                    template.valueLen = derivedKeyType.length >> 3;
                     // derive key
                     // TODO: EcdhParams no match for Chrome examples 
                     session!.deriveKey(
@@ -326,7 +325,9 @@ export class Ecdh extends EcCrypto {
             .then(() => {
                 return new Promise((resolve, reject) => {
 
-                    let template: ITemplate = aes.create_template(session!, { name: "AES-CBC", length: this.getAesKeyLength(length)}, true, ["encrypt"]);
+                    const aesKeyLength = this.getAesKeyLength(length);
+                    let template: ITemplate = aes.create_template(session!, { name: "AES-CBC", length: aesKeyLength }, true, ["encrypt"]);
+                    template.valueLen = aesKeyLength >> 3;
                     // derive key
                     // TODO: EcdhParams no match for Chrome examples 
                     session!.deriveKey(
@@ -345,7 +346,7 @@ export class Ecdh extends EcCrypto {
                                 reject(err);
                             else {
                                 const secretKey = key.toType<graphene.SecretKey>();
-                                const value = secretKey.getAttribute({value: null}).value as Buffer;
+                                const value = secretKey.getAttribute({ value: null }).value as Buffer;
                                 resolve(value.slice(0, length >> 3));
                             }
                         });
