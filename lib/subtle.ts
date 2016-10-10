@@ -7,6 +7,7 @@ import * as graphene from "graphene-pk11";
 
 import { CryptoKey } from "./key";
 
+import * as sha from "./crypto/sha";
 import * as aes from "./crypto/aes";
 import * as rsa from "./crypto/rsa";
 import * as ec from "./crypto/ec";
@@ -20,6 +21,28 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
         super();
 
         this.session = session;
+    }
+
+    digest(algorithm: AlgorithmIdentifier, data: NodeBufferSource): PromiseLike<ArrayBuffer> {
+        return super.digest.apply(this, arguments)
+            .then(() => {
+                const _alg = PrepareAlgorithm(algorithm);
+                const _data = utils.PrepareData(data);
+                let algName = _alg.name.toLowerCase();
+                let AlgClass: typeof BaseCrypto;
+                switch (algName) {
+                    case "sha-1":
+                    case "sha-224":
+                    case "sha-256":
+                    case "sha-384":
+                    case "sha-512":
+                        AlgClass = sha.ShaCrypto;
+                        break;
+                    default:
+                        throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, algName);
+                }
+                return AlgClass.digest(_alg, _data, this.session);
+            });
     }
 
     generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair | CryptoKey>;

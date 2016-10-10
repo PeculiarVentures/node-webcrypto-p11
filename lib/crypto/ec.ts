@@ -311,10 +311,9 @@ export class Ecdh extends EcCrypto {
         [128, 192, 256].forEach(function (keySize) {
             let byteLength = length >> 3;
             let byteKeySize = keySize >> 3;
-            let calc = byteLength % byteKeySize;
-            if ((calc === byteLength || !calc) && !res) {
+            let calc = byteKeySize / byteLength;
+            if (calc >= 1) {
                 res = keySize;
-                return false;
             }
         });
         return res;
