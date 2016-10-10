@@ -254,7 +254,7 @@ export class Ecdsa extends EcCrypto {
 
 export class Ecdh extends EcCrypto {
 
-    static deriveKey(algorithm: EcdsaParams, baseKey: CryptoKey, derivedKeyType: AesKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
+    static deriveKey(algorithm: EcdhKeyDeriveParams, baseKey: CryptoKey, derivedKeyType: AesKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
         return super.deriveKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
@@ -274,14 +274,13 @@ export class Ecdh extends EcCrypto {
                     let template = aes.create_template(session!, derivedKeyType, extractable, keyUsages);
                     template.valueLen = derivedKeyType.length >> 3;
                     // derive key
-                    // TODO: EcdhParams no match for Chrome examples 
                     session!.deriveKey(
                         {
                             name: "ECDH1_DERIVE",
                             params: new graphene.EcdhParams(
                                 EcKdf.NULL,
                                 undefined,
-                                (algorithm as any).public.key.getAttribute({ pointEC: null }).pointEC // CKA_EC_POINT
+                                (algorithm.public as CryptoKey).key.getAttribute({ pointEC: null }).pointEC! // CKA_EC_POINT
                             )
                         },
                         baseKey.key,
@@ -319,7 +318,7 @@ export class Ecdh extends EcCrypto {
         return res;
     }
 
-    static deriveBits(algorithm: Algorithm, baseKey: CryptoKey, length: number, session?: Session): PromiseLike<ArrayBuffer> {
+    static deriveBits(algorithm: EcdhKeyDeriveParams, baseKey: CryptoKey, length: number, session?: Session): PromiseLike<ArrayBuffer> {
         return super.deriveBits.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
@@ -327,15 +326,14 @@ export class Ecdh extends EcCrypto {
                     const aesKeyLength = this.getAesKeyLength(length);
                     let template: ITemplate = aes.create_template(session!, { name: "AES-CBC", length: aesKeyLength }, true, ["encrypt"]);
                     template.valueLen = aesKeyLength >> 3;
-                    // derive key
-                    // TODO: EcdhParams no match for Chrome examples 
+                    // derive key 
                     session!.deriveKey(
                         {
                             name: "ECDH1_DERIVE",
                             params: new graphene.EcdhParams(
                                 EcKdf.NULL,
                                 undefined,
-                                (algorithm as any).public.key.getAttribute({ pointEC: null }).pointEC // CKA_EC_POINT
+                                (algorithm.public as CryptoKey).key.getAttribute({ pointEC: null }).pointEC! // CKA_EC_POINT
                             )
                         },
                         baseKey.key,
