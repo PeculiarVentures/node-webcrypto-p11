@@ -1,25 +1,4 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "lib": [
-            "es5",
-            "es2015.promise",
-            "dom"
-        ],
-        "noUnusedLocals": true,
-        "strictNullChecks": true,
-        "module": "commonjs",
-        "rootDir": "lib",
-        "outDir": "buildjs",
-        "removeComments": true,
-        "declaration": false,
-        "sourceMap": false,
-        "noImplicitAny": true
-    },
-    "files": [
-        "lib/typings/index.d.ts",
-        "lib/webcrypto.ts"
-    ],
     "globalDependencies": {
         "graphene-pk11": "registry:dt/graphene-pk11#2.0.3+20160815222423",
         "node": "registry:env/node#4.0.0+20160813135048",
