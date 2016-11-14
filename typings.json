@@ -1,7 +1,0 @@
-{
-    "globalDependencies": {
-        "graphene-pk11": "registry:dt/graphene-pk11#2.0.3+20160815222423",
-        "node": "registry:env/node#4.0.0+20160813135048",
-        "pkcs11js": "registry:dt/pkcs11js#1.0.3+20160811214100"
-  }
-}
