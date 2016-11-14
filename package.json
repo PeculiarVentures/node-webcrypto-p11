@@ -3,6 +3,7 @@
   "version": "1.0.3",
   "description": "A WebCrypto Polyfill built on PKCS11",
   "main": "built/webcrypto.js",
+  "types": "index.d.ts",
   "engineStrict": true,
   "scripts": {
     "clean": "rm -rf built/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",

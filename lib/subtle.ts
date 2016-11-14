@@ -5,7 +5,7 @@ const PrepareAlgorithm = webcrypto.PrepareAlgorithm;
 const AlgorithmNames = webcrypto.AlgorithmNames;
 import * as graphene from "graphene-pk11";
 
-import { CryptoKey } from "./key";
+import { CryptoKey, CryptoKeyPair } from "./key";
 
 import * as sha from "./crypto/sha";
 import * as aes from "./crypto/aes";

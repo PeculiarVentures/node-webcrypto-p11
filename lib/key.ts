@@ -8,6 +8,11 @@ export interface ITemplatePair {
     publicKey: ITemplate;
 }
 
+export interface CryptoKeyPair extends NativeCryptoKey {
+    privateKey: CryptoKey;
+    publicKey: CryptoKey;
+}
+
 export class CryptoKey implements NativeCryptoKey {
     type: string;
     extractable: boolean;

@@ -31,7 +31,7 @@ export function create_template(session: Session, alg: AesKeyGenParams, extracta
     };
 }
 
-abstract class AesCrypto extends BaseCrypto {
+export abstract class AesCrypto extends BaseCrypto {
 
     static generateKey(algorithm: AesKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
         return (super.generateKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)

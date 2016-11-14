@@ -17,7 +17,7 @@ _global.atob = (data: string) => new Buffer(data, "base64").toString("binary");
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class WebCrypto implements NativeCrypto {
+class WebCrypto implements NativeCrypto {
 
     private module: Module;
     private session: Session;
@@ -81,26 +81,4 @@ export class WebCrypto implements NativeCrypto {
     }
 }
 
-interface P11WebCryptoParams extends Object {
-    /**
-     * Path to labrary
-     */
-    library: string;
-    /**
-     * Name of PKCS11 module
-     */
-    name: string;
-    /**
-     * Index of slot
-     */
-    slot: number;
-    sessionFlags?: number;
-    /**
-     * PIN of slot
-     */
-    pin?: string;
-    /**
-     * list of vendor json files
-     */
-    vendors?: string[];
-}
+export = WebCrypto;
