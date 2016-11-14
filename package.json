@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@types/node": "^6.0.46",
-    "graphene-pk11": "latest",
+    "graphene-pk11": "^2.0.18",
     "webcrypto-core": "git+https://github.com/PeculiarVentures/webcrypto-core#types"
   },
   "keywords": [
