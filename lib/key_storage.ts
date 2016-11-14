@@ -1,8 +1,10 @@
-import {SessionObject, Session, Key, KeyType} from "graphene-pk11";
-import {WebCryptoError} from "./error";
-import {CryptoKey} from "./key";
+import * as webcrypto from "webcrypto-core";
+const WebCryptoError = webcrypto.WebCryptoError;
 
-export class KeyStorage implements NodeKeyStorage {
+import { Session, Key } from "graphene-pk11";
+import { CryptoKey } from "./key";
+
+export class KeyStorage {
 
     protected session: Session;
 
@@ -17,7 +19,7 @@ export class KeyStorage implements NodeKeyStorage {
         this.session.clear();
     }
 
-    protected getItemById(id: string): SessionObject {
+    protected getItemById(id: string) {
         let keys = this.session.find({ id: new Buffer(id) });
         if (!keys.length) {
             // console.log(`WebCrypto:PKCS11: Key by ID '${id}' is not found`);
@@ -28,7 +30,7 @@ export class KeyStorage implements NodeKeyStorage {
         return keys.items(0);
     }
 
-    getItem(key: string): CryptoKey {
+    getItem(key: string) {
         let sobj = this.getItemById(key);
         if (sobj) {
             let _key = sobj.toType<Key>();

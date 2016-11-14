@@ -1,4 +1,4 @@
-module.exports = {
+var config = {
 	library: "/usr/local/lib/softhsm/libsofthsm2.so",
 	name: "SoftHSMv2",
 	slot: 0,
@@ -6,14 +6,18 @@ module.exports = {
 	pin: "12345"
 }
 
-function test_manufacturer(manufacturerID) {
-	if (module.exports.name === manufacturerID) {
-		console.warn("    \x1b[33mWARN:\x1b[0m Test is not supported for %s", manufacturerID);
+var WebCrypto = require("../built/webcrypto.js");     
+    
+module.exports.crypto = new WebCrypto(config);
+
+function test_manufacturer(manufacturerID, message) {
+	if (config.name === manufacturerID) {
+		console.warn("    \x1b[33mWARN:\x1b[0m Test is not supported for %s. %s", manufacturerID, message || "");
 		return true;
 	}
 	return false;
 }
 
-module.exports.isSoftHSM = function isSoftHSM() {
-	return test_manufacturer("SoftHSMv2");
+module.exports.isSoftHSM = function isSoftHSM(message) {
+	return test_manufacturer("SoftHSMv2", message);
 }

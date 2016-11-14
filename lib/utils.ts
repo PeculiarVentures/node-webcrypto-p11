@@ -1,3 +1,4 @@
+import * as webcrypto from "webcrypto-core";
 import {Session} from "graphene-pk11";
 
 export function GUID(session: Session): string {
@@ -30,36 +31,22 @@ export function GUID(session: Session): string {
     return res.join("-");
 }
 
-export class Base64Url {
+export function b64_decode(b64url: string): Buffer {
+    return new Buffer(webcrypto.Base64Url.decode(b64url));
+}
 
-    static encode(value: Buffer): string;
-    static encode(value: string, encoding?: string): string;
-    static encode(value: string | Buffer, encoding?: string) {
-        let data: Buffer;
-        if (!Buffer.isBuffer(value)) {
-            data = new Buffer(value, encoding);
-        }
-        else
-            data = value;
-        let res = data.toString("base64")
-            .replace(/=/g, "")
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_");
-        return res;
-    }
+/**
+ * Prepare array of data before it's using 
+ * @param data Array which must be prepared
+ */
+export function PrepareData(data: NodeBufferSource): Buffer {
+    return ab2b(data);
+}
 
-    static decode(base64url: string): Buffer;
-    static decode(base64url: string, encoding: string): string;
-    static decode(base64url: string, encoding?: string): Buffer | string {
-        while (base64url.length % 4) {
-            base64url += "=";
-        }
-        base64url
-            .replace(/\-/g, "+")
-            .replace(/_/g, "/");
-        let buf = new Buffer(base64url, "base64");
-        if (encoding)
-            return buf.toString(encoding);
-        return buf;
-    }
+/**
+ * Converts ArrayBuffer to Buffer
+ * @param ab ArrayBuffer value wich must be converted to Buffer
+ */
+function ab2b(ab: NodeBufferSource) {
+    return new Buffer(ab as any);
 }

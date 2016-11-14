@@ -1,293 +1,172 @@
 var assert = require('assert');
-var config = require('./config');
-var WebCrypto = require("../built/webcrypto.js");
+var crypto = require('./config').crypto;
+var isSoftHSM = require('./config').isSoftHSM;
 
-describe("Aes", function () {
-    var webcrypto;
+var keys = [];
+
+describe("WebCrypto Aes", function () {
 
     var TEST_MESSAGE = new Buffer("1234567890123456");
+    var KEYS = [
+        { alg: "AES-CBC", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
+        { alg: "AES-GCM", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
+    ];
 
-    before(function (done) {
-        webcrypto = new WebCrypto(config);
-        assert.equal(!!webcrypto, true, "WebCrypto is not initialized");
-        done();
-    })
+    context("Generate key", () => {
 
-    after(function (done) {
-        webcrypto.close();
-        done();
-    })
+        // Algs
+        KEYS.forEach(key => {
+            // length
+            [128, 192, 256].forEach(length => {
+                var keyName = `${key.alg} l:${length}`;
+                var keyTemplate = {
+                    name: keyName,
+                    key: null,
+                    usages: key.usages,
+                };
+                keys.push(keyTemplate);
+                it(keyName, done => {
+                    var alg = {
+                        name: key.alg,
+                        length: length
+                    };
+                    crypto.subtle.generateKey(alg, true, key.usages)
+                        .then(aesKey => {
+                            assert.equal(!!aesKey, true, "Aes key is empty");
+                            keyTemplate.key = aesKey;
+                        })
+                        .then(done, done);
+                });
+            });
+        })
 
-    it("Aes GCM", function (done) {
-        if (config.isSoftHSM()) return done();
+    });
 
-        var key = null;
-        var iv = webcrypto.getRandomValues(new Uint8Array(12));
-        webcrypto.subtle.generateKey({
-            name: "AES-GCM",
-            length: 256, //can be  128, 192, or 256
-        },
-            false, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.encrypt(
-                    {
-                        name: "AES-GCM",
+    context("Encrypt/Decrypt", () => {
 
-                        //Don't re-use initialization vectors!
-                        //Always generate a new iv every time your encrypt!
-                        //Recommended to use 12 bytes length
-                        iv: iv,
+        context("AES-CBC", () => {
 
-                        //Additional authentication data (optional)
-                        additionalData: null,
+            // Filter CBC
+            keys.filter(key => /AES-CBC/.test(key.name))
+                .forEach(key => {
+                    [new Uint8Array(16), new Uint8Array(16)].forEach(iv => {
+                        it(`iv:${iv.length}\t${key.name}`, done => {
+                            var alg = { name: "AES-CBC", iv: iv };
+                            crypto.subtle.encrypt(alg, key.key, TEST_MESSAGE)
+                                .then(enc => {
+                                    assert(!!enc, true, "Encrypted message is empty");
+                                    return crypto.subtle.decrypt(alg, key.key, enc);
+                                })
+                                .then(dec => {
+                                    assert(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "Decrypted message is wrong");
+                                })
+                                .then(done, done);
+                        });
+                    });
+                });
+        });
 
-                        //Tag length (optional)
-                        tagLength: 128, //can be 32, 64, 96, 104, 112, 120 or 128 (default)
-                    },
-                    key, //from generateKey or importKey above
-                    TEST_MESSAGE //ArrayBuffer of data you want to encrypt
-                )
-            })
-            .then(function (enc) {
-                assert.equal(enc !== null, true, "Has no encrypted value");
-                assert.notEqual(enc.length, 0, "Has empty encrypted value");
-                return webcrypto.subtle.decrypt(
-                    {
-                        name: "AES-GCM",
-                        iv: iv, //The initialization vector you used to encrypt
-                        additionalData: null, //The addtionalData you used to encrypt (if any)
-                        tagLength: 128, //The tagLength you used to encrypt (if any)
-                    },
-                    key, //from generateKey or importKey above
-                    enc //ArrayBuffer of the data
-                );
-            })
-            .then(function (dec) {
-                assert.equal(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "AES-GCM encrypt/decrypt is not valid")
-            })
-            .then(done, done);
-    })
+        context("AES-GCM", () => {
+            if (isSoftHSM("AES-GCM Encrypt/Decrypt")) return;
+            // Filter GCM
+            keys.filter(key => /AES-GCM/.test(key.name))
+                .forEach(key => {
+                    // IV
+                    [new Uint8Array(16)].forEach(iv => {
+                        // AAD
+                        [new Uint8Array([1, 2, 3, 4, 5]), null].forEach(aad => {
+                            // Tag
+                            [32, 64, 96, 104, 112, 120, 128].forEach(tag => {
+                                it(`aad:${aad ? "+" : "-"} t:${tag}\t${key.name}`, done => {
+                                    var alg = { name: "AES-GCM", iv: iv, aad: aad, tagLength: tag };
+                                    crypto.subtle.encrypt(alg, key.key, TEST_MESSAGE)
+                                        .then(enc => {
+                                            assert(!!enc, true, "Encrypted message is empty");
+                                            return crypto.subtle.decrypt(alg, key.key, enc);
+                                        })
+                                        .then(dec => {
+                                            assert(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "Decrypted message is wrong");
+                                        })
+                                        .then(done, done);
+                                });
+                            });
+                        });
+                    });
+                });
+        });
 
-    it("Aes CBC encrypt/decrypt", function (done) {
-        var key = null;
-        var iv = webcrypto.getRandomValues(new Uint8Array(16));
-        webcrypto.subtle.generateKey({
-            name: "AES-CBC",
-            length: 256, //can be  128, 192, or 256
-        },
-            false, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.encrypt(
-                    {
-                        name: "AES-CBC",
+    });
 
-                        //Don't re-use initialization vectors!
-                        //Always generate a new iv every time your encrypt!
-                        iv: iv
-                    },
-                    key, //from generateKey or importKey above
-                    TEST_MESSAGE //ArrayBuffer of data you want to encrypt
-                )
-            })
-            .then(function (enc) {
-                assert.equal(enc !== null, true, "Has no encrypted value");
-                assert.notEqual(enc.length, 0, "Has empty encrypted value");
-                return webcrypto.subtle.decrypt(
-                    {
-                        name: "AES-CBC",
-                        iv: iv //The initialization vector you used to encrypt
-                    },
-                    key, //from generateKey or importKey above
-                    enc //ArrayBuffer of the data
-                );
-            })
-            .then(function (dec) {
-                dec = new Buffer(dec);
-                assert.equal(dec.toString(), TEST_MESSAGE.toString(), "AES-CBC encrypt/decrypt is not valid")
-            })
-            .then(done, done);
-    })
+    context("Export/Import", () => {
 
-    it("Aes export/import JWK", function (done) {
-        var key = null;
-        webcrypto.subtle.generateKey({
-            name: "AES-CBC",
-            length: 256, //can be  128, 192, or 256
-        },
-            true, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.exportKey(
-                    "jwk",
-                    key)
-            })
-            .then(function (jwk) {
-                assert.equal(jwk.kty, "oct");
-                assert.equal(!!jwk.k, true);
-                assert.equal(jwk.alg, "A256CBC");
-                assert.equal(jwk.ext, true);
-                return webcrypto.subtle.importKey(
-                    "jwk",
-                    jwk,
-                    {
-                        name: "AES-CBC",
-                    },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-            })
-            .then(function (key) {
-                assert.equal(!!key, true);
-            })
-            .then(done, done);
-    })
+        // Keys
+        keys.forEach(key => {
+            // Format
+            ["jwk", "raw"].forEach(format => {
+                it(`${format}\t${key.name}`, done => {
+                    crypto.subtle.exportKey(format, key.key)
+                        .then(jwk => {
+                            assert.equal(!!jwk, true, "Has no jwk value");
+                            if (format === "jwk")
+                                assert.equal(!!jwk.k, true, "Has no k value");
+                            else
+                                assert.equal(!!jwk.byteLength, true, "Wrong raw length");
+                            return crypto.subtle.importKey(format, jwk, key.key.algorithm, true, key.key.usages);
+                        })
+                        .then(k => {
+                            assert.equal(!!k, true, "Imported key is empty")
+                            assert.equal(!!k._key, true, "Has no native key value");
+                        })
+                        .then(done, done);
+                });
+            });
+        });
+    });
 
-    it("AES import/export RAW", function (done) {
-        var key = null;
-        var k;
-        webcrypto.subtle.generateKey({
-            name: "AES-CBC",
-            length: 256, //can be  128, 192, or 256
-        },
-            true, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.exportKey(
-                    "raw",
-                    key)
-            })
-            .then(function (raw) {
-                assert.equal(!!raw, true);
-                k = raw;
-                return webcrypto.subtle.importKey(
-                    "raw",
-                    new Uint8Array(raw),
-                    {
-                        name: "AES-CBC",
-                    },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-            })
-            .then(function (key) {
-                assert.equal(!!key, true);
-                return webcrypto.subtle.exportKey(
-                    "raw",
-                    key)
-            })
-            .then(function (raw) {
-                assert.equal(Buffer.compare(new Buffer(raw), new Buffer(k)), 0);
-            })
-            .then(done, done);
-    })
+    context("Wrap/Unwrap", () => {
+        context("AES-CBC", () => {
+            // AES keys
+            keys.filter(key => /AES-CBC/.test(key.name)).forEach(key => {
+                ["jwk", "raw"].forEach(format => {
+                    it(`format:${format} ${key.name}`, done => {
+                        var _alg = { name: "AES-CBC", iv: new Uint8Array(16) }
+                        crypto.subtle.wrapKey(format, key.key, key.key, _alg)
+                            .then(wrappedKey => {
+                                assert.equal(!!wrappedKey, true, "Wrapped key is empty");
 
-    it("AES wrap/unwrap JWK", function (done) {
-        var key = null;
-        var iv = webcrypto.getRandomValues(new Uint8Array(16));
-        webcrypto.subtle.generateKey({
-            name: "AES-CBC",
-            length: 256, //can be  128, 192, or 256
-        },
-            true, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.wrapKey(
-                    "jwk", //can be "jwk", "raw", "spki", or "pkcs8"
-                    key, //the key you want to wrap, must be able to export to above format
-                    key, //the AES-CBC key with "wrapKey" usage flag
-                    {   //these are the wrapping key's algorithm options
-                        name: "AES-CBC",
-                        //Don't re-use initialization vectors!
-                        //Always generate a new iv every time your encrypt!
-                        iv: iv,
+                                return crypto.subtle.unwrapKey(format, wrappedKey, key.key, _alg, key.key.algorithm, true, ["encrypt", "decrypt"]);
+                            })
+                            .then(key => {
+                                assert.equal(!!key, true, "Unwrapped key is empty");
+                            })
+                            .then(done, done);
                     })
-            })
-            .then(function (wrapped) {
-                assert.equal(!!wrapped, true);
-                return webcrypto.subtle.unwrapKey(
-                    "jwk", //"jwk", "raw", "spki", or "pkcs8" (whatever was used in wrapping)
-                    wrapped, //the key you want to unwrap
-                    key, //the AES-CBC key with "unwrapKey" usage flag
-                    {   //these are the wrapping key's algorithm options
-                        name: "AES-CBC",
-                        iv: iv, //The initialization vector you used to encrypt
-                    },
-                    {   //this what you want the wrapped key to become (same as when wrapping)
-                        name: "AES-CBC",
-                        length: 256
-                    },
-                    true, //whether the key is extractable (i.e. can be used in exportKey)
-                    ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
-                )
-            })
-            .then(function (key) {
-                assert.equal(!!key, true);
-            })
-            .then(done, done);
-    })
 
-    it("AES wrap/unwrap raw", function (done) {
-        var key = null;
-        var iv = webcrypto.getRandomValues(new Uint8Array(16));
-        webcrypto.subtle.generateKey({
-            name: "AES-CBC",
-            length: 256, //can be  128, 192, or 256
-        },
-            true, //whether the key is extractable (i.e. can be used in exportKey)
-            ["encrypt", "decrypt", "wrapKey", "unwrapKey"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-        )
-            .then(function (k) {
-                assert.equal(k.key !== null, true, "Has no key value");
-                key = k;
-                return webcrypto.subtle.wrapKey(
-                    "raw", //can be "jwk", "raw", "spki", or "pkcs8"
-                    key, //the key you want to wrap, must be able to export to above format
-                    key, //the AES-CBC key with "wrapKey" usage flag
-                    {   //these are the wrapping key's algorithm options
-                        name: "AES-CBC",
-                        //Don't re-use initialization vectors!
-                        //Always generate a new iv every time your encrypt!
-                        iv: iv,
+                });
+            });
+        });
+        context("AES-GCM", () => {
+            if (isSoftHSM("AES-GCM Wrap/Unwrap")) return;
+            // AES keys
+            keys.filter(key => /AES-GCM/.test(key.name)).forEach(key => {
+                ["jwk", "raw"].forEach(format => {
+                    it(`format:${format} ${key.name}`, done => {
+                        var _alg = { name: "AES-GCM", iv: new Uint8Array(16) }
+                        crypto.subtle.wrapKey(format, key.key, key.key, _alg)
+                            .then(wrappedKey => {
+                                assert.equal(!!wrappedKey, true, "Wrapped key is empty");
+
+                                return crypto.subtle.unwrapKey(format, wrappedKey, key.key, _alg, key.key.algorithm, true, ["encrypt", "decrypt"]);
+                            })
+                            .then(key => {
+                                assert.equal(!!key, true, "Unwrapped key is empty");
+                            })
+                            .then(done, done);
                     })
-            })
-            .then(function (wrapped) {
-                assert.equal(!!wrapped, true);
-                return webcrypto.subtle.unwrapKey(
-                    "raw", //"jwk", "raw", "spki", or "pkcs8" (whatever was used in wrapping)
-                    wrapped, //the key you want to unwrap
-                    key, //the AES-CBC key with "unwrapKey" usage flag
-                    {   //these are the wrapping key's algorithm options
-                        name: "AES-CBC",
-                        iv: iv, //The initialization vector you used to encrypt
-                    },
-                    {   //this what you want the wrapped key to become (same as when wrapping)
-                        name: "AES-CBC",
-                        length: 256
-                    },
-                    true, //whether the key is extractable (i.e. can be used in exportKey)
-                    ["encrypt", "decrypt"] //the usages you want the unwrapped key to have
-                )
-            })
-            .then(function (key) {
-                assert.equal(!!key, true);
-            })
-            .then(done, done);
-    })
-})
+
+                });
+            });
+        });
+    });
+
+});
