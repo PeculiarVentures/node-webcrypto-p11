@@ -1,7 +1,7 @@
-/.vscode
-/built
-/node_modules
-/typings
-/.nyc_output/
-/.waiting.html
-/coverage/
+.vscode
+built
+node_modules
+.nyc_output/
+.waiting.html
+coverage/
+npm-debug.log

@@ -9,6 +9,7 @@
         "noUnusedLocals": true,
         "strictNullChecks": true,
         "module": "commonjs",
+        "moduleResolution": "node",
         "rootDir": "lib",
         "outDir": "built",
         "removeComments": true,
@@ -16,9 +17,8 @@
         "sourceMap": false,
         "noImplicitAny": true
     },
-    "files": [
-        "typings/index.d.ts",
-        "lib/typings/index.d.ts",
-        "lib/webcrypto.ts"
+    "exclude": [
+        "node_modules",
+        "test"
     ]
 }

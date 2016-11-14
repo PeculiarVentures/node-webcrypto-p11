@@ -5,12 +5,15 @@
   "main": "built/webcrypto.js",
   "engineStrict": true,
   "scripts": {
-    "clean": "rm -rf build/ buildjs/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",
+    "clean": "rm -rf built/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",
     "prepublish": "npm run build",
     "postinstall": "npm run build",
-    "pretest": "npm run build",
+    "pretest": "npm run build:source",
     "test": "mocha",
-    "build": "typings install && tsc --sourceMap",
+    "build": "npm run build:es5",
+    "build:es5": "tsc",
+    "build:es2015": "tsc --module es2015 --target es2015",
+    "build:source": "tsc --sourceMap",
     "pub": "npm version patch && npm publish && git push",
     "sync": "git ac && git pull --rebase && git push",
     "coverage": "nyc npm test",
@@ -27,8 +30,9 @@
     "url": "git+https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
+    "@types/node": "^6.0.46",
     "graphene-pk11": "latest",
-    "webcrypto-core": "^0.1.0"
+    "webcrypto-core": "git+https://github.com/PeculiarVentures/webcrypto-core#types"
   },
   "keywords": [
     "crypto",
@@ -51,8 +55,7 @@
     "mocha": "^3",
     "npm-run-all": "^3",
     "nyc": "^8",
-    "typescript": "^1",
-    "typings": "^1",
+    "typescript": "^2",
     "watch": "^0"
   }
 }
