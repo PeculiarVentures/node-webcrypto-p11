@@ -279,7 +279,7 @@ export class Ecdh extends EcCrypto {
                             name: "ECDH1_DERIVE",
                             params: new graphene.EcdhParams(
                                 EcKdf.NULL,
-                                undefined,
+                                <any>null,
                                 (algorithm.public as CryptoKey).key.getAttribute({ pointEC: null }).pointEC! // CKA_EC_POINT
                             )
                         },
@@ -332,7 +332,7 @@ export class Ecdh extends EcCrypto {
                             name: "ECDH1_DERIVE",
                             params: new graphene.EcdhParams(
                                 EcKdf.NULL,
-                                undefined,
+                                <any>null,
                                 (algorithm.public as CryptoKey).key.getAttribute({ pointEC: null }).pointEC! // CKA_EC_POINT
                             )
                         },
