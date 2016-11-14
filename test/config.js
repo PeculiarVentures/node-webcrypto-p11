@@ -6,7 +6,7 @@ var config = {
 	pin: "12345"
 }
 
-var WebCrypto = require("../built/webcrypto.js").WebCrypto;     
+var WebCrypto = require("../built/webcrypto.js");     
     
 module.exports.crypto = new WebCrypto(config);
 
