@@ -1,10 +1,11 @@
+import { Session } from "graphene-pk11";
 import * as webcrypto from "webcrypto-core";
-import {Session} from "graphene-pk11";
 
 export function GUID(session: Session): string {
-    let buf = session.generateRandom(10);
+    const buf = session.generateRandom(10);
     // buf to string
     let bufStr = "";
+    // tslint:disable-next-line:prefer-for-of
     for (let i = 0; i < buf.length; i++) {
         let str = buf[i].toString(32);
         if (str.length === 1) {
@@ -13,18 +14,19 @@ export function GUID(session: Session): string {
         // some chars to Upper case
         let newStr = "";
         for (let j = 0; j < str.length; j++) {
-            let isUpper = +Math.random().toString().slice(2, 3) % 2;
-            if (isUpper)
+            const isUpper = +Math.random().toString().slice(2, 3) % 2;
+            if (isUpper) {
                 newStr += str.charAt(j).toUpperCase();
-            else
+            } else {
                 newStr += str.charAt(j);
+            }
         }
         bufStr += newStr;
     }
     // split chars to 4 groups
-    let res: string[] = [];
+    const res: string[] = [];
     for (let i = 0; i < 4; i++) {
-        let str = bufStr.slice(i * 5, (i + 1) * 5);
+        const str = bufStr.slice(i * 5, (i + 1) * 5);
         // to upper case
         res.push(str);
     }
@@ -36,7 +38,7 @@ export function b64_decode(b64url: string): Buffer {
 }
 
 /**
- * Prepare array of data before it's using 
+ * Prepare array of data before it's using
  * @param data Array which must be prepared
  */
 export function PrepareData(data: NodeBufferSource): Buffer {
@@ -45,7 +47,7 @@ export function PrepareData(data: NodeBufferSource): Buffer {
 
 /**
  * Converts ArrayBuffer to Buffer
- * @param ab ArrayBuffer value wich must be converted to Buffer
+ * @param ab ArrayBuffer value which must be converted to Buffer
  */
 function ab2b(ab: NodeBufferSource) {
     return new Buffer(ab as any);

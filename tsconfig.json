@@ -3,7 +3,7 @@
         "target": "es5",
         "lib": [
             "es5",
-            "es2015.promise",
+            "es2015",
             "dom"
         ],
         "noUnusedLocals": true,
@@ -15,7 +15,8 @@
         "removeComments": true,
         "declaration": false,
         "sourceMap": false,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "importHelpers": true
     },
     "exclude": [
         "node_modules",

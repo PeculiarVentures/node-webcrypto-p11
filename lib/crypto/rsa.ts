@@ -5,30 +5,28 @@ const AlgorithmError = webcrypto.AlgorithmError;
 const Base64Url = webcrypto.Base64Url;
 
 import {
-    Session,
     IAlgorithm,
-    KeyGenMechanism,
-    MechanismEnum,
     ITemplate,
-    ObjectClass,
+    KeyGenMechanism,
     KeyType,
-    RsaMgf,
-    PublicKey,
+    MechanismEnum,
+    ObjectClass,
     PrivateKey,
+    PublicKey,
+    RsaMgf,
+    Session,
 } from "graphene-pk11";
 import * as graphene from "graphene-pk11";
 
-
-import { ITemplatePair, CryptoKey } from "../key";
 import { BaseCrypto } from "../base";
+import { CryptoKey, ITemplatePair } from "../key";
 import * as utils from "../utils";
 // import * as aes from "./aes";
 
-
 function create_template(session: Session, alg: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
-    const id_pk = new Buffer(utils.GUID(session));
-    const id_pubk = new Buffer(utils.GUID(session));
+    const idPrivateKey = new Buffer(utils.GUID(session));
+    const idPublicKey = new Buffer(utils.GUID(session));
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
@@ -36,37 +34,37 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             class: ObjectClass.PRIVATE_KEY,
             keyType: KeyType.RSA,
             private: true,
-            label: label,
-            id: id_pk,
-            extractable: extractable,
+            label,
+            id: idPrivateKey,
+            extractable,
             derive: false,
             sign: keyUsages.indexOf("sign") > -1,
             decrypt: keyUsages.indexOf("decrypt") > -1,
-            unwrap: keyUsages.indexOf("unwrapKey") > -1
+            unwrap: keyUsages.indexOf("unwrapKey") > -1,
         },
         publicKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PUBLIC_KEY,
             keyType: KeyType.RSA,
-            label: label,
-            id: id_pubk,
+            label,
+            id: idPublicKey,
             verify: keyUsages.indexOf("verify") > -1,
             encrypt: keyUsages.indexOf("encrypt") > -1,
             wrap: keyUsages.indexOf("wrapKey") > -1,
-        }
+        },
     };
 }
 
 export abstract class RsaCrypto extends BaseCrypto {
 
-    static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKeyPair> {
-        return (super.generateKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+    public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKeyPair> {
+        return super.generateKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    let size = algorithm.modulusLength;
-                    let exp = new Buffer(algorithm.publicExponent);
+                    const size = algorithm.modulusLength;
+                    const exp = new Buffer(algorithm.publicExponent);
 
-                    let template = create_template(session!, algorithm as any, extractable, keyUsages);
+                    const template = create_template(session!, algorithm as any, extractable, keyUsages);
 
                     // RSA params
                     template.publicKey.publicExponent = exp;
@@ -77,20 +75,51 @@ export abstract class RsaCrypto extends BaseCrypto {
                         try {
                             if (err) {
                                 reject(new WebCryptoError(`Rsa: Can not generate new key\n${err.message}`));
-                            }
-                            else {
-                                let wcKeyPair: CryptoKeyPair = {
+                            } else {
+                                const wcKeyPair: CryptoKeyPair = {
                                     privateKey: new CryptoKey(keys.privateKey, algorithm),
-                                    publicKey: new CryptoKey(keys.publicKey, algorithm)
+                                    publicKey: new CryptoKey(keys.publicKey, algorithm),
                                 };
                                 resolve(wcKeyPair);
                             }
-                        }
-                        catch (e) {
+                        } catch (e) {
                             reject(e);
                         }
                     });
                 });
+            });
+    }
+
+    public static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
+        return super.exportKey.apply(this, arguments)
+            .then(() => {
+                switch (format.toLowerCase()) {
+                    case "jwk":
+                        if (key.type === "private") {
+                            return this.exportJwkPrivateKey(key);
+                        } else {
+                            return this.exportJwkPublicKey(key);
+                        }
+                    default:
+                        throw new Error(`Not supported format '${format}'`);
+                }
+            });
+    }
+
+    public static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
+        return super.importKey.apply(this, arguments)
+            .then(() => {
+                switch (format.toLowerCase()) {
+                    case "jwk":
+                        const jwk: any = keyData;
+                        if (jwk.d) {
+                            return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+                        } else {
+                            return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+                        }
+                    default:
+                        throw new Error(`Not supported format '${format}'`);
+                }
             });
     }
 
@@ -100,18 +129,18 @@ export abstract class RsaCrypto extends BaseCrypto {
 
     protected static exportJwkPublicKey(key: CryptoKey) {
         return new Promise((resolve, reject) => {
-            let pkey: ITemplate = (<CryptoKey>key).key.getAttribute({
+            const pkey: ITemplate = key.key.getAttribute({
                 publicExponent: null,
-                modulus: null
+                modulus: null,
             });
-            let alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
-            let jwk: JsonWebKey = {
+            const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
+            const jwk: JsonWebKey = {
                 kty: "RSA",
-                alg: alg,
+                alg,
                 ext: true,
                 key_ops: key.usages,
                 e: Base64Url.encode(pkey.publicExponent as Uint8Array),
-                n: Base64Url.encode(pkey.modulus as Uint8Array)
+                n: Base64Url.encode(pkey.modulus as Uint8Array),
             };
             resolve(jwk);
         });
@@ -119,7 +148,7 @@ export abstract class RsaCrypto extends BaseCrypto {
 
     protected static exportJwkPrivateKey(key: CryptoKey) {
         return new Promise((resolve, reject) => {
-            let pkey: ITemplate = key.key.getAttribute({
+            const pkey: ITemplate = key.key.getAttribute({
                 publicExponent: null,
                 modulus: null,
                 privateExponent: null,
@@ -127,12 +156,12 @@ export abstract class RsaCrypto extends BaseCrypto {
                 prime2: null,
                 exp1: null,
                 exp2: null,
-                coefficient: null
+                coefficient: null,
             });
-            let alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
-            let jwk: JsonWebKey = {
+            const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
+            const jwk: JsonWebKey = {
                 kty: "RSA",
-                alg: alg,
+                alg,
                 ext: true,
                 key_ops: key.usages,
                 e: Base64Url.encode(pkey.publicExponent as Uint8Array),
@@ -142,30 +171,15 @@ export abstract class RsaCrypto extends BaseCrypto {
                 q: Base64Url.encode(pkey.prime2 as Uint8Array),
                 dp: Base64Url.encode(pkey.exp1 as Uint8Array),
                 dq: Base64Url.encode(pkey.exp2 as Uint8Array),
-                qi: Base64Url.encode(pkey.coefficient as Uint8Array)
+                qi: Base64Url.encode(pkey.coefficient as Uint8Array),
             };
             resolve(jwk);
         });
     }
 
-    static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
-        return (super.exportKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                switch (format.toLowerCase()) {
-                    case "jwk":
-                        if (key.type === "private")
-                            return this.exportJwkPrivateKey(key);
-                        else
-                            return this.exportJwkPublicKey(key);
-                    default:
-                        throw new Error(`Not supported format '${format}'`);
-                }
-            });
-    }
-
-    static importJwkPrivateKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
+    protected static importJwkPrivateKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
         return new Promise((resolve, reject) => {
-            let template = create_template(session, algorithm, extractable, keyUsages).privateKey;
+            const template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.publicExponent = utils.b64_decode(jwk.e!);
             template.modulus = utils.b64_decode(jwk.n!);
             template.privateExponent = utils.b64_decode(jwk.d!);
@@ -174,42 +188,56 @@ export abstract class RsaCrypto extends BaseCrypto {
             template.exp1 = utils.b64_decode(jwk.dp!);
             template.exp2 = utils.b64_decode(jwk.dq!);
             template.coefficient = utils.b64_decode(jwk.qi!);
-            let p11key = session.create(template).toType<PrivateKey>();
+            const p11key = session.create(template).toType<PrivateKey>();
             resolve(new CryptoKey(p11key, algorithm));
         });
     }
 
-    static importJwkPublicKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
+    protected static importJwkPublicKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
         return new Promise((resolve, reject) => {
-            let template = create_template(session, algorithm, extractable, keyUsages).publicKey;
+            const template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.publicExponent = utils.b64_decode(jwk.e!);
             template.modulus = utils.b64_decode(jwk.n!);
-            let p11key = session.create(template).toType<PublicKey>();
+            const p11key = session.create(template).toType<PublicKey>();
             resolve(new CryptoKey(p11key, algorithm));
         });
-    }
-
-    static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
-        return (super.importKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                switch (format.toLowerCase()) {
-                    case "jwk":
-                        let jwk: any = keyData;
-                        if (jwk.d)
-                            return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
-                        else
-                            return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
-                    default:
-                        throw new Error(`Not supported format '${format}'`);
-                }
-            });
     }
 
 }
 
 export class RsaPKCS1 extends RsaCrypto {
 
-    static wc2pk11(alg: Algorithm, keyAlg: KeyAlgorithm): IAlgorithm {
+    public static sign(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
+        return super.sign.apply(this, arguments)
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data2) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(data2.buffer);
+                        }
+                    });
+                });
+            });
+    }
+
+    public static verify(algorithm: Algorithm, key: CryptoKey, signature: Buffer, data: Buffer, session?: Session): PromiseLike<boolean> {
+        return super.verify.apply(this, arguments)
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data2) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(data2);
+                        }
+                    });
+                });
+            });
+    }
+
+    protected static wc2pk11(alg: Algorithm, keyAlg: KeyAlgorithm): IAlgorithm {
         let res: string;
         switch ((keyAlg as any).hash.name.toUpperCase()) {
             case "SHA-1":
@@ -234,45 +262,23 @@ export class RsaPKCS1 extends RsaCrypto {
     }
 
     protected static jwkAlgName(alg: RsaHashedKeyAlgorithm): string {
-        let algName = /(\d+)$/.exec((alg as any).hash.name) ![1];
+        const algName = /(\d+)$/.exec((alg as any).hash.name)![1];
         return `RS${algName === "1" ? "" : algName}`;
     }
 
-    static sign(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.sign.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                return new Promise((resolve, reject) => {
-                    session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data) => {
-                        if (err) reject(err);
-                        else resolve(data.buffer);
-                    });
-                });
-            });
-    }
-
-    static verify(algorithm: Algorithm, key: CryptoKey, signature: Buffer, data: Buffer, session?: Session): PromiseLike<boolean> {
-        return (super.verify.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                return new Promise((resolve, reject) => {
-                    session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data) => {
-                        if (err) reject(err);
-                        else resolve(data);
-                    });
-                });
-            });
-    }
 }
 
 export class RsaPSS extends RsaPKCS1 {
+
     protected static jwkAlgName(alg: RsaHashedKeyAlgorithm): string {
-        let algName = /(\d+)$/.exec((alg as any).hash.name) ![1];
+        const algName = /(\d+)$/.exec((alg as any).hash.name)![1];
         return `RP${algName === "1" ? "" : algName}`;
     }
 
-    static wc2pk11(alg: Algorithm, keyAlg: Algorithm): IAlgorithm {
+    protected static wc2pk11(alg: Algorithm, keyAlg: Algorithm): IAlgorithm {
         let mech: string;
         let param: graphene.RsaPssParams;
-        let saltLen = (alg as any).saltLength;
+        const saltLen = (alg as any).saltLength;
         switch ((keyAlg as any).hash.name.toUpperCase()) {
             case "SHA-1":
                 mech = "SHA1_RSA_PKCS_PSS";
@@ -303,12 +309,42 @@ export class RsaPSS extends RsaPKCS1 {
 
 export class RsaOAEP extends RsaCrypto {
 
+    public static encrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
+        return super.encrypt.apply(this, arguments)
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    session!.createCipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data2) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(data2.buffer);
+                        }
+                    });
+                });
+            });
+    }
+
+    public static decrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
+        return super.decrypt.apply(this, arguments)
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    session!.createDecipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data2) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(data2.buffer);
+                        }
+                    });
+                });
+            });
+    }
+
     protected static jwkAlgName(alg: RsaHashedKeyAlgorithm): string {
-        let algName = /(\d+)$/.exec((alg as any).hash.name) ![1];
+        const algName = /(\d+)$/.exec((alg as any).hash.name)![1];
         return `RSA-OAEP${algName === "1" ? "" : ("-" + algName)}`;
     }
 
-    static wc2pk11(alg: Algorithm, keyAlg: KeyAlgorithm): IAlgorithm {
+    protected static wc2pk11(alg: Algorithm, keyAlg: KeyAlgorithm): IAlgorithm {
         let params: graphene.RsaOaepParams;
         const sourceData = (alg as RsaOaepParams).label ? new Buffer((alg as RsaOaepParams).label as Uint8Array) : undefined;
         switch ((keyAlg as any).hash.name.toUpperCase()) {
@@ -330,31 +366,8 @@ export class RsaOAEP extends RsaCrypto {
             default:
                 throw new AlgorithmError(AlgorithmError.UNSUPPORTED_ALGORITHM, (keyAlg as any).hash.name);
         }
-        let res = { name: "RSA_PKCS_OAEP", params: params };
+        const res = { name: "RSA_PKCS_OAEP", params };
         return res;
     }
 
-    static encrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.encrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                return new Promise((resolve, reject) => {
-                    session!.createCipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {
-                        if (err) reject(err);
-                        else resolve(data.buffer);
-                    });
-                });
-            });
-    }
-
-    static decrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.decrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
-            .then(() => {
-                return new Promise((resolve, reject) => {
-                    session!.createDecipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {
-                        if (err) reject(err);
-                        else resolve(data.buffer);
-                    });
-                });
-            });
-    }
 }

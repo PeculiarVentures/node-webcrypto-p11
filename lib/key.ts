@@ -1,7 +1,7 @@
 // Core
 import { WebCryptoError } from "webcrypto-core";
 
-import { Key, PrivateKey, PublicKey, SecretKey, ObjectClass, ITemplate } from "graphene-pk11";
+import { ITemplate, Key, ObjectClass, PrivateKey, PublicKey, SecretKey } from "graphene-pk11";
 
 export interface ITemplatePair {
     privateKey: ITemplate;
@@ -14,14 +14,16 @@ export interface CryptoKeyPair extends NativeCryptoKey {
 }
 
 export class CryptoKey implements NativeCryptoKey {
-    type: string;
-    extractable: boolean;
-    algorithm: KeyAlgorithm;
-    id: string;
-    usages: string[] = [];
+
+    public type: string;
+    public extractable: boolean;
+    public algorithm: KeyAlgorithm;
+    public id: string;
+    public usages: string[] = [];
 
     private _key: Key | PrivateKey | PublicKey | SecretKey;
-    get key(): Key {
+
+    public get key(): Key {
         return this._key;
     }
 
@@ -48,38 +50,62 @@ export class CryptoKey implements NativeCryptoKey {
         this.type = "private";
         this.extractable = key.extractable;
         this.usages = [];
-        if (key.decrypt) this.usages.push("decrypt");
+        if (key.decrypt) {
+            this.usages.push("decrypt");
+        }
         if (key.derive) {
             this.usages.push("deriveKey");
             this.usages.push("deriveBits");
         }
-        if (key.sign) this.usages.push("sign");
-        if (key.unwrap) this.usages.push("unwrapKey");
+        if (key.sign) {
+            this.usages.push("sign");
+        }
+        if (key.unwrap) {
+            this.usages.push("unwrapKey");
+        }
     }
 
     protected initPublicKey(key: PublicKey) {
         this._key = key;
         this.type = "public";
         this.extractable = true;
-        if (key.encrypt) this.usages.push("encrypt");
-        if (key.verify) this.usages.push("verify");
-        if (key.wrap) this.usages.push("wrapKey");
+        if (key.encrypt) {
+            this.usages.push("encrypt");
+        }
+        if (key.verify) {
+            this.usages.push("verify");
+        }
+        if (key.wrap) {
+            this.usages.push("wrapKey");
+        }
     }
 
     protected initSecretKey(key: SecretKey) {
         this._key = key;
         this.type = "secret";
         this.extractable = key.extractable;
-        if (key.encrypt) this.usages.push("encrypt");
-        if (key.verify) this.usages.push("verify");
-        if (key.wrap) this.usages.push("wrapKey");
-        if (key.decrypt) this.usages.push("decrypt");
+        if (key.encrypt) {
+            this.usages.push("encrypt");
+        }
+        if (key.verify) {
+            this.usages.push("verify");
+        }
+        if (key.wrap) {
+            this.usages.push("wrapKey");
+        }
+        if (key.decrypt) {
+            this.usages.push("decrypt");
+        }
         if (key.derive) {
             this.usages.push("deriveKey");
             this.usages.push("deriveBits");
         }
-        if (key.sign) this.usages.push("sign");
-        if (key.unwrap) this.usages.push("unwrapKey");
+        if (key.sign) {
+            this.usages.push("sign");
+        }
+        if (key.unwrap) {
+            this.usages.push("unwrapKey");
+        }
     }
 
 }

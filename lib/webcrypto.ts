@@ -2,9 +2,9 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { Module, Mechanism, Session, Slot } from "graphene-pk11";
-import { SubtleCrypto } from "./subtle";
+import { Mechanism, Module, Session, Slot } from "graphene-pk11";
 import { KeyStorage } from "./key_storage";
+import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
 
 const ERR_RANDOM_VALUE_LENGTH = "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (%1) exceeds the number of bytes of entropy available via this API (65536).";
@@ -19,50 +19,28 @@ _global.atob = (data: string) => new Buffer(data, "base64").toString("binary");
  */
 class WebCrypto implements NativeCrypto {
 
+    public subtle: SubtleCrypto;
+    public keyStorage: KeyStorage;
+
     private module: Module;
     private session: Session;
     private slot: Slot;
     private initialized: boolean;
 
-    public subtle: SubtleCrypto;
-
-    keyStorage: KeyStorage;
-
-    /**
-     * Generates cryptographically random values
-     * @param array Initialize array
-     */
-    // Based on: https://github.com/KenanY/get-random-values
-    getRandomValues(array: NodeBufferSource): NodeBufferSource;
-    getRandomValues(array: ArrayBufferView): ArrayBufferView;
-    getRandomValues(array: NodeBufferSource): NodeBufferSource {
-        if (array.byteLength > 65536) {
-            let error = new webcrypto.WebCryptoError(ERR_RANDOM_VALUE_LENGTH, array.byteLength);
-            error.code = 22;
-            throw error;
-        }
-        let bytes = new Uint8Array(this.session.generateRandom(array.byteLength));
-        (array as Uint8Array).set(bytes);
-        return array;
-    }
-
-    getGUID() {
-        return utils.GUID(this.session);
-    }
-
     /**
      * @param  {P11WebCryptoParams} props PKCS11 module init parameters
      */
     constructor(props: P11WebCryptoParams) {
-        let mod = this.module = Module.load(props.library, props.name);
+        const mod = this.module = Module.load(props.library, props.name);
         mod.initialize();
         this.initialized = true;
         this.slot = mod.getSlots(props.slot);
-        if (!this.slot)
+        if (!this.slot) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
+        }
         this.session = this.slot.open(props.sessionFlags);
         this.session.login(props.pin!);
-        for (let i in props.vendors!) {
+        for (const i in props.vendors!) {
             Mechanism.vendor(props.vendors![i]);
         }
         this.subtle = new SubtleCrypto(this.session);
@@ -70,9 +48,31 @@ class WebCrypto implements NativeCrypto {
     }
 
     /**
+     * Generates cryptographically random values
+     * @param array Initialize array
+     */
+    // Based on: https://github.com/KenanY/get-random-values
+    public getRandomValues(array: NodeBufferSource): NodeBufferSource;
+    public getRandomValues(array: ArrayBufferView): ArrayBufferView;
+    public getRandomValues(array: NodeBufferSource): NodeBufferSource {
+        if (array.byteLength > 65536) {
+            const error = new webcrypto.WebCryptoError(ERR_RANDOM_VALUE_LENGTH, array.byteLength);
+            error.code = 22;
+            throw error;
+        }
+        const bytes = new Uint8Array(this.session.generateRandom(array.byteLength));
+        (array as Uint8Array).set(bytes);
+        return array;
+    }
+
+    public getGUID() {
+        return utils.GUID(this.session);
+    }
+
+    /**
      * Close PKCS11 module
      */
-    close() {
+    public close() {
         if (this.initialized) {
             this.session.logout();
             this.session.close();

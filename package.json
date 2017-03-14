@@ -29,12 +29,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PeculiarVentures/node-webcrypto-p11.git"
+    "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
     "@types/node": "^6.0.46",
     "graphene-pk11": "^2.0.18",
-    "webcrypto-core": "git+https://github.com/PeculiarVentures/webcrypto-core#types"
+    "webcrypto-core": "^0.1.13"
   },
   "keywords": [
     "crypto",
