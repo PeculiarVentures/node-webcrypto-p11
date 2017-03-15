@@ -17,7 +17,7 @@ _global.atob = (data: string) => new Buffer(data, "base64").toString("binary");
 /**
  * PKCS11 with WebCrypto Interface
  */
-class WebCrypto implements NativeCrypto {
+export class WebCrypto implements NativeCrypto {
 
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
@@ -28,21 +28,27 @@ class WebCrypto implements NativeCrypto {
     private initialized: boolean;
 
     /**
-     * @param  {P11WebCryptoParams} props PKCS11 module init parameters
+     * Creates an instance of WebCrypto.
+     * @param {P11WebCryptoParams} props PKCS11 module init parameters
+     *
+     * @memberOf WebCrypto
      */
     constructor(props: P11WebCryptoParams) {
         const mod = this.module = Module.load(props.library, props.name);
         mod.initialize();
         this.initialized = true;
+
         this.slot = mod.getSlots(props.slot);
         if (!this.slot) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
         }
+
         this.session = this.slot.open(props.sessionFlags);
         this.session.login(props.pin!);
         for (const i in props.vendors!) {
             Mechanism.vendor(props.vendors![i]);
         }
+
         this.subtle = new SubtleCrypto(this.session);
         this.keyStorage = new KeyStorage(this.session);
     }
@@ -80,5 +86,3 @@ class WebCrypto implements NativeCrypto {
         }
     }
 }
-
-export = WebCrypto;

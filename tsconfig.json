@@ -7,7 +7,6 @@
             "dom"
         ],
         "noUnusedLocals": true,
-        "strictNullChecks": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "rootDir": "lib",
@@ -16,6 +15,7 @@
         "declaration": false,
         "sourceMap": false,
         "noImplicitAny": true,
+        "experimentalDecorators": true,
         "importHelpers": true
     },
     "exclude": [

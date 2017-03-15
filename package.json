@@ -2,7 +2,7 @@
   "name": "node-webcrypto-p11",
   "version": "1.0.4",
   "description": "A WebCrypto Polyfill built on PKCS11",
-  "main": "built/webcrypto.js",
+  "main": "built/index.js",
   "types": "index.d.ts",
   "engineStrict": true,
   "scripts": {
@@ -32,8 +32,9 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "@types/node": "^6.0.46",
-    "graphene-pk11": "^2.0.18",
+    "@types/node": "^7.0.8",
+    "graphene-pk11": "^2.0.20",
+    "ts-lib": "0.0.5",
     "webcrypto-core": "^0.1.13"
   },
   "keywords": [

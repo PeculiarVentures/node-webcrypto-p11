@@ -48,7 +48,12 @@ export class CryptoKey implements NativeCryptoKey {
     protected initPrivateKey(key: PrivateKey) {
         this._key = key;
         this.type = "private";
-        this.extractable = key.extractable;
+        try {
+            // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
+            this.extractable = key.extractable;
+        } catch (e) {
+            this.extractable = false;
+        }
         this.usages = [];
         if (key.decrypt) {
             this.usages.push("decrypt");
@@ -83,7 +88,12 @@ export class CryptoKey implements NativeCryptoKey {
     protected initSecretKey(key: SecretKey) {
         this._key = key;
         this.type = "secret";
-        this.extractable = key.extractable;
+        try {
+            // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
+            this.extractable = key.extractable;
+        } catch (e) {
+            this.extractable = false;
+        }
         if (key.encrypt) {
             this.usages.push("encrypt");
         }

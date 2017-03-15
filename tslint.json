@@ -11,6 +11,7 @@
         "object-literal-sort-keys": false,
         "no-bitwise": false,
         "forin": false,
+        "no-shadowed-variable": false,
         "max-line-length": [
             false
         ],

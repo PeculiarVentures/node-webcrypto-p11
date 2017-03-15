@@ -1,10 +1,10 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { Key, Session } from "graphene-pk11";
+import { KeyType, ObjectClass, SecretKey, Session, SessionObject } from "graphene-pk11";
 import { CryptoKey } from "./key";
 
-export class KeyStorage {
+export class KeyStorage implements IKeyStorage {
 
     protected session: Session;
 
@@ -12,19 +12,44 @@ export class KeyStorage {
         this.session = session;
     }
 
-    public get length(): number {
-        throw new Error("Not implemented yet");
+    public async keys() {
+        const keys: string[] = [];
+        [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY].forEach((objectClass) => {
+            this.session.find({ class: objectClass }, (obj) => {
+                const item = obj.toType<any>();
+                keys.push(this.getName(objectClass, item.id));
+            });
+        });
+        return keys;
     }
 
-    public clear(): void {
+    public async clear() {
         this.session.clear();
     }
 
-    public getItem(key: string) {
+    public async getItem(key: string) {
         const subjectObject = this.getItemById(key);
         if (subjectObject) {
-            const p11Key = subjectObject.toType<Key>();
-            const alg = JSON.parse(p11Key.label);
+            const p11Key = subjectObject.toType<SecretKey>();
+            const alg: any = {};
+            // name
+            switch (p11Key.type) {
+                case KeyType.RSA: {
+                    if (p11Key.sign || p11Key.verify) {
+                        alg.name = "RSASSA-PKCS1-v1_5";
+                    } else {
+                        alg.name = "RSA-OAEP";
+                    }
+                    alg.hash = "SHA-256";
+                    break;
+                }
+                case KeyType.EC: {
+                    throw new Error(`Not implemented yet`);
+                }
+                default:
+                    throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
+            }
+            // const alg = JSON.parse(p11Key.label);
             return new CryptoKey(p11Key, alg);
         } else {
             return null;
@@ -35,14 +60,14 @@ export class KeyStorage {
         throw new Error("Not implemented yet");
     }
 
-    public removeItem(key: string): void {
+    public async removeItem(key: string) {
         const sessionObject = this.getItemById(key);
         if (sessionObject) {
             sessionObject.destroy();
         }
     }
 
-    public setItem(key: string, data: CryptoKey): void {
+    public async setItem(key: string, data: CryptoKey) {
         if (!(data instanceof CryptoKey)) {
             throw new WebCryptoError("Parameter 2 is not P11CryptoKey");
         }
@@ -58,15 +83,43 @@ export class KeyStorage {
     }
 
     protected getItemById(id: string) {
-        const keys = this.session.find({ id: new Buffer(id) });
-        if (!keys.length) {
-            // console.log(`WebCrypto:PKCS11: Key by ID '${id}' is not found`);
-            return null;
+        let key: SessionObject = null;
+        [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY].forEach((objectClass) => {
+            this.session.find({ class: objectClass }, (obj) => {
+                const item = obj.toType<any>();
+                if (id === this.getName(objectClass, item.id)) {
+                    key = item;
+                    return false;
+                }
+            });
+        });
+        return key;
+    }
+
+    /**
+     * Returns name for item by it's type and id
+     * Template: <type>-<hex(id)>
+     *
+     * @protected
+     * @param {ObjectClass} type
+     * @param {Buffer} id
+     * @returns
+     *
+     * @memberOf KeyStorage
+     */
+    protected getName(type: ObjectClass, id: Buffer) {
+        let name: string;
+        switch (type) {
+            case ObjectClass.PRIVATE_KEY:
+                name = "private";
+                break;
+            case ObjectClass.PUBLIC_KEY:
+                name = "public";
+                break;
+            default:
+                throw new Error(`Unsupported Object type '${type}'`);
         }
-        if (keys.length > 1) {
-            console.log(`WebCrypto:PKCS11: ${keys.length} keys matches ID '${id}'`);
-        }
-        return keys.items(0);
+        return `${name}-${id.toString("hex")}`;
     }
 
 }
