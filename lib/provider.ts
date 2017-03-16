@@ -3,8 +3,8 @@ import { EventEmitter } from "events";
 
 const TOKEN_WATCHER_INTERVAL = 2e3;
 
-type ProviderTokenHandler = () => void;
-type ProviderListeningHandler = () => void;
+type ProviderTokenHandler = (info: { removed: IProvider[], added: IProvider[] }) => void;
+type ProviderListeningHandler = (info: IModule) => void;
 type ProviderErrorHandler = (e: Error) => void;
 type ProviderStopHandler = () => void;
 
@@ -48,7 +48,9 @@ export class Provider extends EventEmitter {
                 this.getInfo((info2) => {
                     const length2 = info2.providers.length;
                     if (length2 !== length) {
-                        this.emit("token", info2);
+                        const difference = this.findDifference(info.providers, info2.providers);
+                        this.emit("token", difference);
+                        info = info2;
                         length = length2;
                     }
                 });
@@ -59,6 +61,25 @@ export class Provider extends EventEmitter {
 
     public stop() {
         clearInterval(this.interval);
+    }
+
+    protected findDifference(a: IProvider[], b: IProvider[]) {
+        // remove all equal providers from arrays
+        a = a.filter((A) => {
+            let found = false;
+            b = b.filter((B) => {
+                if (A.serialNumber === B.serialNumber) {
+                    found = true;
+                    return false;
+                }
+                return true;
+            });
+            return !found;
+        });
+        return {
+            removed: a,
+            added: b,
+        };
     }
 
     protected getInfo(cb: (info: IModule) => void) {

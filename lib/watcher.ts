@@ -18,6 +18,7 @@ try {
         const provider: IProvider = {
             id: slot.manufacturerID,
             name: slot.slotDescription,
+            serialNumber: slot.getToken().serialNumber,
             algorithms: [],
         };
 

@@ -117,5 +117,6 @@ interface IModule {
 interface IProvider {
     id: string;
     name: string;
+    serialNumber: string;
     algorithms: string[];
 }
