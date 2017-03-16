@@ -6,6 +6,7 @@ import { Mechanism, Module, Session, Slot } from "graphene-pk11";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
+import { CertificateStorage } from "./cert_storage";
 
 const ERR_RANDOM_VALUE_LENGTH = "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (%1) exceeds the number of bytes of entropy available via this API (65536).";
 
@@ -21,6 +22,7 @@ export class WebCrypto implements NativeCrypto {
 
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
+    public certStorage: CertificateStorage;
 
     private module: Module;
     private session: Session;
@@ -51,6 +53,7 @@ export class WebCrypto implements NativeCrypto {
 
         this.subtle = new SubtleCrypto(this.session);
         this.keyStorage = new KeyStorage(this.session);
+        this.certStorage = new CertificateStorage(this.session);
     }
 
     /**

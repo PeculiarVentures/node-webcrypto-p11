@@ -127,6 +127,68 @@ TODO: ADD THREATS FROM WEAK CRYPTOGRAPHY
 
 TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
 
+## Using
+
+### Provider
+
+```javascript
+var wcp11 = require("node-webcrypto-p11");
+const provider = new wcp11.Provider("path/to/pkcs11.so");
+
+let tokens = 0;
+provider
+    .on("listening", (info) => {
+        console.log("listening");
+        console.log(info);
+        console.log(`Providers: ${info.providers.length}`);
+
+        tokens = info.providers.length;
+    })
+    .on("token", (info) => {
+        console.log("token:", tokens > info.providers.length ? "removed" : "inserted");
+        console.log(`Providers: ${info.providers.length}`);
+        tokens = info.providers.length;
+    })
+    .on("error", (e) => {
+        console.error(e);
+    })
+
+provider.open();
+```
+
+### Crypto
+
+Example: Generates `ECDSA` key pair with named curve `P-256` and signs/verifies text message.
+
+```javascript
+var wcp11 = require("node-webcrypto-p11");
+
+var config = {
+    library: "/usr/local/lib/softhsm/libsofthsm2.so",
+    name: "SoftHSM v2.0",
+    slot: 0,
+    sessionFlags: 4, // SERIAL_SESSION
+    pin: "12345"
+}
+
+var crypto = new wcp11.WebCrypto(config);
+
+crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", "verify"])
+    .then((keys) => {
+        return crypto.subtle.sign({name: "ECDSA", hash: "SHA-256"}, keys.privateKey, new Buffer("Hello world!"))
+            .then((signature) => {
+                console.log(`Signature: ${signature}`);
+                return crypto.subtle.verify({name: "ECDSA", hash: "SHA-256"}, keys.publicKey, signature, new Buffer("Hello world!"))
+            })
+            .then((ok) => {
+                console.log(`Verification: ${ok}`);
+            });
+    })
+    .catch((err) => {
+        console.error(err);
+    });
+```
+
 ## Bug Reporting
 Please report bugs either as pull requests or as issues in the issue tracker. Backwater has a full disclosure vulnerability policy. Please do NOT attempt to report any security vulnerability in this code privately to anybody.
 

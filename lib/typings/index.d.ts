@@ -79,13 +79,13 @@ interface ICertificateStorageItem {
 }
 
 interface IX509Certificate extends ICertificateStorageItem {
-    serialNumber: HexString;
-    issuerName: string;
-    subjectName: string;
+    serialNumber?: HexString;
+    issuerName?: string;
+    subjectName?: string;
 }
 
 interface IX509Request extends ICertificateStorageItem {
-    subjectName: string;
+    subjectName?: string;
 }
 
 interface ICertificateStorage {
