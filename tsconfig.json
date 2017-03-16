@@ -3,11 +3,10 @@
         "target": "es5",
         "lib": [
             "es5",
-            "es2015.promise",
+            "es2015",
             "dom"
         ],
         "noUnusedLocals": true,
-        "strictNullChecks": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "rootDir": "lib",

@@ -149,7 +149,7 @@ export abstract class RsaCrypto extends BaseCrypto {
     }
 
     static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
-        return (super.exportKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.exportKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {
                     case "jwk":
@@ -190,7 +190,7 @@ export abstract class RsaCrypto extends BaseCrypto {
     }
 
     static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
-        return (super.importKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.importKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {
                     case "jwk":
@@ -239,7 +239,7 @@ export class RsaPKCS1 extends RsaCrypto {
     }
 
     static sign(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.sign.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.sign.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data) => {
@@ -251,7 +251,7 @@ export class RsaPKCS1 extends RsaCrypto {
     }
 
     static verify(algorithm: Algorithm, key: CryptoKey, signature: Buffer, data: Buffer, session?: Session): PromiseLike<boolean> {
-        return (super.verify.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.verify.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data) => {
@@ -335,7 +335,7 @@ export class RsaOAEP extends RsaCrypto {
     }
 
     static encrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.encrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.encrypt.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createCipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {
@@ -347,7 +347,7 @@ export class RsaOAEP extends RsaCrypto {
     }
 
     static decrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.decrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.decrypt.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createDecipher(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, new Buffer((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3), (err, data) => {

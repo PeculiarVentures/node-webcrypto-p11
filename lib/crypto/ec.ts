@@ -145,7 +145,7 @@ export class EcCrypto extends BaseCrypto {
     }
 
     static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
-        return (super.exportKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.exportKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {
                     case "jwk":
@@ -183,7 +183,7 @@ export class EcCrypto extends BaseCrypto {
     }
 
     static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
-        return (super.importKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.importKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {
                     case "jwk":
@@ -227,7 +227,7 @@ export class Ecdsa extends EcCrypto {
     }
 
     static sign(algorithm: EcdsaParams, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.sign.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.sign.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data) => {
@@ -239,7 +239,7 @@ export class Ecdsa extends EcCrypto {
     }
 
     static verify(algorithm: EcdsaParams, key: CryptoKey, signature: Buffer, data: Buffer, session?: Session): PromiseLike<boolean> {
-        return (super.verify.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.verify.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data) => {

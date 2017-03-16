@@ -34,7 +34,7 @@ export function create_template(session: Session, alg: AesKeyGenParams, extracta
 export abstract class AesCrypto extends BaseCrypto {
 
     static generateKey(algorithm: AesKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
-        return (super.generateKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.generateKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     let template = create_template(session!, algorithm, extractable, keyUsages);
@@ -85,7 +85,7 @@ export abstract class AesCrypto extends BaseCrypto {
     }
 
     static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
-        return (super.importKey.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.importKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     // get key value
@@ -133,7 +133,7 @@ export abstract class AesCrypto extends BaseCrypto {
     }
 
     static encrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.encrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.encrypt.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createCipher(this.wc2pk11(algorithm), key.key).once(data, new Buffer(this.getOutputBufferSize(key.algorithm as AesKeyAlgorithm, true, data.length)), (err, data) => {
@@ -145,7 +145,7 @@ export abstract class AesCrypto extends BaseCrypto {
     }
 
     static decrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
-        return (super.decrypt.apply(this, arguments) as PromiseLike<CryptoKeyPair>)
+        return super.decrypt.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createDecipher(this.wc2pk11(algorithm), key.key).once(data, new Buffer(this.getOutputBufferSize(key.algorithm as AesKeyAlgorithm, false, data.length)), (err, data) => {
