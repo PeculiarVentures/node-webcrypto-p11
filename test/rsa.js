@@ -62,7 +62,7 @@ describe("WebCrypto RSA", () => {
             .forEach(key => {
                 it(key.name, done => {
                     // TODO: Add label
-                    crypto.subtle.sign({ name: key.privateKey.algorithm.name }, key.privateKey, TEST_MESSAGE)
+                    crypto.subtle.sign({ name: key.privateKey.algorithm.name, saltLength: 8 }, key.privateKey, TEST_MESSAGE)
                         .then(sig => {
                             assert.equal(!!sig, true, "Has no signature value");
                             assert.notEqual(sig.length, 0, "Has empty signature value");
