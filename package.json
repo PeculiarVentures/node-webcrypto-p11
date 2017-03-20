@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@types/node": "^7.0.8",
-    "graphene-pk11": "^2.0.20",
+    "graphene-pk11": "^2.0.21",
     "ts-lib": "0.0.5",
     "webcrypto-core": "^0.1.13"
   },

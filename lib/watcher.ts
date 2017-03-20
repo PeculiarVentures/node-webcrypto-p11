@@ -69,6 +69,15 @@ try {
                 case "ECDH1_DERIVE":
                     algName = "ECDH";
                     break;
+                case "AES_CBC_PAD":
+                    algName = "AES-CBC";
+                    break;
+                case "AES_GCM_PAD":
+                    algName = "AES-GCM";
+                    break;
+                case "AES_KEY_WRAP_PAD":
+                    algName = "AES-KW";
+                    break;
                 default:
             }
             if (algName && !provider.algorithms.some((alg) => alg === algName)) {
