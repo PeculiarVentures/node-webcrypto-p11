@@ -1,7 +1,14 @@
+import * as crypto from "crypto";
 import { Module } from "graphene-pk11";
 
 const libPath = process.argv[2];
 const mod = Module.load(libPath);
+
+function CalculateID(data: string) {
+    const digest = crypto.createHash("SHA256");
+    digest.update(data);
+    return digest.digest("hex");
+}
 
 
 try {
@@ -16,7 +23,7 @@ try {
     for (let i = 0; i < slots.length; i++) {
         const slot = slots.items(i);
         const provider: IProvider = {
-            id: slot.manufacturerID,
+            id: CalculateID(slot.manufacturerID + slot.slotDescription + slot.getToken().serialNumber + i.toString()),
             name: slot.slotDescription,
             serialNumber: slot.getToken().serialNumber,
             algorithms: [],

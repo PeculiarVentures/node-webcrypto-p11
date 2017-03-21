@@ -83,12 +83,14 @@ export class Provider extends EventEmitter {
     }
 
     protected getInfo(cb: (info: IModule) => void) {
-        childProcess.exec(`node ${__dirname}/watcher.js ${this.library}`, (error, stdout) => {
+        childProcess.exec(`node ${__dirname}/watcher.js ${this.library}`, (error, stdout, stderr) => {
             if (error) {
                 this.emit("error", error);
             } else {
                 if (stdout !== "-1") {
                     cb(JSON.parse(stdout));
+                } else {
+                    this.emit("error", new Error("Cannot get info from watcher.\n" + stderr));
                 }
             }
         });
