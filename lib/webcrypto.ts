@@ -2,11 +2,11 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { Mechanism, Module, Session, Slot } from "graphene-pk11";
+import { Mechanism, Module, Session, SessionFlag, Slot } from "graphene-pk11";
+import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
-import { CertificateStorage } from "./cert_storage";
 
 const ERR_RANDOM_VALUE_LENGTH = "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (%1) exceeds the number of bytes of entropy available via this API (65536).";
 
@@ -23,6 +23,7 @@ export class WebCrypto implements NativeCrypto {
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
     public certStorage: CertificateStorage;
+    public isLoggedIn: boolean = false;
 
     private module: Module;
     private session: Session;
@@ -37,16 +38,22 @@ export class WebCrypto implements NativeCrypto {
      */
     constructor(props: P11WebCryptoParams) {
         const mod = this.module = Module.load(props.library, props.name);
-        mod.initialize();
+        try {
+            mod.initialize();
+        } catch (e) {
+            // console.log("Module already initialized");
+        }
         this.initialized = true;
 
         this.slot = mod.getSlots(props.slot);
         if (!this.slot) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
         }
+        this.open(props.readWrite);
 
-        this.session = this.slot.open(props.sessionFlags);
-        this.session.login(props.pin!);
+        if (props.pin) {
+            this.login(props.pin);
+        }
         for (const i in props.vendors!) {
             Mechanism.vendor(props.vendors![i]);
         }
@@ -54,6 +61,24 @@ export class WebCrypto implements NativeCrypto {
         this.subtle = new SubtleCrypto(this.session);
         this.keyStorage = new KeyStorage(this.session);
         this.certStorage = new CertificateStorage(this.session);
+    }
+
+    public open(rw?: boolean) {
+        let flags = SessionFlag.SERIAL_SESSION;
+        if (rw) {
+            flags |= SessionFlag.RW_SESSION;
+        }
+        this.session = this.slot.open(flags);
+    }
+
+    public login(pin: string) {
+        this.session.login(pin);
+        this.isLoggedIn = true;
+    }
+
+    public logout() {
+        this.session.logout();
+        this.isLoggedIn = false;
     }
 
     /**

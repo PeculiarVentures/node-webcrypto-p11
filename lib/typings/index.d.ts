@@ -13,7 +13,7 @@ interface P11WebCryptoParams extends Object {
      * Index of slot
      */
     slot: number;
-    sessionFlags?: number;
+    readWrite?: boolean;
     /**
      * PIN of slot
      */

@@ -2,7 +2,7 @@ var config = {
 	library: "/usr/local/lib/softhsm/libsofthsm2.so",
 	name: "SoftHSMv2",
 	slot: 0,
-    sessionFlags: 2 | 4,
+    readWrite: true,
 	pin: "12345"
 }
 

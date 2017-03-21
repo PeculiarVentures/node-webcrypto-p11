@@ -96,10 +96,7 @@ declare module "node-webcrypto-p11" {
     }
 
     class WebCrypto implements NativeCrypto {
-        private module;
-        private session;
-        private slot;
-        private initialized;
+        isLoggedIn: boolean;
         subtle: SubtleCrypto;
         keyStorage: IKeyStorage;
         certStorage: ICertificateStorage;
@@ -107,14 +104,17 @@ declare module "node-webcrypto-p11" {
         getRandomValues(array: ArrayBufferView): ArrayBufferView;
         getGUID(): string;
         constructor(props: P11WebCryptoParams);
+        open(rw?: boolean): void;
         close(): void;
+        login(pin: string): void;
+        logout(): void;
     }
 
     interface P11WebCryptoParams extends Object {
         library: string;
-        name: string;
+        name?: string;
         slot: number;
-        sessionFlags?: number;
+        readWrite?: boolean;
         pin?: string;
         vendors?: string[];
     }
