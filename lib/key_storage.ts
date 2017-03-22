@@ -15,7 +15,7 @@ export class KeyStorage implements IKeyStorage {
     public async keys() {
         const keys: string[] = [];
         [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY].forEach((objectClass) => {
-            this.session.find({ class: objectClass }, (obj) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
                 keys.push(this.getName(objectClass, item.id));
             });
@@ -76,7 +76,7 @@ export class KeyStorage implements IKeyStorage {
         if (!p11Key.key.token) {
             this.session.copy(p11Key.key, {
                 token: true,
-                id: new Buffer(key),
+                id: new Buffer(p11Key.id),
                 label: JSON.stringify(data.algorithm),
             });
         }
@@ -115,6 +115,9 @@ export class KeyStorage implements IKeyStorage {
                 break;
             case ObjectClass.PUBLIC_KEY:
                 name = "public";
+                break;
+            case ObjectClass.SECRET_KEY:
+                name = "secret";
                 break;
             default:
                 throw new Error(`Unsupported Object type '${type}'`);

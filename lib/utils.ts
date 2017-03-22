@@ -1,8 +1,9 @@
+import * as crypto from "crypto";
 import { Session } from "graphene-pk11";
 import * as webcrypto from "webcrypto-core";
 
 export function GUID(session: Session): string {
-    const buf = session.generateRandom(10);
+    const buf = crypto.randomBytes(10);
     // buf to string
     let bufStr = "";
     // tslint:disable-next-line:prefer-for-of

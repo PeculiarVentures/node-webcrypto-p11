@@ -1,21 +1,27 @@
-import * as webcrypto from "webcrypto-core";
-const WebCryptoError = webcrypto.WebCryptoError;
+import * as crypto from "crypto";
 
-import { KeyType, ObjectClass, PublicKey, Session, SessionObject, X509Certificate } from "graphene-pk11";
+import { KeyType, ObjectClass, PublicKey, Session, SessionObject, X509Certificate as P11Certificate, CertificateType, Certificate } from "graphene-pk11";
 import { CryptoKey } from "./key";
+
+import * as Asn1Js from "asn1js";
+import { WebCrypto } from "./webcrypto";
+import { X509Certificate } from "./cert";
+const pkijs = require("pkijs");
 
 export class CertificateStorage implements ICertificateStorage {
 
     protected session: Session;
+    protected crypto: WebCrypto;
 
-    constructor(session: Session) {
+    constructor(session: Session, crypto: WebCrypto) {
         this.session = session;
+        this.crypto = crypto;
     }
 
     public async keys() {
         const keys: string[] = [];
         [ObjectClass.CERTIFICATE].forEach((objectClass) => {
-            this.session.find({ class: objectClass }, (obj) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
                 keys.push(this.getName(objectClass, item.id));
             });
@@ -30,12 +36,13 @@ export class CertificateStorage implements ICertificateStorage {
     public async getItem(key: string) {
         const subjectObject = this.getItemById(key);
         if (subjectObject) {
-            const x509 = subjectObject.toType<X509Certificate>();
+            const x509Object = subjectObject.toType<P11Certificate>();
             const keys = this.session.find({
                 class: ObjectClass.PUBLIC_KEY,
-                id: x509.id,
+                id: x509Object.id,
             });
             if (!keys.length) {
+                // TODO: export key from certificate
                 throw new Error("Cannot find public key for Certificate");
             }
             const p11Key = keys.items(0).toType<PublicKey>();
@@ -58,12 +65,9 @@ export class CertificateStorage implements ICertificateStorage {
                     throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
             }
             // const alg = JSON.parse(p11Key.label);
-            return {
-                id: x509.id.toString("hex"),
-                type: "x509",
-                publicKey: new CryptoKey(p11Key, alg),
-                value: new Uint8Array(x509.value).buffer,
-            } as IX509Certificate;
+            const cert = new X509Certificate(x509Object);
+            cert.publicKey = new CryptoKey(p11Key, alg);
+            return cert;
         } else {
             return null;
         }
@@ -81,22 +85,64 @@ export class CertificateStorage implements ICertificateStorage {
     }
 
     public async setItem(key: string, data: ICertificateStorageItem) {
-        if (!(data instanceof CryptoKey)) {
-            throw new WebCryptoError("Parameter 2 is not P11CryptoKey");
-        }
-        const p11Key = data as CryptoKey;
+        const p11Object = (data as any).handle as Certificate;
         // don't copy object from token
-        if (!p11Key.key.token) {
-            this.session.copy(p11Key.key, {
+        if (!p11Object.token) {
+            this.session.copy(p11Object, {
                 token: true,
-                id: new Buffer(key),
-                label: JSON.stringify(data.algorithm),
             });
         }
     }
 
-    public async importCert(type: string, data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<ICertificateStorageItem> {
-        throw new Error("Method not implemented.");
+    public async importCert(type: string, data: ArrayBuffer, algorithm: Algorithm, usages: string[]): Promise<ICertificateStorageItem> {
+        const asn1 = Asn1Js.fromBER(data);
+        switch (type.toLowerCase()) {
+            case "x509": {
+                const x509 = new pkijs.Certificate({ schema: asn1.result });
+
+                const publicKeyInfoSchema = x509.subjectPublicKeyInfo.toSchema();
+                const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
+
+                const publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, usages);
+
+                const hash = crypto.createHash("SHA1");
+                hash.update(new Buffer(publicKeyInfoBuffer));
+                const hashSPKI = hash.digest();
+
+                const x509Object = this.session.create({
+                    id: hashSPKI,
+                    class: ObjectClass.CERTIFICATE,
+                    certType: CertificateType.X_509,
+                    serial: new Buffer(x509.serialNumber.toBER(false)),
+                    subject: new Buffer(x509.subject.toSchema(true).toBER(false)),
+                    issuer: new Buffer(x509.issuer.toSchema(true).toBER(false)),
+                    token: false,
+                    ski: hashSPKI,
+                    value: new Buffer(data),
+                });
+
+                const cert = new X509Certificate(x509Object.toType<P11Certificate>());
+                cert.publicKey = publicKey;
+                return cert
+            }
+            case "request": {
+                const request = new pkijs.CertificationRequest({ schema: asn1.result });
+
+                const publicKeyInfoSchema = request.subjectPublicKeyInfo.toSchema();
+                const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
+
+                const publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, usages);
+
+                return {
+                    id: "",
+                    publicKey,
+                    type: "request",
+                    value: data,
+                };
+            }
+            default:
+                throw new Error(`Wrong value for parameter type. Must be x509 or request`);
+        }
     }
 
     protected getItemById(id: string) {

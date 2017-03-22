@@ -60,7 +60,7 @@ export class WebCrypto implements NativeCrypto {
 
         this.subtle = new SubtleCrypto(this.session);
         this.keyStorage = new KeyStorage(this.session);
-        this.certStorage = new CertificateStorage(this.session);
+        this.certStorage = new CertificateStorage(this.session, this);
     }
 
     public open(rw?: boolean) {
