@@ -32,8 +32,10 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
+    "@types/asn1js": "0.0.1",
     "@types/node": "^7.0.8",
     "graphene-pk11": "^2.0.21",
+    "pkijs": "^2.0.55",
     "ts-lib": "0.0.5",
     "webcrypto-core": "^0.1.13"
   },

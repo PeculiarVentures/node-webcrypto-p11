@@ -23,10 +23,12 @@ import { CryptoKey, ITemplatePair } from "../key";
 import * as utils from "../utils";
 // import * as aes from "./aes";
 
+import * as Asn1Js from "asn1js";
+const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
+
 function create_template(session: Session, alg: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
-    const idPrivateKey = new Buffer(utils.GUID(session));
-    const idPublicKey = new Buffer(utils.GUID(session));
+    const idKey = new Buffer(utils.GUID(session));
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
@@ -35,7 +37,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             keyType: KeyType.RSA,
             private: true,
             label,
-            id: idPrivateKey,
+            id: idKey,
             extractable,
             derive: false,
             sign: keyUsages.indexOf("sign") > -1,
@@ -47,7 +49,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             class: ObjectClass.PUBLIC_KEY,
             keyType: KeyType.RSA,
             label,
-            id: idPublicKey,
+            id: idKey,
             verify: keyUsages.indexOf("verify") > -1,
             encrypt: keyUsages.indexOf("encrypt") > -1,
             wrap: keyUsages.indexOf("wrapKey") > -1,
@@ -90,20 +92,30 @@ export abstract class RsaCrypto extends BaseCrypto {
             });
     }
 
-    public static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
-        return super.exportKey.apply(this, arguments)
-            .then(() => {
-                switch (format.toLowerCase()) {
-                    case "jwk":
-                        if (key.type === "private") {
-                            return this.exportJwkPrivateKey(key);
-                        } else {
-                            return this.exportJwkPublicKey(key);
-                        }
-                    default:
-                        throw new Error(`Not supported format '${format}'`);
+    public static async exportKey(format: string, key: CryptoKey, session?: Session): Promise<JsonWebKey | ArrayBuffer> {
+        await super.exportKey.call(this, format, key, session);
+        switch (format.toLowerCase()) {
+            case "jwk":
+                if (key.type === "private") {
+                    return this.exportJwkPrivateKey(key);
+                } else {
+                    return this.exportJwkPublicKey(key);
                 }
-            });
+            case "pkcs8": {
+                const jwk = await this.exportJwkPrivateKey(key);
+                const privateKey = new PrivateKeyInfo();
+                privateKey.fromJSON(jwk);
+                return privateKey.toSchema(true).toBER(false);
+            }
+            case "spki": {
+                const jwk = await this.exportJwkPublicKey(key);
+                const publicKey = new PublicKeyInfo();
+                publicKey.fromJSON(jwk);
+                return publicKey.toSchema(true).toBER(false);
+            }
+            default:
+                throw new Error(`Not supported format '${format}'`);
+        }
     }
 
     public static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
@@ -117,6 +129,20 @@ export abstract class RsaCrypto extends BaseCrypto {
                         } else {
                             return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
                         }
+                    case "spki": {
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const asn1 = Asn1Js.fromBER(arBuf);
+
+                        const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
+                        return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+                    }
+                    case "pkcs8": {
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const asn1 = Asn1Js.fromBER(arBuf);
+
+                        const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();
+                        return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+                    }
                     default:
                         throw new Error(`Not supported format '${format}'`);
                 }
@@ -127,70 +153,67 @@ export abstract class RsaCrypto extends BaseCrypto {
         throw new WebCryptoError(WebCryptoError.NOT_SUPPORTED);
     }
 
-    protected static exportJwkPublicKey(key: CryptoKey) {
-        return new Promise((resolve, reject) => {
-            const pkey: ITemplate = key.key.getAttribute({
-                publicExponent: null,
-                modulus: null,
-            });
-            const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
-            const jwk: JsonWebKey = {
-                kty: "RSA",
-                alg,
-                ext: true,
-                key_ops: key.usages,
-                e: Base64Url.encode(pkey.publicExponent as Uint8Array),
-                n: Base64Url.encode(pkey.modulus as Uint8Array),
-            };
-            resolve(jwk);
+    protected static async exportJwkPublicKey(key: CryptoKey) {
+        const pkey: ITemplate = key.key.getAttribute({
+            publicExponent: null,
+            modulus: null,
         });
+        const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
+        const jwk: JsonWebKey = {
+            kty: "RSA",
+            alg,
+            ext: true,
+            key_ops: key.usages,
+            e: Base64Url.encode(pkey.publicExponent as Uint8Array),
+            n: Base64Url.encode(pkey.modulus as Uint8Array),
+        };
+        return jwk;
     }
 
-    protected static exportJwkPrivateKey(key: CryptoKey) {
-        return new Promise((resolve, reject) => {
-            const pkey: ITemplate = key.key.getAttribute({
-                publicExponent: null,
-                modulus: null,
-                privateExponent: null,
-                prime1: null,
-                prime2: null,
-                exp1: null,
-                exp2: null,
-                coefficient: null,
-            });
-            const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
-            const jwk: JsonWebKey = {
-                kty: "RSA",
-                alg,
-                ext: true,
-                key_ops: key.usages,
-                e: Base64Url.encode(pkey.publicExponent as Uint8Array),
-                n: Base64Url.encode(pkey.modulus as Uint8Array),
-                d: Base64Url.encode(pkey.privateExponent as Uint8Array),
-                p: Base64Url.encode(pkey.prime1 as Uint8Array),
-                q: Base64Url.encode(pkey.prime2 as Uint8Array),
-                dp: Base64Url.encode(pkey.exp1 as Uint8Array),
-                dq: Base64Url.encode(pkey.exp2 as Uint8Array),
-                qi: Base64Url.encode(pkey.coefficient as Uint8Array),
-            };
-            resolve(jwk);
+    protected static async exportJwkPrivateKey(key: CryptoKey) {
+        const pkey: ITemplate = key.key.getAttribute({
+            publicExponent: null,
+            modulus: null,
+            privateExponent: null,
+            prime1: null,
+            prime2: null,
+            exp1: null,
+            exp2: null,
+            coefficient: null,
         });
+        const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
+        const jwk: JsonWebKey = {
+            kty: "RSA",
+            alg,
+            ext: true,
+            key_ops: key.usages,
+            e: Base64Url.encode(pkey.publicExponent as Uint8Array),
+            n: Base64Url.encode(pkey.modulus as Uint8Array),
+            d: Base64Url.encode(pkey.privateExponent as Uint8Array),
+            p: Base64Url.encode(pkey.prime1 as Uint8Array),
+            q: Base64Url.encode(pkey.prime2 as Uint8Array),
+            dp: Base64Url.encode(pkey.exp1 as Uint8Array),
+            dq: Base64Url.encode(pkey.exp2 as Uint8Array),
+            qi: Base64Url.encode(pkey.coefficient as Uint8Array),
+        };
+        return jwk;
     }
 
     protected static importJwkPrivateKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
-        return new Promise((resolve, reject) => {
-            const template = create_template(session, algorithm, extractable, keyUsages).privateKey;
-            template.publicExponent = utils.b64_decode(jwk.e!);
-            template.modulus = utils.b64_decode(jwk.n!);
-            template.privateExponent = utils.b64_decode(jwk.d!);
-            template.prime1 = utils.b64_decode(jwk.p!);
-            template.prime2 = utils.b64_decode(jwk.q!);
-            template.exp1 = utils.b64_decode(jwk.dp!);
-            template.exp2 = utils.b64_decode(jwk.dq!);
-            template.coefficient = utils.b64_decode(jwk.qi!);
-            const p11key = session.create(template).toType<PrivateKey>();
-            resolve(new CryptoKey(p11key, algorithm));
-        });
+        return Promise.resolve()
+            .then(() => {
+                const template = create_template(session, algorithm, extractable, keyUsages).privateKey;
+                template.publicExponent = utils.b64_decode(jwk.e!);
+                template.modulus = utils.b64_decode(jwk.n!);
+                template.privateExponent = utils.b64_decode(jwk.d!);
+                template.prime1 = utils.b64_decode(jwk.p!);
+                template.prime2 = utils.b64_decode(jwk.q!);
+                template.exp1 = utils.b64_decode(jwk.dp!);
+                template.exp2 = utils.b64_decode(jwk.dq!);
+                template.coefficient = utils.b64_decode(jwk.qi!);
+                const p11key = session.create(template).toType<PrivateKey>();
+                return new CryptoKey(p11key, algorithm);
+            });
     }
 
     protected static importJwkPublicKey(session: Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {

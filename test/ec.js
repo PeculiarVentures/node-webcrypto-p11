@@ -119,32 +119,32 @@ describe("WebCrypto EC", () => {
             });
     });
 
-    // context("Export/Import", () => {
+    context("Export/Import", () => {
 
-    //     // Keys
-    //     keys.forEach(key => {
-    //         // Format
-    //         ["jwk"].forEach(format => {
-    //             it(`${format}\t${key.name}`, done => {
-    //                 var promise = Promise.resolve();
-    //                 // Check public and private keys
-    //                 [key.privateKey, key.publicKey].forEach(_key => {
-    //                     if ((format === "spki" && _key.type === "public") || (format === "pkcs8" && _key.type === "private") || format === "jwk")
-    //                         promise = promise.then(() => {
-    //                             return crypto.subtle.exportKey(format, _key)
-    //                                 .then(jwk => {
-    //                                     assert.equal(!!jwk, true, "Has no jwk value");
-    //                                     // TODO assert JWK params
-    //                                     return crypto.subtle.importKey(format, jwk, _key.algorithm, true, _key.usages);
-    //                                 })
-    //                         })
-    //                             .then(k => assert.equal(!!k, true, "Imported key is empty"))
-    //                     // TODO assert imported key params
-    //                 });
-    //                 promise.then(done, done);
-    //             });
-    //         });
-    //     });
-    // });
+        // Keys
+        keys.forEach(key => {
+            // Format
+            ["jwk", "spki", "pkcs8"].forEach(format => {
+                it(`${format}\t${key.name}`, done => {
+                    var promise = Promise.resolve();
+                    // Check public and private keys
+                    [key.privateKey, key.publicKey].forEach(_key => {
+                        if ((format === "spki" && _key.type === "public") || (format === "pkcs8" && _key.type === "private") || format === "jwk")
+                            promise = promise.then(() => {
+                                return crypto.subtle.exportKey(format, _key)
+                                    .then(jwk => {
+                                        assert.equal(!!jwk, true, "Has no jwk value");
+                                        // TODO assert JWK params
+                                        return crypto.subtle.importKey(format, jwk, _key.algorithm, true, _key.usages);
+                                    })
+                            })
+                                .then(k => assert.equal(!!k, true, "Imported key is empty"))
+                        // TODO assert imported key params
+                    });
+                    promise.then(done, done);
+                });
+            });
+        });
+    });
 
 });

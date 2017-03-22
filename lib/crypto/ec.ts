@@ -22,10 +22,12 @@ import { BaseCrypto } from "../base";
 import { CryptoKey, ITemplatePair } from "../key";
 import * as utils from "../utils";
 
+import * as Asn1Js from "asn1js";
+const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
+
 function create_template(session: Session, alg: EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
-    const idPrivateKey = new Buffer(utils.GUID(session));
-    const idPublicKey = new Buffer(utils.GUID(session));
+    const idKey = new Buffer(utils.GUID(session));
     const keyType = KeyType.ECDSA;
     return {
         privateKey: {
@@ -35,7 +37,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
             keyType,
             private: true,
             label,
-            id: idPrivateKey,
+            id: idKey,
             extractable,
             derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
             sign: keyUsages.indexOf("sign") !== -1,
@@ -47,7 +49,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
             class: ObjectClass.PUBLIC_KEY,
             keyType,
             label,
-            id: idPublicKey,
+            id: idKey,
             derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
             verify: keyUsages.indexOf("verify") !== -1,
             encrypt: keyUsages.indexOf("encrypt") !== -1,
@@ -86,33 +88,59 @@ export class EcCrypto extends BaseCrypto {
             });
     }
 
-    public static exportKey(format: string, key: CryptoKey, session?: Session): PromiseLike<JsonWebKey | ArrayBuffer> {
-        return super.exportKey.apply(this, arguments)
-            .then(() => {
-                switch (format.toLowerCase()) {
-                    case "jwk":
-                        if (key.type === "private") {
-                            return this.exportJwkPrivateKey(key);
-                        } else {
-                            return this.exportJwkPublicKey(key);
-                        }
-                    default:
-                        throw new Error(`Not supported format '${format}'`);
+    public static async exportKey(format: string, key: CryptoKey, session?: Session): Promise<JsonWebKey | ArrayBuffer> {
+        await super.exportKey(format, key, session);
+        switch (format.toLowerCase()) {
+            case "jwk": {
+                if (key.type === "private") {
+                    return this.exportJwkPrivateKey(key);
+                } else {
+                    return this.exportJwkPublicKey(key);
                 }
-            });
+            }
+            case "pkcs8": {
+                const jwk = await this.exportJwkPrivateKey(key);
+                const privateKey = new PrivateKeyInfo();
+                privateKey.fromJSON(jwk);
+                return privateKey.toSchema(true).toBER(false);
+            }
+            case "spki": {
+                const jwk = await this.exportJwkPublicKey(key);
+                const publicKey = new PublicKeyInfo();
+                publicKey.fromJSON(jwk);
+                return publicKey.toSchema(true).toBER(false);
+            }
+            default:
+                throw new Error(`Not supported format '${format}'`);
+        }
     }
 
     public static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
         return super.importKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {
-                    case "jwk":
+                    case "jwk": {
                         const jwk: any = keyData;
                         if (jwk.d) {
                             return this.importJwkPrivateKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                         } else {
                             return this.importJwkPublicKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                         }
+                    }
+                    case "spki": {
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const asn1 = Asn1Js.fromBER(arBuf);
+
+                        const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
+                        return this.importJwkPublicKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
+                    }
+                    case "pkcs8": {
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const asn1 = Asn1Js.fromBER(arBuf);
+
+                        const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();
+                        return this.importJwkPrivateKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
+                    }
                     default:
                         throw new Error(`Not supported format '${format}'`);
                 }
@@ -142,40 +170,36 @@ export class EcCrypto extends BaseCrypto {
         });
     }
 
-    protected static exportJwkPublicKey(key: CryptoKey) {
-        return new Promise((resolve, reject) => {
-            const pkey: ITemplate = (key as CryptoKey).key.getAttribute({
-                pointEC: null,
-            });
-            // TODO: lib.dom.d.ts has typedCurve
-            const curve = this.getNamedCurve((key.algorithm as EcKeyGenParams).namedCurve);
-            const ecPoint = EcUtils.decodePoint(pkey.pointEC!, curve);
-            const jwk: JsonWebKey = {
-                kty: "EC",
-                crv: (key.algorithm as EcKeyGenParams).namedCurve,
-                ext: true,
-                key_ops: key.usages,
-                x: Base64Url.encode(ecPoint.x),
-                y: Base64Url.encode(ecPoint.y),
-            };
-            resolve(jwk);
+    protected static async exportJwkPublicKey(key: CryptoKey) {
+        const pkey: ITemplate = (key as CryptoKey).key.getAttribute({
+            pointEC: null,
         });
+        // TODO: lib.dom.d.ts has typedCurve
+        const curve = this.getNamedCurve((key.algorithm as EcKeyGenParams).namedCurve);
+        const ecPoint = EcUtils.decodePoint(pkey.pointEC!, curve);
+        const jwk: JsonWebKey = {
+            kty: "EC",
+            crv: (key.algorithm as EcKeyGenParams).namedCurve,
+            ext: true,
+            key_ops: key.usages,
+            x: Base64Url.encode(ecPoint.x),
+            y: Base64Url.encode(ecPoint.y),
+        };
+        return jwk;
     }
 
-    protected static exportJwkPrivateKey(key: CryptoKey) {
-        return new Promise((resolve, reject) => {
-            const pkey: ITemplate = key.key.getAttribute({
-                value: null,
-            });
-            const jwk: JsonWebKey = {
-                kty: "EC",
-                crv: (key.algorithm as EcKeyGenParams).namedCurve,
-                ext: true,
-                key_ops: key.usages,
-                d: Base64Url.encode(pkey.value!),
-            };
-            resolve(jwk);
+    protected static async exportJwkPrivateKey(key: CryptoKey) {
+        const pkey: ITemplate = key.key.getAttribute({
+            value: null,
         });
+        const jwk: JsonWebKey = {
+            kty: "EC",
+            crv: (key.algorithm as EcKeyGenParams).namedCurve,
+            ext: true,
+            key_ops: key.usages,
+            d: Base64Url.encode(pkey.value!),
+        };
+        return jwk;
     }
 
     protected static getNamedCurve(name: string): INamedCurve {
@@ -392,7 +416,7 @@ class EcUtils {
         // Per ANSI X9.62, an encoded point is a 1 byte type followed by
         // ceiling(log base 2 field-size / 8) bytes of x and the same of y.
         const n = (data.length - 1) / 2;
-        if (n !== (curve.size / 8)) {
+        if (n !== (Math.ceil(curve.size / 8))) {
             throw new Error("Point does not match field size");
         }
 
@@ -404,7 +428,7 @@ class EcUtils {
 
     public static encodePoint(point: IEcPoint, curve: INamedCurve): Buffer {
         // get field size in bytes (rounding up)
-        const n = curve.size / 8;
+        const n = Math.ceil(curve.size / 8);
         const xb = this.trimZeroes(point.x);
         const yb = this.trimZeroes(point.y);
         if ((xb.length > n) || (yb.length > n)) {
