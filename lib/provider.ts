@@ -8,12 +8,25 @@ type ProviderListeningHandler = (info: IModule) => void;
 type ProviderErrorHandler = (e: Error) => void;
 type ProviderStopHandler = () => void;
 
+/**
+ * Provider class
+ *
+ * @export
+ * @class Provider
+ * @extends {EventEmitter}
+ */
 export class Provider extends EventEmitter {
 
     public readonly library: string;
 
     protected interval: NodeJS.Timer;
 
+    /**
+     * Creates an instance of Provider.
+     * @param {string} lib Path to PKCS#11 library
+     *
+     * @memberOf Provider
+     */
     constructor(lib: string) {
         super();
 
@@ -24,7 +37,6 @@ export class Provider extends EventEmitter {
     public on(event: "listening", listener: ProviderListeningHandler): this;
     public on(event: "token", listener: ProviderTokenHandler): this;
     public on(event: "error", listener: ProviderErrorHandler): this;
-    // public on(event: string | symbol, listener: Function): this;
     public on(event: string | symbol, listener: Function) {
         return super.on(event, listener);
     }
@@ -33,7 +45,6 @@ export class Provider extends EventEmitter {
     public once(event: "listening", listener: ProviderListeningHandler): this;
     public once(event: "token", listener: ProviderTokenHandler): this;
     public once(event: "error", listener: ProviderErrorHandler): this;
-    // public once(event: string | symbol, listener: Function): this;
     public once(event: string | symbol, listener: Function) {
         return super.once(event, listener);
     }
@@ -84,6 +95,14 @@ export class Provider extends EventEmitter {
         };
     }
 
+    /**
+     * Returns info about module
+     *
+     * @protected
+     * @param {(info: IModule) => void} cb
+     *
+     * @memberOf Provider
+     */
     protected getInfo(cb: (info: IModule) => void) {
         childProcess.exec(`node ${__dirname}/watcher.js ${this.library}`, (error, stdout, stderr) => {
             if (error) {

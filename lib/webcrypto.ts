@@ -20,6 +20,7 @@ _global.atob = (data: string) => new Buffer(data, "base64").toString("binary");
  */
 export class WebCrypto implements NativeCrypto {
 
+    public info: IProvider;
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
     public certStorage: Pkcs11CertificateStorage;
@@ -69,6 +70,7 @@ export class WebCrypto implements NativeCrypto {
             flags |= SessionFlag.RW_SESSION;
         }
         this.session = this.slot.open(flags);
+        this.info = utils.getProviderInfo(this.session.slot);
     }
 
     public login(pin: string) {
