@@ -53,3 +53,14 @@ export function PrepareData(data: NodeBufferSource): Buffer {
 function ab2b(ab: NodeBufferSource) {
     return new Buffer(ab as any);
 }
+
+/**
+ * Calculates digest for given data
+ * @param algorithm
+ * @param data
+ */
+export function digest(algorithm: string, data: NodeBufferSource): Buffer {
+    const hash = crypto.createHash(algorithm.replace("-", ""));
+    hash.update(PrepareData(data));
+    return hash.digest();
+}

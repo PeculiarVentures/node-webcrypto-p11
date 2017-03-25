@@ -38,23 +38,25 @@ export class Provider extends EventEmitter {
         return super.once(event, listener);
     }
 
-    public open() {
+    public open(watch?: boolean) {
 
         this.getInfo((info) => {
             this.emit("listening", info);
             let length = info.providers.length;
 
-            this.interval = setInterval(() => {
-                this.getInfo((info2) => {
-                    const length2 = info2.providers.length;
-                    if (length2 !== length) {
-                        const difference = this.findDifference(info.providers, info2.providers);
-                        this.emit("token", difference);
-                        info = info2;
-                        length = length2;
-                    }
-                });
-            }, TOKEN_WATCHER_INTERVAL);
+            if (watch) {
+                this.interval = setInterval(() => {
+                    this.getInfo((info2) => {
+                        const length2 = info2.providers.length;
+                        if (length2 !== length) {
+                            const difference = this.findDifference(info.providers, info2.providers);
+                            this.emit("token", difference);
+                            info = info2;
+                            length = length2;
+                        }
+                    });
+                }, TOKEN_WATCHER_INTERVAL);
+            }
         });
 
     }

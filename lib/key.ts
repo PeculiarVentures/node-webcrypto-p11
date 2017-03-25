@@ -45,6 +45,15 @@ export class CryptoKey implements NativeCryptoKey {
         this.id = this._key.getAttribute({ id: null }).id!.toString();
     }
 
+    public toJSON(): NativeCryptoKey {
+        return {
+            algorithm: this.algorithm,
+            type: this.type,
+            usages: this.usages,
+            extractable: this.extractable,
+        };
+    }
+
     protected initPrivateKey(key: PrivateKey) {
         this._key = key;
         this.type = "private";
@@ -119,4 +128,3 @@ export class CryptoKey implements NativeCryptoKey {
     }
 
 }
-

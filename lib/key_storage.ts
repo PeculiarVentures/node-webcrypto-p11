@@ -1,7 +1,8 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { KeyType, ObjectClass, SecretKey, Session, SessionObject } from "graphene-pk11";
+import { KeyType, NamedCurve, ObjectClass, SecretKey, Session, SessionObject } from "graphene-pk11";
+import { PrepareAlgorithm } from "webcrypto-core";
 import { CryptoKey } from "./key";
 
 export class KeyStorage implements IKeyStorage {
@@ -24,40 +25,75 @@ export class KeyStorage implements IKeyStorage {
     }
 
     public async clear() {
-        this.session.clear();
+        const keys: SessionObject[] = [];
+        [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY].forEach((objectClass) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
+                keys.push(obj);
+            });
+        });
+        keys.forEach((key) => {
+            key.destroy();
+        });
     }
 
-    public async getItem(key: string) {
+    public async getItem(key: string): Promise<CryptoKey>;
+    public async getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    public async getItem(key: string, algorithm?: Algorithm, usages?: string[]) {
         const subjectObject = this.getItemById(key);
         if (subjectObject) {
             const p11Key = subjectObject.toType<SecretKey>();
-            const alg: any = {};
-            // name
-            switch (p11Key.type) {
-                case KeyType.RSA: {
-                    if (p11Key.sign || p11Key.verify) {
-                        alg.name = "RSASSA-PKCS1-v1_5";
-                    } else {
-                        alg.name = "RSA-OAEP";
+            let alg: any;
+            if (algorithm) {
+                alg = PrepareAlgorithm(algorithm);
+            } else {
+                // name
+                alg = {};
+                switch (p11Key.type) {
+                    case KeyType.RSA: {
+                        if (p11Key.sign || p11Key.verify) {
+                            alg.name = "RSASSA-PKCS1-v1_5";
+                        } else {
+                            alg.name = "RSA-OAEP";
+                        }
+                        alg.hash = { name: "SHA-256" };
+                        break;
                     }
-                    alg.hash = "SHA-256";
-                    break;
+                    case KeyType.EC: {
+                        if (p11Key.sign || p11Key.verify) {
+                            alg.name = "ECDSA";
+                        } else {
+                            alg.name = "ECDH";
+                        }
+                        const attributes = p11Key.getAttribute({ paramsECDSA: null });
+                        const pointEC = NamedCurve.getByBuffer(attributes.paramsECDSA);
+                        let namedCurve: string;
+                        switch (pointEC.name) {
+                            case "secp192r1":
+                                namedCurve = "P-192";
+                                break;
+                            case "secp256r1":
+                                namedCurve = "P-256";
+                                break;
+                            case "secp384r1":
+                                namedCurve = "P-384";
+                                break;
+                            case "secp521r1":
+                                namedCurve = "P-521";
+                                break;
+                                default:
+                                    throw new Error(`Unsupported named curve for EC key '${pointEC.name}'`);
+                        }
+                        alg.namedCurve = namedCurve;
+                        break;
+                    }
+                    default:
+                        throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
                 }
-                case KeyType.EC: {
-                    throw new Error(`Not implemented yet`);
-                }
-                default:
-                    throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
             }
-            // const alg = JSON.parse(p11Key.label);
             return new CryptoKey(p11Key, alg);
         } else {
             return null;
         }
-    }
-
-    public key(index: number): string {
-        throw new Error("Not implemented yet");
     }
 
     public async removeItem(key: string) {
@@ -67,7 +103,7 @@ export class KeyStorage implements IKeyStorage {
         }
     }
 
-    public async setItem(key: string, data: CryptoKey) {
+    public async setItem(data: CryptoKey) {
         if (!(data instanceof CryptoKey)) {
             throw new WebCryptoError("Parameter 2 is not P11CryptoKey");
         }
@@ -76,10 +112,10 @@ export class KeyStorage implements IKeyStorage {
         if (!p11Key.key.token) {
             this.session.copy(p11Key.key, {
                 token: true,
-                id: new Buffer(p11Key.id),
-                label: JSON.stringify(data.algorithm),
             });
         }
+
+        return this.getName(p11Key.key.class, new Buffer(data.id, "binary"));
     }
 
     protected getItemById(id: string) {

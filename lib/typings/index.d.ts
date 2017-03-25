@@ -12,7 +12,7 @@ interface P11WebCryptoParams extends Object {
     /**
      * Index of slot
      */
-    slot: number;
+    slot?: number;
     readWrite?: boolean;
     /**
      * PIN of slot
@@ -47,13 +47,12 @@ interface IKeyStorage {
     /**
      * Add key to storage
      * 
-     * @param {string} key 
      * @param {CryptoKey} value 
      * @returns {Promise<void>} 
      * 
      * @memberOf KeyStorage
      */
-    setItem(key: string, value: CryptoKey): Promise<void>;
+    setItem(value: CryptoKey): Promise<string>;
 
     /**
      * Removes item from storage by given key
@@ -69,26 +68,26 @@ interface IKeyStorage {
 
 type HexString = string;
 
-type CertificateItemType = string | "x509" | "request";
+type CryptoCertificateType = string | "x509" | "request";
 
-interface ICertificateStorageItem {
-    id: string;
-    type: CertificateItemType;
+interface CryptoCertificate {
+    type: CryptoCertificateType;
     publicKey: CryptoKey;
-    value: ArrayBuffer;
 }
 
-interface IX509Certificate extends ICertificateStorageItem {
-    serialNumber?: HexString;
-    issuerName?: string;
-    subjectName?: string;
+interface CryptoX509Certificate extends CryptoCertificate {
+    notBefore: Date;
+    notAfter: Date;
+    serialNumber: HexString;
+    issuerName: string;
+    subjectName: string;
 }
 
-interface IX509Request extends ICertificateStorageItem {
-    subjectName?: string;
+interface CryptoX509CertificateRequest extends CryptoCertificate {
+    subjectName: string;
 }
 
-interface ICertificateStorage {
+interface CertificateStorage {
 
     keys(): Promise<string[]>;
 
@@ -101,11 +100,13 @@ interface ICertificateStorage {
      * 
      * @memberOf CertificateStorage
      */
-    importCert(type: CertificateItemType, data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<ICertificateStorageItem>;
+    importCert(type: CryptoCertificateType, data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+    exportCert(cert: CryptoCertificate): Promise<ArrayBuffer>;
 
-    setItem(key: string, item: ICertificateStorageItem): Promise<void>;
-    getItem(key: string): Promise<ICertificateStorageItem>;
+    setItem(item: CryptoCertificate): Promise<string>;
+    getItem(key: string): Promise<CryptoCertificate>;
     removeItem(key: string): Promise<void>;
+    clear(): Promise<void>;
 
 }
 

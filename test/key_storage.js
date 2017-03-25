@@ -1,7 +1,7 @@
 var assert = require('assert');
 var crypto = require('./config').crypto;
 var isSoftHSM = require('./config').isSoftHSM;
-/*
+
 describe("KeyStorage", function() {
 
     it("GUID", function() {
@@ -52,4 +52,3 @@ describe("KeyStorage", function() {
     })
 
 })
-*/

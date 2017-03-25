@@ -3,7 +3,7 @@ import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
 import { Mechanism, Module, Session, SessionFlag, Slot } from "graphene-pk11";
-import { CertificateStorage } from "./cert_storage";
+import { Pkcs11CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
@@ -22,11 +22,11 @@ export class WebCrypto implements NativeCrypto {
 
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
-    public certStorage: CertificateStorage;
+    public certStorage: Pkcs11CertificateStorage;
     public isLoggedIn: boolean = false;
+    public session: Session;
 
     private module: Module;
-    private session: Session;
     private slot: Slot;
     private initialized: boolean;
 
@@ -45,7 +45,7 @@ export class WebCrypto implements NativeCrypto {
         }
         this.initialized = true;
 
-        this.slot = mod.getSlots(props.slot);
+        this.slot = mod.getSlots(props.slot || 0);
         if (!this.slot) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
         }
@@ -60,7 +60,7 @@ export class WebCrypto implements NativeCrypto {
 
         this.subtle = new SubtleCrypto(this.session);
         this.keyStorage = new KeyStorage(this.session);
-        this.certStorage = new CertificateStorage(this.session, this);
+        this.certStorage = new Pkcs11CertificateStorage(this.session, this);
     }
 
     public open(rw?: boolean) {

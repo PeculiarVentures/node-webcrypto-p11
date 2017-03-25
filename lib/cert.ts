@@ -1,6 +1,12 @@
+import { Certificate, CertificateType, ObjectClass, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import { Base64Url, PrepareAlgorithm } from "webcrypto-core";
+
 import * as Asn1Js from "asn1js";
-import { X509Certificate as P11X509Certificate } from "graphene-pk11";
-const { Certificate } = require("pkijs");
+import { CryptoKey } from "./key";
+import { digest } from "./utils";
+import { WebCrypto } from "./webcrypto";
+
+const PkiJs = require("pkijs");
 
 /**
  * List of OIDs
@@ -88,45 +94,229 @@ export function nameToString(name: any, splitter: string = ","): string {
     return res.join(splitter + " ");
 }
 
+// CryptoX509Certificate
 
-export class X509Certificate implements IX509Certificate {
+export interface Pkcs11CryptoX509Certificate extends CryptoCertificate {
+    p11Object: Certificate;
+
+    importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+    exportCert<T extends Pkcs11CryptoX509Certificate>(this: { new: (crypto: WebCrypto) => T }): Promise<T>;
+    exportKey(): Promise<CryptoKey>;
+    exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+
+}
+
+// X509Certificate
+
+export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509Certificate {
 
     public get serialNumber() {
-        return this.handle.serialNumber;
+        return this.p11Object.serialNumber;
     }
-    public get issuerName(){
+    public get notBefore() {
+        return this.getData().notBefore.value;
+    }
+    public get notAfter() {
+        return this.getData().notAfter.value;
+    }
+    public get issuerName() {
         return nameToString(this.getData().issuer);
     }
     public get subjectName() {
         return nameToString(this.getData().subject);
     }
     public get id() {
-        return this.handle.id.toString("hex");
+        return `x509-${this.p11Object.id.toString("hex")}`;
     }
     public type = "x509";
 
     public publicKey: CryptoKey;
 
     public get value(): ArrayBuffer {
-        return new Uint8Array(this.handle.value).buffer;
+        return new Uint8Array(this.p11Object.value).buffer;
     }
 
-    protected handle: P11X509Certificate;
-    protected asn1: any;
+    public p11Object: P11X509Certificate;
+    protected schema: any;
+    protected crypto: WebCrypto;
 
-    constructor(p11X509: P11X509Certificate) {
-        this.handle = p11X509;
+    constructor(crypto: WebCrypto) {
+        this.crypto = crypto;
+    }
+
+    public async importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]) {
+        this.parse(data);
+
+        const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
+        const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
+
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+
+        const hashSPKI = digest("SHA-1", publicKeyInfoBuffer);
+
+        this.p11Object = this.crypto.session.create({
+            id: hashSPKI,
+            class: ObjectClass.CERTIFICATE,
+            certType: CertificateType.X_509,
+            serial: new Buffer(this.schema.serialNumber.toBER(false)),
+            subject: new Buffer(this.schema.subject.toSchema(true).toBER(false)),
+            issuer: new Buffer(this.schema.issuer.toSchema(true).toBER(false)),
+            token: false,
+            ski: hashSPKI,
+            value: new Buffer(data),
+        }).toType<P11X509Certificate>();
+    }
+
+    public async exportCert() {
+        return this.value;
+    }
+
+    public toJSON() {
+        return {
+            publicKey: this.publicKey,
+            notBefore: this.notBefore,
+            notAfter: this.notAfter,
+            subjectName: this.subjectName,
+            issuerName: this.issuerName,
+            serialNumber: this.serialNumber,
+            type: this.type,
+            value: Base64Url.encode(new Uint8Array(this.value)),
+        };
+    }
+
+    public async exportKey(): Promise<CryptoKey>;
+    public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    public async exportKey(algorithm?: Algorithm, usages?: string[]) {
+        if (!this.publicKey) {
+            let params: { algorithm: { algorithm: any, usages: string[] } };
+            if (algorithm) {
+                params = {
+                    algorithm: {
+                        algorithm: PrepareAlgorithm(algorithm),
+                        usages,
+                    },
+                };
+            }
+            PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+            return this.getData().getPublicKey(params);
+        }
+        return this.publicKey;
+    }
+
+    protected parse(data: ArrayBuffer) {
+        const asn1 = Asn1Js.fromBER(data);
+        this.schema = new PkiJs.Certificate({ schema: asn1.result });
     }
 
     /**
      * returns parsed ASN1 value
      */
     protected getData() {
-        if (!this.asn1) {
-            const asn1 = Asn1Js.fromBER(this.value);
-            this.asn1 = new Certificate({ schema: asn1.result });
+        if (!this.schema) {
+            this.parse(this.value);
         }
-        return this.asn1;
+        return this.schema;
+    }
+
+}
+
+// X509Certificate
+
+export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkcs11CryptoX509Certificate {
+
+    public get subjectName() {
+        return nameToString(this.getData().subject);
+    }
+    public get id() {
+        return `request-${this.p11Object.id.toString("hex")}`;
+    }
+    public type = "request";
+
+    public publicKey: CryptoKey;
+
+    public get value(): ArrayBuffer {
+        return new Uint8Array(this.p11Object.value).buffer;
+    }
+
+    public p11Object: P11X509Certificate;
+    protected schema: any;
+    protected crypto: WebCrypto;
+
+    constructor(crypto: WebCrypto) {
+        this.crypto = crypto;
+    }
+
+    /**
+     * Creates new CertificateRequest in PKCS11 session
+     * @param data
+     * @param algorithm
+     * @param keyUsages
+     */
+    public async importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]) {
+        this.parse(data);
+
+        const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
+        const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
+
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+
+        const hashSPKI = digest("SHA-1", publicKeyInfoBuffer);
+
+        this.p11Object = this.crypto.session.create({
+            objectId: hashSPKI,
+            application: "webcrypto-p11",
+            class: ObjectClass.DATA,
+            label: "X509 Request",
+            token: false,
+            value: new Buffer(data),
+        }).toType<P11X509Certificate>();
+    }
+
+    public async exportCert() {
+        return this.value;
+    }
+
+    public toJSON() {
+        return {
+            publicKey: this.publicKey.toJSON(),
+            subjectName: this.subjectName,
+            type: this.type,
+            value: Base64Url.encode(new Uint8Array(this.value)),
+        };
+    }
+
+    public async exportKey(): Promise<CryptoKey>;
+    public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    public async exportKey(algorithm?: Algorithm, usages?: string[]) {
+        if (!this.publicKey) {
+            let params: { algorithm: { algorithm: any, usages: string[] } };
+            if (algorithm) {
+                params = {
+                    algorithm: {
+                        algorithm: PrepareAlgorithm(algorithm),
+                        usages,
+                    },
+                };
+            }
+            PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+            return this.getData().getPublicKey(params);
+        }
+        return this.publicKey;
+    }
+
+    protected parse(data: ArrayBuffer) {
+        const asn1 = Asn1Js.fromBER(data);
+        this.schema = new PkiJs.CertificationRequest({ schema: asn1.result });
+    }
+
+    /**
+     * returns parsed ASN1 value
+     */
+    protected getData() {
+        if (!this.schema) {
+            this.parse(this.value);
+        }
+        return this.schema;
     }
 
 }
