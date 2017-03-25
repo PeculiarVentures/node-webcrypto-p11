@@ -101,10 +101,6 @@ export class WebCrypto implements NativeCrypto {
         return array;
     }
 
-    public getGUID() {
-        return utils.GUID(this.session);
-    }
-
     /**
      * Close PKCS11 module
      */
