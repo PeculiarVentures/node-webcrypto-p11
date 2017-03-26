@@ -44,6 +44,7 @@ interface IKeyStorage {
      * @memberOf KeyStorage
      */
     getItem(key: string): Promise<CryptoKey>;
+    getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
     /**
      * Add key to storage
      * 
@@ -63,6 +64,15 @@ interface IKeyStorage {
      * @memberOf KeyStorage
      */
     removeItem(key: string): Promise<void>;
+
+    /**
+     * Removes all keys from storage
+     * 
+     * @returns {Promise<void>} 
+     * 
+     * @memberOf IKeyStorage
+     */
+    clear(): Promise<void>
 
 }
 
@@ -100,7 +110,7 @@ interface CertificateStorage {
      * 
      * @memberOf CertificateStorage
      */
-    importCert(type: CryptoCertificateType, data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+    importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
     exportCert(cert: CryptoCertificate): Promise<ArrayBuffer>;
 
     setItem(item: CryptoCertificate): Promise<string>;

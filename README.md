@@ -100,7 +100,7 @@ module.exports = {
 	name: "Name of PKCS11 module",
     slot: 0,        // number of slot
 	pin: "password"
-    slotFlags: 4,   // open session flags, optional. Default SERIAL_SESSION(4)
+    readWrite: true,
     vendors: []     // list of vendor files, optional
 }
 ```
@@ -187,6 +187,159 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
     .catch((err) => {
         console.error(err);
     });
+```
+
+## Key Storage
+
+```typescript
+interface IKeyStorage {
+
+    /**
+     * Return list of names of stored keys
+     */
+    keys(): Promise<string[]>;
+    /**
+     * Returns key from storage
+     */
+    getItem(key: string): Promise<CryptoKey>;
+    getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    /**
+     * Add key to storage
+     */
+    setItem(value: CryptoKey): Promise<string>;
+    /**
+     * Removes item from storage by given key
+     */
+    removeItem(key: string): Promise<void>;
+    /**
+     * Removes all keys from storage
+     */
+    clear(): Promise<void>
+
+}
+```
+
+### Example
+
+Generate ECDSA key pair and put to storage
+
+```javascript
+crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", "verify"])
+    .then((keys) => {
+        // set private key to storage
+        return crypto.keyStorage.setItem(keys.privateKey)
+            .then((privateKeyID) => {
+                // set public key to storage
+                return crypto.keyStorage.setItem(keys.publicKey);
+            })
+            .then((publicKeyID) => {
+                // get list of keys
+                return crypto.keyStorage.keys();
+            })
+    })
+    .then((indexes) => {
+        console.log(indexes); // ['private-3239...', 'public-3239...']
+        // get key by id
+        crypto.keyStorage.getItem("private-3239...");
+    })
+    .then((key) => {
+        // signing data
+        return crypto.subtle.sign({name: "ECDSA", hash: "SHA-256"}, key, new Buffer("Message here"));
+            .then((signature) => {
+                console.log("Signature:", new Buffer(signature).toString("hex"));
+            })
+    })
+    .catch((err) => {
+        console.error(err);
+    });
+```
+
+## Certificate storage
+
+### Items
+
+```typescript
+type HexString = string;
+
+type CryptoCertificateType = string | "x509" | "request";
+
+interface CryptoCertificate {
+    type: CryptoCertificateType;
+    publicKey: CryptoKey;
+}
+
+interface CryptoX509Certificate extends CryptoCertificate {
+    notBefore: Date;
+    notAfter: Date;
+    serialNumber: HexString;
+    issuerName: string;
+    subjectName: string;
+}
+
+interface CryptoX509CertificateRequest extends CryptoCertificate {
+    subjectName: string;
+}
+```
+
+### Storage
+
+```typescript
+interface ICertificateStorage {
+    /**
+     * Returns list of indexes of stored items
+     */
+    keys(): Promise<string[]>;
+    /**
+     * Import certificate from data
+     */
+    importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+    /**
+     * Returns raw of certificate
+     */
+    exportCert(cert: CryptoCertificate): Promise<ArrayBuffer>;
+    /**
+     * Adds item to storage and returns it's identity
+     */
+    setItem(item: CryptoCertificate): Promise<string>;
+    /**
+     * Returns item by identity
+     */
+    getItem(key: string): Promise<CryptoCertificate>;
+    /**
+     * Removes item by identity
+     */
+    removeItem(key: string): Promise<void>;
+    /**
+     * Removes all items from storage
+     */
+    clear(): Promise<void>;
+}
+```
+
+### Example
+
+Add certificate to storage and use it for verification of signed data
+
+```javascript
+const X509_RAW = new Buffer("308203A830820290A003020...", "hex")
+
+crypto.certStorage.importCert("x509", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, ["verify"])
+    .then((x509) => {
+        console.log(x509.subjectName); // C=name, O=...
+        return crypto.certStorage.setItem(x509)
+            .then((index) => {
+                console.log(index); // x509-2943...
+            })
+    })
+    .then(() => {
+        return crypto.subtle.verify({name: "RSASSA-PKCS1-v1_5"}, SIGNATURE, MESSAGE);
+    })
+    .then((ok) => {
+        console.log("Signature:", ok);
+    })
+    .catch((err) => {
+        console.error(err);
+    })
 ```
 
 ## Bug Reporting
