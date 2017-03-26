@@ -1,4 +1,4 @@
-import { Certificate, CertificateType, ObjectClass, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate as P11X509Certificate } from "graphene-pk11";
 import { Base64Url, PrepareAlgorithm } from "webcrypto-core";
 
 import * as Asn1Js from "asn1js";
@@ -96,19 +96,41 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export interface Pkcs11CryptoX509Certificate extends CryptoCertificate {
-    p11Object: Certificate;
+export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
 
-    importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
-    exportCert<T extends Pkcs11CryptoX509Certificate>(this: { new: (crypto: WebCrypto) => T }): Promise<T>;
-    exportKey(): Promise<CryptoKey>;
-    exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    public static getID(p11Object: Storage) {
+        let type: string;
+        let id: Buffer;
+        if (p11Object instanceof P11Data) {
+            type = "request";
+            id = p11Object.objectId;
+        } else if (p11Object instanceof P11X509Certificate) {
+            type = "x509";
+            id = p11Object.id;
+        }
+        if (!type) {
+            throw new Error("Unsupported PKCS#11 object");
+        }
+        return `${type}-${id.toString("hex")}`;
+    }
 
+    public get id() {
+        return Pkcs11CryptoCertificate.getID(this.p11Object);
+    }
+    public type: string;
+    public publicKey: CryptoKey;
+
+    public p11Object: Storage;
+
+    public abstract importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+    public abstract exportCert<T extends Pkcs11CryptoCertificate>(this: { new: (crypto: WebCrypto) => T }): Promise<T>;
+    public abstract exportKey(): Promise<CryptoKey>;
+    public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
 }
 
 // X509Certificate
 
-export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509Certificate {
+export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX509Certificate {
 
     public get serialNumber() {
         return this.p11Object.serialNumber;
@@ -125,9 +147,6 @@ export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509C
     public get subjectName() {
         return nameToString(this.getData().subject);
     }
-    public get id() {
-        return `x509-${this.p11Object.id.toString("hex")}`;
-    }
     public type = "x509";
 
     public publicKey: CryptoKey;
@@ -141,11 +160,13 @@ export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509C
     protected crypto: WebCrypto;
 
     constructor(crypto: WebCrypto) {
+        super();
         this.crypto = crypto;
     }
 
-    public async importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]) {
-        this.parse(data);
+    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
+        const array = new Uint8Array(data);
+        this.parse(array.buffer);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
@@ -173,7 +194,7 @@ export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509C
 
     public toJSON() {
         return {
-            publicKey: this.publicKey,
+            publicKey: this.publicKey.toJSON(),
             notBefore: this.notBefore,
             notAfter: this.notAfter,
             subjectName: this.subjectName,
@@ -188,17 +209,21 @@ export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509C
     public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
     public async exportKey(algorithm?: Algorithm, usages?: string[]) {
         if (!this.publicKey) {
-            let params: { algorithm: { algorithm: any, usages: string[] } };
-            if (algorithm) {
-                params = {
-                    algorithm: {
-                        algorithm: PrepareAlgorithm(algorithm),
-                        usages,
-                    },
-                };
+            const publicKeyID = this.id.replace(/\w+/i, "public");
+            this.publicKey = await this.crypto.keyStorage.getItem(publicKeyID, algorithm, usages);
+            if (!this.publicKey) {
+                let params: { algorithm: { algorithm: any, usages: string[] } };
+                if (algorithm) {
+                    params = {
+                        algorithm: {
+                            algorithm: PrepareAlgorithm(algorithm),
+                            usages,
+                        },
+                    };
+                }
+                PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+                this.publicKey = await this.getData().getPublicKey(params);
             }
-            PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
-            return this.getData().getPublicKey(params);
         }
         return this.publicKey;
     }
@@ -222,13 +247,10 @@ export class X509Certificate implements CryptoX509Certificate, Pkcs11CryptoX509C
 
 // X509Certificate
 
-export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkcs11CryptoX509Certificate {
+export class X509CertificateRequest extends Pkcs11CryptoCertificate implements CryptoX509CertificateRequest {
 
     public get subjectName() {
         return nameToString(this.getData().subject);
-    }
-    public get id() {
-        return `request-${this.p11Object.id.toString("hex")}`;
     }
     public type = "request";
 
@@ -238,11 +260,12 @@ export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkc
         return new Uint8Array(this.p11Object.value).buffer;
     }
 
-    public p11Object: P11X509Certificate;
+    public p11Object: P11Data;
     protected schema: any;
     protected crypto: WebCrypto;
 
     constructor(crypto: WebCrypto) {
+        super();
         this.crypto = crypto;
     }
 
@@ -252,8 +275,9 @@ export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkc
      * @param algorithm
      * @param keyUsages
      */
-    public async importCert(data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]) {
-        this.parse(data);
+    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
+        const array = new Uint8Array(data).buffer;
+        this.parse(array);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
@@ -269,7 +293,7 @@ export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkc
             label: "X509 Request",
             token: false,
             value: new Buffer(data),
-        }).toType<P11X509Certificate>();
+        }).toType<P11Data>();
     }
 
     public async exportCert() {
@@ -289,17 +313,12 @@ export class X509CertificateRequest implements CryptoX509CertificateRequest, Pkc
     public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
     public async exportKey(algorithm?: Algorithm, usages?: string[]) {
         if (!this.publicKey) {
-            let params: { algorithm: { algorithm: any, usages: string[] } };
-            if (algorithm) {
-                params = {
-                    algorithm: {
-                        algorithm: PrepareAlgorithm(algorithm),
-                        usages,
-                    },
-                };
+            const publicKeyID = this.id.replace(/\w+/i, "public");
+            this.publicKey = await this.crypto.keyStorage.getItem(publicKeyID, algorithm, usages);
+            if (!this.publicKey) {
+                const spki = this.getData().subjectPublicKeyInfo.toJSON();
+                this.publicKey = await this.crypto.subtle.importKey("jwk", spki, algorithm, true, usages);
             }
-            PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
-            return this.getData().getPublicKey(params);
         }
         return this.publicKey;
     }

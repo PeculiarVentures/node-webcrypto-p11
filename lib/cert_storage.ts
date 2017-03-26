@@ -1,7 +1,13 @@
-import { Certificate, ObjectClass, Session, SessionObject, X509Certificate as P11Certificate } from "graphene-pk11";
+import { CertificateType, Data as P11Data, ObjectClass, Session, SessionObject, X509Certificate as P11X509Certificate } from "graphene-pk11";
 
-import { X509Certificate, X509CertificateRequest } from "./cert";
+import { Pkcs11CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
+import * as utils from "./utils";
 import { WebCrypto } from "./webcrypto";
+
+const TEMPLATES = [
+    { class: ObjectClass.CERTIFICATE, certType: CertificateType.X_509, token: true },
+    { class: ObjectClass.DATA, token: true, label: "X509 Request" },
+];
 
 export class Pkcs11CertificateStorage implements CertificateStorage {
 
@@ -15,10 +21,11 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
 
     public async keys() {
         const keys: string[] = [];
-        [ObjectClass.CERTIFICATE].forEach((objectClass) => {
-            this.session.find({ class: objectClass, token: true }, (obj) => {
+        TEMPLATES.forEach((template) => {
+            this.session.find(template, (obj) => {
                 const item = obj.toType<any>();
-                keys.push(this.getName(objectClass, item.id));
+                const id = Pkcs11CryptoCertificate.getID(item);
+                keys.push(id);
             });
         });
         return keys;
@@ -26,8 +33,8 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
 
     public async clear() {
         const objects: SessionObject[] = [];
-        [ObjectClass.CERTIFICATE].forEach((objectClass) => {
-            this.session.find({ class: objectClass, token: true }, (obj) => {
+        TEMPLATES.forEach((template) => {
+            this.session.find(template, (obj) => {
                 objects.push(obj);
             });
         });
@@ -39,27 +46,22 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
     public getItem(key: string): Promise<CryptoCertificate>;
     public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate>;
     public async getItem(key: string, algorithm?: Algorithm, usages?: string[]) {
-        const sessionObject = this.getItemById(key);
-        if (sessionObject) {
-            const x509Object = sessionObject.toType<P11Certificate>();
+        const storageObject = this.getItemById(key);
+        if (storageObject instanceof P11X509Certificate) {
+            const x509Object = storageObject.toType<P11X509Certificate>();
             const x509 = new X509Certificate(this.crypto);
             x509.p11Object = x509Object;
-
-            const publicKey = await this.crypto.keyStorage.getItem(`public-${x509Object.id.toString("hex")}`, algorithm, usages);
-            if (!publicKey) {
-                // export public key from certificate
-                x509.publicKey = await x509.exportKey(algorithm, usages);
-            } else {
-                x509.publicKey  = publicKey;
-            }
+            await x509.exportKey(algorithm, usages);
             return x509;
+        } else if (storageObject instanceof P11Data) {
+            const x509Object = storageObject.toType<P11Data>();
+            const x509request = new X509CertificateRequest(this.crypto);
+            x509request.p11Object = x509Object;
+            await x509request.exportKey(algorithm, usages);
+            return x509request;
         } else {
             return null;
         }
-    }
-
-    public key(index: number): string {
-        throw new Error("Not implemented yet");
     }
 
     public async removeItem(key: string) {
@@ -69,31 +71,34 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
     }
 
-    public async setItem(data: CryptoCertificate) {
-        const p11Object = (data as any).handle as Certificate;
+    public async setItem(data: Pkcs11CryptoCertificate) {
+        if (!(data instanceof Pkcs11CryptoCertificate)) {
+            throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
+        }
         // don't copy object from token
-        if (!p11Object.token) {
-            this.session.copy(p11Object, {
+        if (!data.p11Object.token) {
+            this.session.copy(data.p11Object, {
                 token: true,
             });
         }
-        return this.getName(p11Object.class, p11Object.toType<P11Certificate>().id);
+        return data.id;
     }
 
     public exportCert(cert: CryptoCertificate) {
         return (cert as any).value;
     }
 
-    public async importCert(type: string, data: ArrayBuffer, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate> {
+    public async importCert(type: string, data: NodeBufferSource, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate> {
+        const preparedData = utils.PrepareData(data);
         switch (type.toLowerCase()) {
             case "x509": {
                 const x509 = new X509Certificate(this.crypto);
-                await x509.importCert(data, algorithm, usages);
+                await x509.importCert(preparedData, algorithm, usages);
                 return x509;
             }
             case "request": {
                 const request = new X509CertificateRequest(this.crypto);
-                await request.importCert(data, algorithm, usages);
+                await request.importCert(preparedData, algorithm, usages);
                 return request;
             }
             default:
@@ -103,39 +108,16 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
 
     protected getItemById(id: string) {
         let object: SessionObject = null;
-        [ObjectClass.CERTIFICATE].forEach((objectClass) => {
-            this.session.find({ class: objectClass }, (obj) => {
+        TEMPLATES.forEach((template) => {
+            this.session.find(template, (obj) => {
                 const item = obj.toType<any>();
-                if (id === this.getName(objectClass, item.id)) {
+                if (id === Pkcs11CryptoCertificate.getID(item)) {
                     object = item;
                     return false;
                 }
             });
         });
         return object;
-    }
-
-    /**
-     * Returns name for item by it's type and id
-     * Template: <type>-<hex(id)>
-     *
-     * @protected
-     * @param {ObjectClass} type
-     * @param {Buffer} id
-     * @returns
-     *
-     * @memberOf KeyStorage
-     */
-    protected getName(type: ObjectClass, id: Buffer) {
-        let name: string;
-        switch (type) {
-            case ObjectClass.CERTIFICATE:
-                name = "x509";
-                break;
-            default:
-                throw new Error(`Unsupported Object type '${type}'`);
-        }
-        return `${name}-${id.toString("hex")}`;
     }
 
 }

@@ -63,7 +63,7 @@ export class CryptoKey implements NativeCryptoKey {
         this.id = CryptoKey.getID(key.class, key.id);
     }
 
-    public toJSON(): NativeCryptoKey {
+    public toJSON() {
         return {
             algorithm: this.algorithm,
             type: this.type,

@@ -153,7 +153,7 @@ export class EcCrypto extends BaseCrypto {
             const template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.paramsEC = namedCurve.value;
             template.value = utils.b64_decode(jwk.d!);
-            const p11key = session.create(template);
+            const p11key = session.create(template).toType();
             resolve(new CryptoKey(p11key as any, algorithm));
         });
     }
@@ -165,7 +165,7 @@ export class EcCrypto extends BaseCrypto {
             template.paramsEC = namedCurve.value;
             const pointEc = EcUtils.encodePoint({ x: utils.b64_decode(jwk.x!), y: utils.b64_decode(jwk.y!) }, namedCurve);
             template.pointEC = pointEc;
-            const p11key = session.create(template);
+            const p11key = session.create(template).toType();
             resolve(new CryptoKey(p11key as any, algorithm));
         });
     }
