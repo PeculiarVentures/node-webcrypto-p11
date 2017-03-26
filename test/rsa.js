@@ -133,7 +133,7 @@ describe("WebCrypto RSA", () => {
             var promise = Promise.resolve();
             [128, 192, 256].forEach((length, index) => {
                 var keyTemplate = aesKeys[index];
-                promise.then(() => {
+                promise = promise.then(() => {
                     return crypto.subtle.generateKey({ name: "AES-CBC", length: length }, true, ["encrypt", "decrypt"])
                         .then(key => {
                             keyTemplate.key = key;
