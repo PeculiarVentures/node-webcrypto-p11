@@ -170,6 +170,7 @@ export class EcCrypto extends BaseCrypto {
         });
     }
 
+
     protected static async exportJwkPublicKey(key: CryptoKey) {
         const pkey: ITemplate = (key as CryptoKey).key.getAttribute({
             pointEC: null,
