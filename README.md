@@ -43,25 +43,6 @@ webcrypto.subtle.generateKey({
         })
 ```
 
-## Table Of Contents
-
-* [WARNING](#warning)
-* [Installing](#installing)
-  * [Clone Repo](#clone-repo)
-  * [Install Dependencies](#install-dependencies)
-  * [Install SoftHSM2](#install-softhsm2)
-  * [Install Graphene](#install-graphene)
-  * [Install](#install)
-  * [Test](#test)
-* [Threat Model](#threat-model)
-  * [Assumptions](#assumptions)
-  * [Threats From A node-webcrypto-p11 Defect](#threats-from-a-node-webcrypto-p11-defect)
-  * [Threats From A HSM Defect](#threats-from-a-hsm-defect)
-  * [Threats From Weak Cryptography](#threats-from-weak-cryptography)
-  * [Threats From Improper Use Of Cryptography](#threats-from-improper-use-of-cryptography)
-* [Bug Reporting](#bug-reporting)
-* [Related](#related)
-
 ## WARNING
 
 **At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.**
