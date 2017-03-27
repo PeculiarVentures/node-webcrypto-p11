@@ -47,11 +47,15 @@ webcrypto.subtle.generateKey({
 
 **At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.**
 
-
-
 ## Installation
 
-### Clone Repo
+### NPM
+
+```
+npm install node-webcrypto-p11
+```
+
+### Clone Repository
 
 ```
 git clone https://github.com/PeculiarVentures/node-webcrypto-p11
@@ -62,7 +66,7 @@ cd node-webcrypto-p11
 
 - For OSX see the [instructions here](https://github.com/opendnssec/SoftHSMv2/blob/develop/OSX-NOTES.md)
 - For linux [instructions here](https://github.com/opendnssec/SoftHSMv2/blob/develop/README.md)
- 
+
  
 ### Install 
 
@@ -116,8 +120,6 @@ TODO: ADD THREATS FROM WEAK CRYPTOGRAPHY
 
 TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
 
-
-
 ## Using
 
 ### Initializing with a specific PKCS#11 implementation.
@@ -136,9 +138,8 @@ provider
         tokens = info.providers.length;
     })
     .on("token", (info) => {
-        console.log("token:", tokens > info.providers.length ? "removed" : "inserted");
-        console.log(`Providers: ${info.providers.length}`);
-        tokens = info.providers.length;
+        console.log("Removed:", info.removed);
+        console.log("Added:", info.added);
     })
     .on("error", (e) => {
         console.error(e);
@@ -156,7 +157,7 @@ var config = {
     library: "/usr/local/lib/softhsm/libsofthsm2.so",
     name: "SoftHSM v2.0",
     slot: 0,
-    sessionFlags: 4, // SERIAL_SESSION
+    readWrite: true,
     pin: "12345"
 }
 
@@ -176,6 +177,56 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
     .catch((err) => {
         console.error(err);
     });
+```
+
+## Provider
+
+Provider allows to get information about PKCS#11 module and watch token removing/insertion.
+
+### Interface
+
+```typescript
+
+interface IProvider {
+    id: string;
+    name: string;
+    serialNumber: string;
+    algorithms: string[];
+}
+
+interface IModule {
+    name: string;
+    providers: IProvider[];
+}
+
+type ProviderTokenHandler = (info: { removed: IProvider[], added: IProvider[] }) => void;
+type ProviderListeningHandler = (info: IModule) => void;
+type ProviderErrorHandler = (e: Error) => void;
+type ProviderStopHandler = () => void;
+
+interface Provider extends EventEmitter {
+
+    readonly library: string;
+
+    /**
+     * Creates an instance of Provider.
+     */
+    new(lib: string);
+
+    public on(event: "stop", listener: ProviderStopHandler): this;
+    public on(event: "listening", listener: ProviderListeningHandler): this;
+    public on(event: "token", listener: ProviderTokenHandler): this;
+    public on(event: "error", listener: ProviderErrorHandler): this;
+
+    public once(event: "stop", listener: ProviderStopHandler): this;
+    public once(event: "listening", listener: ProviderListeningHandler): this;
+    public once(event: "token", listener: ProviderTokenHandler): this;
+    public once(event: "error", listener: ProviderErrorHandler): this;
+
+    public open(watch?: boolean): void;
+    public stop(): void;
+
+}
 ```
 
 ## Key Storage
