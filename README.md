@@ -137,9 +137,7 @@ provider
 provider.open();
 ```
 
-### Generate a key pair, sign, and verify
-
-Example: Generates `ECDSA` key pair with named curve `P-256` and signs/verifies text message.
+### Generates `ECDSA` key pair with named curve `P-256` and signs/verifies text message.
 
 ```javascript
 var wcp11 = require("node-webcrypto-p11");
@@ -172,7 +170,7 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 
 ## Key Storage
 
-### Enumerate stored cryptographic keys
+### Enumerate store cryptographic keys
 
 ```typescript
 interface IKeyStorage {
@@ -203,8 +201,6 @@ interface IKeyStorage {
 ```
 
 ### Generate a cryptographic key and store it
-
-Generate ECDSA key pair and put to storage
 
 ```javascript
 crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", "verify"])
