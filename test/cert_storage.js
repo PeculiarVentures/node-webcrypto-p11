@@ -145,7 +145,7 @@ context("Certificate storage", () => {
     it("exportCert", (done) => {
         crypto.certStorage.importCert("x509", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, ["verify"])
             .then((x509) => {
-                return crypto.certStorage.exportCert(x509);
+                return crypto.certStorage.exportCert("raw", x509);
             })
             .then((raw) => {
                 assert.equal( new Buffer(raw).equals(X509_RAW), true);
