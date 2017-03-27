@@ -20,27 +20,27 @@ var config = {
     library: "/usr/local/lib/softhsm/libsofthsm2.so",
     name: "SoftHSM v2.0",
     slot: 0,
-    sessionFlags: 4, // SERIAL_SESSION
+    readWrite: true,
     pin: "12345"
 }
 
 var webcrypto = new WebCrypto(config);
 
 webcrypto.subtle.generateKey({
-            name:"RSASSA-PKCS1-v1_5",
-            modulusLength: 1024,
-            publicExponent: new Uint8Array([1, 0, 1]), 
-            hash: {
-                name: "SHA-1"
-            }}, 
-            true, 
-            ["sign", "verify"]
-        )
-        .then(function(keys){
-            assert.equal(!!keys.privateKey, true, "Has no private key");
-            assert.equal(!!keys.publicKey, true, "Has no public key");
-            assert.equal(keys.privateKey.extractable, true);
-        })
+        name:"RSASSA-PKCS1-v1_5",
+        modulusLength: 1024,
+        publicExponent: new Uint8Array([1, 0, 1]), 
+        hash: {
+            name: "SHA-1"
+        }}, 
+        true, 
+        ["sign", "verify"]
+    )
+    .then(function(keys){
+        assert.equal(!!keys.privateKey, true, "Has no private key");
+        assert.equal(!!keys.publicKey, true, "Has no public key");
+        assert.equal(keys.privateKey.extractable, true);
+    })
 ```
 
 ## WARNING
@@ -80,12 +80,12 @@ mocha
 
 Tests and samples use a file called [config.js](https://github.com/PeculiarVentures/node-webcrypto-p11/blob/master/test/config.js) file for PKCS11 module configuration. The format of which is:
 
-```
+```javascript
 module.exports = {
-	library: "path/to/pkcs11/module.so",
-	name: "Name of PKCS11 module",
+    library: "path/to/pkcs11/module.so",
+    name: "Name of PKCS11 module",
     slot: 0,        // number of slot
-	pin: "password"
+    pin: "password"
     readWrite: true,
     vendors: []     // list of vendor files, optional
 }
@@ -231,7 +231,7 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
     .then((indexes) => {
         console.log(indexes); // ['private-3239...', 'public-3239...']
         // get key by id
-        crypto.keyStorage.getItem("private-3239...");
+        return crypto.keyStorage.getItem("private-3239...");
     })
     .then((key) => {
         // signing data
@@ -297,6 +297,7 @@ interface ICertificateStorage {
      * Returns item by identity
      */
     getItem(key: string): Promise<CryptoCertificate>;
+    getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate>;
     /**
      * Removes item by identity
      */
