@@ -1,3 +1,11 @@
 .vscode
 built
 node_modules
+
+# coverage
+coverage
+.nyc_output
+.waiting.html
+
+# Log files
+*.log

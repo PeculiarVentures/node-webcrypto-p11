@@ -1,7 +1,7 @@
 // Core
 import { WebCryptoError } from "webcrypto-core";
 
-import { Key, PrivateKey, PublicKey, SecretKey, ObjectClass, ITemplate } from "graphene-pk11";
+import { ITemplate, Key, ObjectClass, PrivateKey, PublicKey, SecretKey } from "graphene-pk11";
 
 export interface ITemplatePair {
     privateKey: ITemplate;
@@ -14,14 +14,34 @@ export interface CryptoKeyPair extends NativeCryptoKey {
 }
 
 export class CryptoKey implements NativeCryptoKey {
-    type: string;
-    extractable: boolean;
-    algorithm: KeyAlgorithm;
-    id: string;
-    usages: string[] = [];
+
+    public static getID(type: ObjectClass, id: Buffer) {
+        let name: string;
+        switch (type) {
+            case ObjectClass.PRIVATE_KEY:
+                name = "private";
+                break;
+            case ObjectClass.PUBLIC_KEY:
+                name = "public";
+                break;
+            case ObjectClass.SECRET_KEY:
+                name = "secret";
+                break;
+            default:
+                throw new Error(`Unsupported Object type '${ObjectClass[type]}'`);
+        }
+        return `${name}-${id.toString("hex")}`;
+    }
+
+    public type: string;
+    public extractable: boolean;
+    public algorithm: KeyAlgorithm;
+    public id: string;
+    public usages: string[] = [];
 
     private _key: Key | PrivateKey | PublicKey | SecretKey;
-    get key(): Key {
+
+    public get key(): Key {
         return this._key;
     }
 
@@ -40,47 +60,89 @@ export class CryptoKey implements NativeCryptoKey {
                 throw new WebCryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
         }
         this.algorithm = alg;
-        this.id = this._key.getAttribute({ id: null }).id!.toString();
+        this.id = CryptoKey.getID(key.class, key.id);
+    }
+
+    public toJSON() {
+        return {
+            algorithm: this.algorithm,
+            type: this.type,
+            usages: this.usages,
+            extractable: this.extractable,
+        };
     }
 
     protected initPrivateKey(key: PrivateKey) {
         this._key = key;
         this.type = "private";
-        this.extractable = key.extractable;
+        try {
+            // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
+            this.extractable = key.extractable;
+        } catch (e) {
+            this.extractable = false;
+        }
         this.usages = [];
-        if (key.decrypt) this.usages.push("decrypt");
+        if (key.decrypt) {
+            this.usages.push("decrypt");
+        }
         if (key.derive) {
             this.usages.push("deriveKey");
             this.usages.push("deriveBits");
         }
-        if (key.sign) this.usages.push("sign");
-        if (key.unwrap) this.usages.push("unwrapKey");
+        if (key.sign) {
+            this.usages.push("sign");
+        }
+        if (key.unwrap) {
+            this.usages.push("unwrapKey");
+        }
     }
 
     protected initPublicKey(key: PublicKey) {
         this._key = key;
         this.type = "public";
         this.extractable = true;
-        if (key.encrypt) this.usages.push("encrypt");
-        if (key.verify) this.usages.push("verify");
-        if (key.wrap) this.usages.push("wrapKey");
+        if (key.encrypt) {
+            this.usages.push("encrypt");
+        }
+        if (key.verify) {
+            this.usages.push("verify");
+        }
+        if (key.wrap) {
+            this.usages.push("wrapKey");
+        }
     }
 
     protected initSecretKey(key: SecretKey) {
         this._key = key;
         this.type = "secret";
-        this.extractable = key.extractable;
-        if (key.encrypt) this.usages.push("encrypt");
-        if (key.verify) this.usages.push("verify");
-        if (key.wrap) this.usages.push("wrapKey");
-        if (key.decrypt) this.usages.push("decrypt");
+        try {
+            // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
+            this.extractable = key.extractable;
+        } catch (e) {
+            this.extractable = false;
+        }
+        if (key.encrypt) {
+            this.usages.push("encrypt");
+        }
+        if (key.verify) {
+            this.usages.push("verify");
+        }
+        if (key.wrap) {
+            this.usages.push("wrapKey");
+        }
+        if (key.decrypt) {
+            this.usages.push("decrypt");
+        }
         if (key.derive) {
             this.usages.push("deriveKey");
             this.usages.push("deriveBits");
         }
-        if (key.sign) this.usages.push("sign");
-        if (key.unwrap) this.usages.push("unwrapKey");
+        if (key.sign) {
+            this.usages.push("sign");
+        }
+        if (key.unwrap) {
+            this.usages.push("unwrapKey");
+        }
     }
 
 }
-

@@ -1,10 +1,13 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { Session, Key } from "graphene-pk11";
+import { KeyType, NamedCurve, ObjectClass, SecretKey, Session, SessionObject } from "graphene-pk11";
+import { PrepareAlgorithm } from "webcrypto-core";
 import { CryptoKey } from "./key";
 
-export class KeyStorage {
+const OBJECT_TYPES = [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY, ObjectClass.SECRET_KEY];
+
+export class KeyStorage implements IKeyStorage {
 
     protected session: Session;
 
@@ -12,58 +15,137 @@ export class KeyStorage {
         this.session = session;
     }
 
-    get length(): number {
-        throw new Error("Not implemented yet");
+    public async keys() {
+        const keys: string[] = [];
+        OBJECT_TYPES.forEach((objectClass) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
+                const item = obj.toType<any>();
+                keys.push(CryptoKey.getID(objectClass, item.id));
+            });
+        });
+        return keys;
     }
-    clear(): void {
-        this.session.clear();
+
+    public async clear() {
+        const keys: SessionObject[] = [];
+        OBJECT_TYPES.forEach((objectClass) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
+                keys.push(obj);
+            });
+        });
+        keys.forEach((key) => {
+            key.destroy();
+        });
+    }
+
+    public async getItem(key: string): Promise<CryptoKey>;
+    public async getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    public async getItem(key: string, algorithm?: Algorithm, usages?: string[]) {
+        const subjectObject = this.getItemById(key);
+        if (subjectObject) {
+            const p11Key = subjectObject.toType<SecretKey>();
+            let alg: any;
+            if (algorithm) {
+                alg = PrepareAlgorithm(algorithm);
+            } else {
+                // name
+                alg = {};
+                switch (p11Key.type) {
+                    case KeyType.RSA: {
+                        if (p11Key.sign || p11Key.verify) {
+                            alg.name = "RSASSA-PKCS1-v1_5";
+                        } else {
+                            alg.name = "RSA-OAEP";
+                        }
+                        alg.hash = { name: "SHA-256" };
+                        break;
+                    }
+                    case KeyType.EC: {
+                        if (p11Key.sign || p11Key.verify) {
+                            alg.name = "ECDSA";
+                        } else {
+                            alg.name = "ECDH";
+                        }
+                        const attributes = p11Key.getAttribute({ paramsECDSA: null });
+                        const pointEC = NamedCurve.getByBuffer(attributes.paramsECDSA);
+                        let namedCurve: string;
+                        switch (pointEC.name) {
+                            case "secp192r1":
+                                namedCurve = "P-192";
+                                break;
+                            case "secp256r1":
+                                namedCurve = "P-256";
+                                break;
+                            case "secp384r1":
+                                namedCurve = "P-384";
+                                break;
+                            case "secp521r1":
+                                namedCurve = "P-521";
+                                break;
+                            default:
+                                throw new Error(`Unsupported named curve for EC key '${pointEC.name}'`);
+                        }
+                        alg.namedCurve = namedCurve;
+                        break;
+                    }
+                    case KeyType.AES: {
+                        if (p11Key.sign || p11Key.verify) {
+                            alg.name = "AES-HMAC";
+                        } else {
+                            alg.name = "AES-CBC";
+                        }
+                        break;
+                    }
+                    default:
+                        throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
+                }
+            }
+            return new CryptoKey(p11Key, alg);
+        } else {
+            return null;
+        }
+    }
+
+    public async removeItem(key: string) {
+        const sessionObject = this.getItemById(key);
+        if (sessionObject) {
+            sessionObject.destroy();
+        }
+    }
+
+    public async setItem(data: CryptoKey) {
+        if (!(data instanceof CryptoKey)) {
+            throw new WebCryptoError("Parameter 1 is not P11CryptoKey");
+        }
+        const p11Key = data as CryptoKey;
+
+        // don't copy object from token
+        if (!(this.hasItem(data) && p11Key.key.token)) {
+            this.session.copy(p11Key.key, {
+                token: true,
+            });
+        }
+
+        return data.id;
+    }
+
+    public hasItem(key: CryptoKey) {
+        const item = this.getItemById(key.id);
+        return !!item;
     }
 
     protected getItemById(id: string) {
-        let keys = this.session.find({ id: new Buffer(id) });
-        if (!keys.length) {
-            // console.log(`WebCrypto:PKCS11: Key by ID '${id}' is not found`);
-            return null;
-        }
-        if (keys.length > 1)
-            console.log(`WebCrypto:PKCS11: ${keys.length} keys matches ID '${id}'`);
-        return keys.items(0);
-    }
-
-    getItem(key: string) {
-        let sobj = this.getItemById(key);
-        if (sobj) {
-            let _key = sobj.toType<Key>();
-            let alg = JSON.parse(_key.label);
-            return new CryptoKey(_key, alg);
-        }
-        else
-            return null;
-    }
-
-    key(index: number): string {
-        throw new Error("Not implemented yet");
-    }
-
-    removeItem(key: string): void {
-        let sobj = this.getItemById(key);
-        if (sobj) {
-            sobj.destroy();
-        }
-    }
-
-    setItem(key: string, data: CryptoKey): void {
-        if (!(data instanceof CryptoKey))
-            throw new WebCryptoError("Parameter 2 is not P11CryptoKey");
-        let _key = data as CryptoKey;
-        // don't copy object from token
-        if (!_key.key.token) {
-            this.session.copy(_key.key, {
-                token: true,
-                id: new Buffer(key),
-                label: JSON.stringify(data.algorithm)
+        let key: SessionObject = null;
+        OBJECT_TYPES.forEach((objectClass) => {
+            this.session.find({ class: objectClass, token: true }, (obj) => {
+                const item = obj.toType<any>();
+                if (id === CryptoKey.getID(objectClass, item.id)) {
+                    key = item;
+                    return false;
+                }
             });
-        }
+        });
+        return key;
     }
 
 }

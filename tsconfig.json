@@ -14,7 +14,9 @@
         "removeComments": true,
         "declaration": false,
         "sourceMap": false,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "experimentalDecorators": true,
+        "importHelpers": true
     },
     "exclude": [
         "node_modules",

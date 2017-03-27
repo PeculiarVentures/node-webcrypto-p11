@@ -6,89 +6,162 @@
 /// <reference types="webcrypto-core" />
 /// <reference types="graphene-pk11" />
 
-declare namespace NodeWebcryptoPkcs11 {
+import { EventEmitter } from "events";
 
+declare module "node-webcrypto-p11" {
     type NodeBufferSource = BufferSource | Buffer;
 
-    interface CryptoKeyPair extends NativeCryptoKey {
-        privateKey: CryptoKey;
+    type HexString = string;
+
+    type CryptoCertificateFormat = string | "x509" | "request";
+
+    interface CryptoCertificate {
+        type: CryptoCertificateFormat;
         publicKey: CryptoKey;
     }
 
-    class CryptoKey implements NativeCryptoKey {
-        type: string;
-        extractable: boolean;
-        algorithm: KeyAlgorithm;
-        id: string;
-        usages: string[];
-        private _key;
-        readonly key: GraphenePkcs11.Key;
-        constructor(key: GraphenePkcs11.Key, alg: Algorithm);
-        protected initPrivateKey(key: GraphenePkcs11.PrivateKey): void;
-        protected initPublicKey(key: GraphenePkcs11.PublicKey): void;
-        protected initSecretKey(key: GraphenePkcs11.SecretKey): void;
+    interface CryptoX509Certificate extends CryptoCertificate {
+        notBefore: Date;
+        notAfter: Date;
+        serialNumber: HexString;
+        issuerName: string;
+        subjectName: string;
     }
 
-    class KeyStorage {
-        protected session: GraphenePkcs11.Session;
-        constructor(session: GraphenePkcs11.Session);
-        readonly length: number;
-        clear(): void;
-        protected getItemById(id: string): GraphenePkcs11.SessionObject | null;
-        getItem(key: string): CryptoKey | null;
-        key(index: number): string;
-        removeItem(key: string): void;
-        setItem(key: string, data: CryptoKey): void;
+    interface CryptoX509CertificateRequest extends CryptoCertificate {
+        subjectName: string;
     }
 
-    class SubtleCrypto extends WebcryptoCore.SubtleCrypto {
-        protected session: GraphenePkcs11.Session;
-        constructor(session: GraphenePkcs11.Session);
-        digest(algorithm: AlgorithmIdentifier, data: NodeBufferSource): PromiseLike<ArrayBuffer>;
-        generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair | CryptoKey>;
-        generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair>;
-        generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: AlgorithmIdentifier): PromiseLike<ArrayBuffer>;
-        unwrapKey(format: string, wrappedKey: NodeBufferSource, unwrappingKey: CryptoKey, unwrapAlgorithm: AlgorithmIdentifier, unwrappedKeyAlgorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: NodeBufferSource): PromiseLike<ArrayBuffer>;
-        decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: NodeBufferSource): PromiseLike<ArrayBuffer>;
-        exportKey(format: "jwk", key: CryptoKey): PromiseLike<JsonWebKey>;
-        exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): PromiseLike<ArrayBuffer>;
-        exportKey(format: string, key: CryptoKey): PromiseLike<JsonWebKey | ArrayBuffer>;
-        importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        importKey(format: "raw" | "pkcs8" | "spki", keyData: NodeBufferSource, algorithm: string | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        importKey(format: string, keyData: JsonWebKey | NodeBufferSource, algorithm: string | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        sign(algorithm: string | RsaPssParams | EcdsaParams | AesCmacParams, key: CryptoKey, data: NodeBufferSource): PromiseLike<ArrayBuffer>;
-        verify(algorithm: string | RsaPssParams | EcdsaParams | AesCmacParams, key: CryptoKey, signature: NodeBufferSource, data: NodeBufferSource): PromiseLike<boolean>;
-        deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | AesDerivedKeyParams | HmacImportParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): PromiseLike<ArrayBuffer>;
+    interface CertificateStorage {
+
+        keys(): Promise<string[]>;
+
+        /**
+         * Import certificate from data
+         * 
+         * @param {CertificateItemType} type Type of certificate
+         * @param {(ArrayBuffer)} data Raw of certificate item
+         * @returns {Promise<CryptoCertificate>} 
+         * 
+         * @memberOf CertificateStorage
+         */
+        importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
+        importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+
+        exportCert(format: "pem", item: CryptoCertificate): Promise<string>
+        exportCert(format: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
+        exportCert(format: CryptoCertificateFormat, item: CryptoCertificate): Promise<ArrayBuffer | string>
+
+        setItem(item: CryptoCertificate): Promise<string>;
+        getItem(key: string): Promise<CryptoCertificate>;
+        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+        removeItem(key: string): Promise<void>;
+        clear(): Promise<void>;
+    }
+
+    interface KeyStorage {
+
+        /**
+         * Return list of names of stored keys
+         * 
+         * @returns {Promise<string[]>} 
+         * 
+         * @memberOf KeyStorage
+         */
+        keys(): Promise<string[]>;
+        /**
+         * Returns key from storage
+         * 
+         * @param {string} key 
+         * @returns {Promise<CryptoKey>} 
+         * 
+         * @memberOf KeyStorage
+         */
+        getItem(key: string): Promise<CryptoKey>;
+        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        /**
+         * Add key to storage
+         * 
+         * @param {string} key 
+         * @param {CryptoKey} value 
+         * @returns {Promise<void>} 
+         * 
+         * @memberOf KeyStorage
+         */
+        setItem(value: CryptoKey): Promise<string>;
+
+        /**
+         * Removes item from storage by given key
+         * 
+         * @param {string} key 
+         * @returns {Promise<void>} 
+         * 
+         * @memberOf KeyStorage
+         */
+        removeItem(key: string): Promise<void>;
+        clear(): Promise<void>;
     }
 
     class WebCrypto implements NativeCrypto {
-        private module;
-        private session;
-        private slot;
-        private initialized;
+        isLoggedIn: boolean;
         subtle: SubtleCrypto;
         keyStorage: KeyStorage;
+        certStorage: CertificateStorage;
         getRandomValues(array: NodeBufferSource): NodeBufferSource;
         getRandomValues(array: ArrayBufferView): ArrayBufferView;
         getGUID(): string;
         constructor(props: P11WebCryptoParams);
+        open(rw?: boolean): void;
         close(): void;
+        login(pin: string): void;
+        logout(): void;
     }
 
     interface P11WebCryptoParams extends Object {
         library: string;
-        name: string;
+        name?: string;
         slot: number;
-        sessionFlags?: number;
+        readWrite?: boolean;
         pin?: string;
         vendors?: string[];
     }
 
-}
+    interface IModule {
+        name: string;
+        providers: IProvider[];
+    }
 
-declare module "node-webcrypto-p11" {
-    export = NodeWebcryptoPkcs11.WebCrypto;
+    interface IProvider {
+        id: string;
+        name: string;
+        serialNumber: string;
+        algorithms: string[];
+    }
+
+    type ProviderTokenHandler = (info: { removed: IProvider[], added: IProvider[] }) => void;
+    type ProviderListeningHandler = (info: IModule) => void;
+    type ProviderErrorHandler = (e: Error) => void;
+    type ProviderStopHandler = () => void;
+
+    export class Provider extends EventEmitter {
+
+        public readonly library: string;
+
+        constructor(lib: string);
+
+        public on(event: "stop", listener: ProviderStopHandler): this;
+        public on(event: "listening", listener: ProviderListeningHandler): this;
+        public on(event: "token", listener: ProviderTokenHandler): this;
+        public on(event: "error", listener: ProviderErrorHandler): this;
+
+        public once(event: "stop", listener: ProviderStopHandler): this;
+        public once(event: "listening", listener: ProviderListeningHandler): this;
+        public once(event: "token", listener: ProviderTokenHandler): this;
+        public once(event: "error", listener: ProviderErrorHandler): this;
+
+        public open(watch?: boolean): void;
+        public stop(): void;
+
+    }
 }

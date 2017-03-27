@@ -43,7 +43,7 @@ describe("WebCrypto RSA", () => {
                             crypto.subtle.generateKey(alg, true, key.usages)
                                 .then(keyPair => {
                                     assert.equal(!!(keyPair.privateKey || keyPair.publicKey), true, "KeyPair is empty");
-                                    // save  keays for next tests
+                                    // save  keys for next tests
                                     keyTemplate.privateKey = keyPair.privateKey;
                                     keyTemplate.publicKey = keyPair.publicKey;
                                     return Promise.resolve();
@@ -66,7 +66,7 @@ describe("WebCrypto RSA", () => {
                         .then(sig => {
                             assert.equal(!!sig, true, "Has no signature value");
                             assert.notEqual(sig.length, 0, "Has empty signature value");
-                            return crypto.subtle.verify({ name: key.publicKey.algorithm.name }, key.publicKey, sig, TEST_MESSAGE)
+                            return crypto.subtle.verify({ name: key.publicKey.algorithm.name, saltLength: 8 }, key.publicKey, sig, TEST_MESSAGE)
                         })
                         .then(v => assert.equal(v, true, "Signature is not valid"))
                         .then(done, done);
@@ -102,7 +102,7 @@ describe("WebCrypto RSA", () => {
         // Keys
         keys.forEach(key => {
             // Format
-            ["jwk"].forEach(format => {
+            ["spki", "pkcs8", "jwk"].forEach(format => {
                 it(`${format}\t${key.name}`, done => {
                     var promise = Promise.resolve();
                     // Check public and private keys
@@ -111,7 +111,7 @@ describe("WebCrypto RSA", () => {
                             promise = promise.then(() => {
                                 return crypto.subtle.exportKey(format, _key)
                                     .then(jwk => {
-                                        assert.equal(!!jwk, true, "Has no jwk value");
+                                        assert.equal(!!jwk, true, "Has no exported value");
                                         // TODO assert JWK params
                                         return crypto.subtle.importKey(format, jwk, _key.algorithm, true, _key.usages);
                                     })
@@ -133,7 +133,7 @@ describe("WebCrypto RSA", () => {
             var promise = Promise.resolve();
             [128, 192, 256].forEach((length, index) => {
                 var keyTemplate = aesKeys[index];
-                promise.then(() => {
+                promise = promise.then(() => {
                     return crypto.subtle.generateKey({ name: "AES-CBC", length: length }, true, ["encrypt", "decrypt"])
                         .then(key => {
                             keyTemplate.key = key;
