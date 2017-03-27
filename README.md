@@ -74,12 +74,11 @@ npm install
 ```
 mocha
 ```
-Use [config.js](https://github.com/PeculiarVentures/node-webcrypto-p11/blob/master/test/config.js) file for PKCS11 module configuration
 
 
 ### Configuration
 
-config.js file format:
+Tests and samples use a file called [config.js](https://github.com/PeculiarVentures/node-webcrypto-p11/blob/master/test/config.js) file for PKCS11 module configuration. The format of which is:
 
 ```
 module.exports = {
