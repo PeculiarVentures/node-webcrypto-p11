@@ -78,10 +78,10 @@ interface IKeyStorage {
 
 type HexString = string;
 
-type CryptoCertificateType = string | "x509" | "request";
+type CryptoCertificateFormat = string | "x509" | "request";
 
 interface CryptoCertificate {
-    type: CryptoCertificateType;
+    type: CryptoCertificateFormat;
     publicKey: CryptoKey;
 }
 
@@ -110,9 +110,9 @@ interface CertificateStorage {
          * 
          * @memberOf CertificateStorage
          */
-        importCert(type: "requets", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+        importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
         importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
-        importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+        importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
 
         exportCert(type: "pem", item: CryptoCertificate): Promise<string>
         exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>

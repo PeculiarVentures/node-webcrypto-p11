@@ -84,8 +84,17 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         return data.id;
     }
 
-    public exportCert(cert: CryptoCertificate) {
-        return (cert as any).value;
+    public async exportCert(format: CryptoCertificateFormat, cert: Pkcs11CryptoCertificate): Promise<ArrayBuffer | string> {
+        switch (format) {
+            case "pem": {
+                throw Error("PEM format is not implemented");
+            }
+            case "raw": {
+                return cert.exportCert();
+            }
+            default:
+                throw new Error(`Unsupported format in use ${format}`);
+        }
     }
 
     public async importCert(type: string, data: NodeBufferSource, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate> {

@@ -119,11 +119,16 @@ export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
     }
     public type: string;
     public publicKey: CryptoKey;
-
     public p11Object: Storage;
 
+    protected crypto: WebCrypto;
+
+    constructor(crypto: WebCrypto) {
+        this.crypto = crypto;
+    }
+
     public abstract importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
-    public abstract exportCert<T extends Pkcs11CryptoCertificate>(this: { new: (crypto: WebCrypto) => T }): Promise<T>;
+    public abstract exportCert(): Promise<ArrayBuffer>;
     public abstract exportKey(): Promise<CryptoKey>;
     public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
 }
@@ -157,12 +162,6 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
     public p11Object: P11X509Certificate;
     protected schema: any;
-    protected crypto: WebCrypto;
-
-    constructor(crypto: WebCrypto) {
-        super();
-        this.crypto = crypto;
-    }
 
     public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
         const array = new Uint8Array(data);
@@ -262,12 +261,6 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
 
     public p11Object: P11Data;
     protected schema: any;
-    protected crypto: WebCrypto;
-
-    constructor(crypto: WebCrypto) {
-        super();
-        this.crypto = crypto;
-    }
 
     /**
      * Creates new CertificateRequest in PKCS11 session
