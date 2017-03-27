@@ -129,7 +129,7 @@ TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
 
 ## Using
 
-### Provider
+### Initializing
 
 ```javascript
 var wcp11 = require("node-webcrypto-p11");
@@ -156,7 +156,7 @@ provider
 provider.open();
 ```
 
-### Crypto
+### Generate a key pair, sign, and verify
 
 Example: Generates `ECDSA` key pair with named curve `P-256` and signs/verifies text message.
 
@@ -191,6 +191,8 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 
 ## Key Storage
 
+### Enumerate stored cryptographic keys
+
 ```typescript
 interface IKeyStorage {
 
@@ -219,7 +221,7 @@ interface IKeyStorage {
 }
 ```
 
-### Example
+### Generate a cryptographic key and store it
 
 Generate ECDSA key pair and put to storage
 
@@ -254,9 +256,10 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
     });
 ```
 
-## Certificate storage
+## Certificate Storage
 
-### Items
+### Interfaces
+#### Certificate
 
 ```typescript
 type HexString = string;
@@ -281,7 +284,7 @@ interface CryptoX509CertificateRequest extends CryptoCertificate {
 }
 ```
 
-### Storage
+#### Storage
 
 ```typescript
 interface ICertificateStorage {
@@ -316,9 +319,7 @@ interface ICertificateStorage {
 }
 ```
 
-### Example
-
-Add certificate to storage and use it for verification of signed data
+### Add certificate to storage and use it for verification of signed data
 
 ```javascript
 const X509_RAW = new Buffer("308203A830820290A003020...", "hex")
