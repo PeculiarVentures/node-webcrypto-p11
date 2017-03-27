@@ -339,9 +339,9 @@ interface ICertificateStorage {
      */
     importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
     /**
-     * Returns raw of certificate
+     * Exports item in given format
      */
-    exportCert(cert: CryptoCertificate): Promise<ArrayBuffer>;
+    exportCert(format: "pem" | "raw", cert: CryptoCertificate): Promise<ArrayBuffer | string>;
     /**
      * Adds item to storage and returns it's identity
      */
