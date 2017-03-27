@@ -120,7 +120,7 @@ TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
 
 ## Using
 
-### Initializing
+### Initializing with a specific PKCS#11 implementation.
 
 ```javascript
 var wcp11 = require("node-webcrypto-p11");
@@ -180,7 +180,9 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 
 ## Key Storage
 
-### Enumerate store cryptographic keys
+### Interface
+
+#### KeyStorage.
 
 ```typescript
 interface IKeyStorage {
@@ -246,7 +248,7 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 ## Certificate Storage
 
 ### Interfaces
-#### Certificate
+#### CryptoCertificate
 
 ```typescript
 type HexString = string;
@@ -271,7 +273,7 @@ interface CryptoX509CertificateRequest extends CryptoCertificate {
 }
 ```
 
-#### Storage
+#### CertificateStorage
 
 ```typescript
 interface ICertificateStorage {
