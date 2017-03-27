@@ -181,7 +181,7 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 
 ## Provider
 
-Provider allows to get information about PKCS#11 module and watch token removing/insertion.
+The `Provider` interface enables you to get information about a PKCS#11 module and watch token removal/insertion.
 
 ### Interface
 
@@ -230,10 +230,11 @@ interface Provider extends EventEmitter {
 ```
 
 ## Key Storage
+The `Key Storage` interface enables you to persist and retrieve keys accross sessions.
 
 ### Interface
 
-#### KeyStorage.
+#### KeyStorage
 
 ```typescript
 interface IKeyStorage {
@@ -297,6 +298,7 @@ crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256"}, false, ["sign", 
 ```
 
 ## Certificate Storage
+The `Certificate Storage` interface enables you to persist and retrieve certificates accross sessions.
 
 ### Interfaces
 #### CryptoCertificate
