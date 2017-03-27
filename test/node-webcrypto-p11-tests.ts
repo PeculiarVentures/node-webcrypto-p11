@@ -1,6 +1,6 @@
 /// <reference path="../index.d.ts" />
 
-import WebCrypto = require("node-webcrypto-p11");
+import {Provider, WebCrypto } from "node-webcrypto-ossl";
 
 // Webcrypto constructor
 let crypto = new WebCrypto({

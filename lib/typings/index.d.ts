@@ -101,22 +101,28 @@ interface CertificateStorage {
 
     keys(): Promise<string[]>;
 
-    /**
-     * Import certificate from data
-     * 
-     * @param {CertificateItemType} type Type of certificate
-     * @param {(ArrayBuffer)} data Raw of certificate item
-     * @returns {Promise<ICertificateStorageItem>} 
-     * 
-     * @memberOf CertificateStorage
-     */
-    importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
-    exportCert(cert: CryptoCertificate): Promise<ArrayBuffer>;
+        /**
+         * Import certificate from data
+         * 
+         * @param {CertificateItemType} type Type of certificate
+         * @param {(ArrayBuffer)} data Raw of certificate item
+         * @returns {Promise<CryptoCertificate>} 
+         * 
+         * @memberOf CertificateStorage
+         */
+        importCert(type: "requets", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
+        importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
 
-    setItem(item: CryptoCertificate): Promise<string>;
-    getItem(key: string): Promise<CryptoCertificate>;
-    removeItem(key: string): Promise<void>;
-    clear(): Promise<void>;
+        exportCert(type: "pem", item: CryptoCertificate): Promise<string>
+        exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
+        exportCert(type: string, item: CryptoCertificate): Promise<ArrayBuffer | string>
+
+        setItem(item: CryptoCertificate): Promise<string>;
+        getItem(key: string): Promise<CryptoCertificate>;
+        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+        removeItem(key: string): Promise<void>;
+        clear(): Promise<void>;
 
 }
 

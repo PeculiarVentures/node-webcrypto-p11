@@ -13,26 +13,26 @@ declare module "node-webcrypto-p11" {
 
     type HexString = string;
 
-    type CertificateItemType = string | "x509" | "request";
+    type CryptoCertificateType = string | "x509" | "request";
 
-    interface ICertificateStorageItem {
-        id: string;
-        type: CertificateItemType;
+    interface CryptoCertificate {
+        type: CryptoCertificateType;
         publicKey: CryptoKey;
-        value: ArrayBuffer;
     }
 
-    interface IX509Certificate extends ICertificateStorageItem {
-        serialNumber?: HexString;
-        issuerName?: string;
-        subjectName?: string;
+    interface CryptoX509Certificate extends CryptoCertificate {
+        notBefore: Date;
+        notAfter: Date;
+        serialNumber: HexString;
+        issuerName: string;
+        subjectName: string;
     }
 
-    interface IX509Request extends ICertificateStorageItem {
-        subjectName?: string;
+    interface CryptoX509CertificateRequest extends CryptoCertificate {
+        subjectName: string;
     }
 
-    interface ICertificateStorage {
+    interface CertificateStorage {
 
         keys(): Promise<string[]>;
 
@@ -41,19 +41,26 @@ declare module "node-webcrypto-p11" {
          * 
          * @param {CertificateItemType} type Type of certificate
          * @param {(ArrayBuffer)} data Raw of certificate item
-         * @returns {Promise<ICertificateStorageItem>} 
+         * @returns {Promise<CryptoCertificate>} 
          * 
          * @memberOf CertificateStorage
          */
-        importCert(type: CertificateItemType, data: ArrayBuffer, algorithm: Algorithm, keyUsages: string[]): Promise<ICertificateStorageItem>;
+        importCert(type: "requets", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
+        importCert(type: CryptoCertificateType, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
 
-        setItem(key: string, item: ICertificateStorageItem): Promise<void>;
-        getItem(key: string): Promise<ICertificateStorageItem>;
+        exportCert(type: "pem", item: CryptoCertificate): Promise<string>
+        exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
+        exportCert(type: string, item: CryptoCertificate): Promise<ArrayBuffer | string>
+
+        setItem(item: CryptoCertificate): Promise<string>;
+        getItem(key: string): Promise<CryptoCertificate>;
+        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
         removeItem(key: string): Promise<void>;
-
+        clear(): Promise<void>;
     }
 
-    interface IKeyStorage {
+    interface KeyStorage {
 
         /**
          * Return list of names of stored keys
@@ -72,6 +79,7 @@ declare module "node-webcrypto-p11" {
          * @memberOf KeyStorage
          */
         getItem(key: string): Promise<CryptoKey>;
+        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
         /**
          * Add key to storage
          * 
@@ -81,7 +89,7 @@ declare module "node-webcrypto-p11" {
          * 
          * @memberOf KeyStorage
          */
-        setItem(key: string, value: CryptoKey): Promise<void>;
+        setItem(value: CryptoKey): Promise<string>;
 
         /**
          * Removes item from storage by given key
@@ -92,14 +100,14 @@ declare module "node-webcrypto-p11" {
          * @memberOf KeyStorage
          */
         removeItem(key: string): Promise<void>;
-
+        clear(): Promise<void>;
     }
 
     class WebCrypto implements NativeCrypto {
         isLoggedIn: boolean;
         subtle: SubtleCrypto;
-        keyStorage: IKeyStorage;
-        certStorage: ICertificateStorage;
+        keyStorage: KeyStorage;
+        certStorage: CertificateStorage;
         getRandomValues(array: NodeBufferSource): NodeBufferSource;
         getRandomValues(array: ArrayBufferView): ArrayBufferView;
         getGUID(): string;
@@ -152,7 +160,7 @@ declare module "node-webcrypto-p11" {
         public once(event: "token", listener: ProviderTokenHandler): this;
         public once(event: "error", listener: ProviderErrorHandler): this;
 
-        public open(): void;
+        public open(watch?: boolean): void;
         public stop(): void;
 
     }
