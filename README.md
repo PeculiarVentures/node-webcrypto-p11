@@ -47,6 +47,8 @@ webcrypto.subtle.generateKey({
 
 **At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.**
 
+
+
 ## Installation
 
 ### Clone Repo
@@ -74,7 +76,11 @@ mocha
 ```
 Use [config.js](https://github.com/PeculiarVentures/node-webcrypto-p11/blob/master/test/config.js) file for PKCS11 module configuration
 
+
+### Configuration
+
 config.js file format:
+
 ```
 module.exports = {
 	library: "path/to/pkcs11/module.so",
@@ -85,6 +91,9 @@ module.exports = {
     vendors: []     // list of vendor files, optional
 }
 ```
+
+
+## Threats
 
 The threat model is defined in terms of what each possible attacker can achieve. The list is intended to be exhaustive.
 
@@ -107,6 +116,8 @@ TODO: ADD THREATS FROM WEAK CRYPTOGRAPHY
 ### Threats From Improper Use Of Cryptography
 
 TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
+
+
 
 ## Using
 
