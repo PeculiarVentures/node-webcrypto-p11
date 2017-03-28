@@ -1,5 +1,6 @@
 var assert = require('assert');
 var crypto = require('./config').crypto;
+var graphene = require('graphene-pk11');
 var isSoftHSM = require('./config').isSoftHSM;
 
 describe("WebCrypto RSA", () => {
@@ -72,6 +73,46 @@ describe("WebCrypto RSA", () => {
                         .then(done, done);
                 });
             });
+
+    });
+
+    context("RSA_PKCS Sign/Verify", () => {
+        const SHA256_RSA_PKCS = graphene.MechanismEnum["SHA256_RSA_PKCS"];
+
+        before(() => {
+            // delete SHA256_RSA_PKCS
+            delete graphene.MechanismEnum["SHA256_RSA_PKCS"];
+            delete graphene.MechanismEnum[SHA256_RSA_PKCS];
+        })
+
+        after(() => {
+            // recover SHA256_RSA_PKCS
+            graphene.MechanismEnum["SHA256_RSA_PKCS"] = SHA256_RSA_PKCS;
+            graphene.MechanismEnum[SHA256_RSA_PKCS] = "SHA256_RSA_PKCS";
+        })
+
+        it("remove SHA256_RSA_PKCS mechanism", (done) => {
+            const algorithm = {
+                name: "RSASSA-PKCS1-v1_5",
+                hash: "SHA-256",
+                publicExponent: new Uint8Array([1, 0, 1]),
+                modulusLength: 2048,
+            }
+
+            const data = new Buffer("Hello world");
+
+            crypto.subtle.generateKey(algorithm, false, ["sign", "verify"])
+                .then((keys) => {
+                    return crypto.subtle.sign(algorithm, keys.privateKey, data)
+                        .then((signature) => {
+                            return crypto.subtle.verify(algorithm, keys.publicKey, signature, data)
+                                .then((ok) => {
+                                    assert.equal(ok, true, "Signature is invalid");
+                                })
+                        })
+                })
+                .then(done, done);
+        })
     });
 
     context("Encrypt/Decrypt", () => {

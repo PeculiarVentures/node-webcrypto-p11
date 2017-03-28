@@ -95,6 +95,7 @@ export function getProviderInfo(slot: Slot) {
             case "SHA512":
                 algName = "SHA-512";
                 break;
+            case "RSA_PKCS":
             case "SHA1_RSA_PKCS":
             case "SHA256_RSA_PKCS":
             case "SHA384_RSA_PKCS":

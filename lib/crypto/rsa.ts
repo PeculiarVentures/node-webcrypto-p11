@@ -26,6 +26,13 @@ import * as utils from "../utils";
 import * as Asn1Js from "asn1js";
 const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
 
+const HASH_PREFIXES: { [alg: string]: Buffer } = {
+    "sha-1": new Buffer([0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14]),
+    "sha-256": new Buffer([0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20]),
+    "sha-384": new Buffer([0x30, 0x41, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02, 0x05, 0x00, 0x04, 0x30]),
+    "sha-512": new Buffer([0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03, 0x05, 0x00, 0x04, 0x40]),
+};
+
 function create_template(session: Session, alg: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
     const idKey = new Buffer(utils.GUID(session));
@@ -234,7 +241,12 @@ export class RsaPKCS1 extends RsaCrypto {
         return super.sign.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data2) => {
+                    const mechanism = this.wc2pk11(algorithm, key.algorithm);
+                    mechanism.name = this.rsaPkcs(session, mechanism.name);
+                    if (mechanism.name === "RSA_PKCS") {
+                        data = this.rsaPkcsPrepareData((key as any).algorithm.hash.name, data);
+                    }
+                    session!.createSign(mechanism, key.key).once(data, (err, data2) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -249,7 +261,12 @@ export class RsaPKCS1 extends RsaCrypto {
         return super.verify.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data2) => {
+                    const mechanism = this.wc2pk11(algorithm, key.algorithm);
+                    mechanism.name = this.rsaPkcs(session, mechanism.name);
+                    if (mechanism.name === "RSA_PKCS") {
+                        data = this.rsaPkcsPrepareData((key as any).algorithm.hash.name, data);
+                    }
+                    session!.createVerify(mechanism, key.key).once(data, signature, (err, data2) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -258,6 +275,31 @@ export class RsaPKCS1 extends RsaCrypto {
                     });
                 });
             });
+    }
+
+    public static rsaPkcsPrepareData(hashAlgorithm: string, data: Buffer) {
+        // use nodejs crypto for digest calculating
+        const hash = utils.digest(hashAlgorithm.replace("-", ""), data);
+
+        // enveloping hash
+        const hashPrefix = HASH_PREFIXES[hashAlgorithm.toLowerCase()];
+        if (!hashPrefix) {
+            throw new Error(`Cannot get prefix for hash '${hashAlgorithm}'`);
+        }
+        return Buffer.concat([hashPrefix, hash]);
+    }
+
+    protected static rsaPkcs(session: Session, p11AlgorithmName: string) {
+        const mechanisms = session.slot.getMechanisms();
+        let res = "RSA_PKCS";
+        for (let i = 0; i < mechanisms.length; i++) {
+            const mechanism = mechanisms.items(i);
+            if (mechanism.name === p11AlgorithmName) {
+                res = p11AlgorithmName;
+                break;
+            }
+        }
+        return res;
     }
 
     protected static wc2pk11(alg: Algorithm, keyAlg: KeyAlgorithm): IAlgorithm {
