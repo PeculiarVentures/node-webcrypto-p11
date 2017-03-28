@@ -97,28 +97,33 @@ module.exports = {
 
 
 ## Threats
-
 The threat model is defined in terms of what each possible attacker can achieve. The list is intended to be exhaustive.
 
 ### Assumptions
-
 TODO: ADD ASSUMPTIONS
 
 ### Threats From A node-webcrypto-p11 Defect
+`node-webcrypto-p11` handles ciphertext, cleartext, and sessions. A defect in this library could result in these values being exposed to an attacker. Examples of such defects include:
+- Buffer, Integer or other overflow related defects,
+- Parsing errors,
+- Logic errors,
+- Weak user seperation or permissions.
 
-TODO: ADD THREATS FROM A node-webcrypto-p11 DEFECT
-
-### Threats From A HSM Defect
-
-TODO: ADD THREATS FROM A HSM DEFECT
+### Threats From A PKCS#11 defect
+PKCS#11 implementations are often old, poorly maintained and incomplete. This can obviously lead to defects. Defects in the PKCS#11 implementation can result in:
+- Weakly implemented or applied cryptographic primitives,
+- Leaked sessions or secreats that expose use of the key,
+- Leaked cryptographic key material.
 
 ### Threats From Weak Cryptography
+Secure use of cryptography requires the implementor to understand the security properties of a given algorithm as well as how to use it in a secure construction.
 
-TODO: ADD THREATS FROM WEAK CRYPTOGRAPHY
+Additionally this library exposes some algorithms that may have known weakneses or are simply too old to be used safely.
 
 ### Threats From Improper Use Of Cryptography
+It is easy to apply cryptography but hard to apply it correctly. Algorithms each have their own security properties and appropriate constructions. The consumer of this library is responsible for understanding how to use the exposed algorithms securely.
 
-TODO: ADD THREATS FOR IMPROPER USE OF CRYPTOGRAPHY
+
 
 ## Using
 
