@@ -249,6 +249,11 @@ interface IKeyStorage {
      */
     keys(): Promise<string[]>;
     /**
+     * Returns identity of item from storage.
+     * If item is not found, then returns `null`
+     */
+    indexOf(item: CryptoKey): Promise<string | null>;
+    /**
      * Returns key from storage
      */
     getItem(key: string): Promise<CryptoKey>;
@@ -339,6 +344,11 @@ interface ICertificateStorage {
      * Returns list of indexes of stored items
      */
     keys(): Promise<string[]>;
+    /**
+     * Returns identity of item from storage.
+     * If item is not found, then returns `null`
+     */
+    indexOf(item: CryptoCertificate): Promise<string | null>;
     /**
      * Import certificate from data
      */
