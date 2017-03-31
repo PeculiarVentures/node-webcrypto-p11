@@ -35,6 +35,11 @@ declare module "node-webcrypto-p11" {
     interface CertificateStorage {
 
         keys(): Promise<string[]>;
+        /**
+         * Returns identity of item from storage.
+         * If item is not found, then returns `null`
+         */
+        indexOf(item: CryptoCertificate): Promise<string | null>;
 
         /**
          * Import certificate from data
@@ -70,6 +75,11 @@ declare module "node-webcrypto-p11" {
          * @memberOf KeyStorage
          */
         keys(): Promise<string[]>;
+        /**
+         * Returns identity of item from storage.
+         * If item is not found, then returns `null`
+         */
+        indexOf(item: CryptoKey): Promise<string | null>;
         /**
          * Returns key from storage
          * 
