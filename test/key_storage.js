@@ -12,14 +12,23 @@ describe("KeyStorage", () => {
     context("indexOf", () => {
         ["privateKey", "publicKey"].forEach((type) => {
             it(type, (done) => {
-                crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024 }, ["sign", "verify"])
+                crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024 }, false, ["sign", "verify"])
                     .then((keys) => {
                         const key = keys[type];
                         return crypto.keyStorage.setItem(key)
                             .then((index) => {
                                 return crypto.keyStorage.indexOf(key)
                                     .then((found) => {
-                                        assert.equal(index, found);
+                                        assert.equal(found, null);
+                                    })
+                                    .then(() => {
+                                        return crypto.keyStorage.getItem(index);
+                                    })
+                                    .then((key) => {
+                                        return crypto.keyStorage.indexOf(key)
+                                    })
+                                    .then((found) => {
+                                        assert.equal(found, index);
                                     })
                             })
                     })

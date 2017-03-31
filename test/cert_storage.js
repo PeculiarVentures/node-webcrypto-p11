@@ -24,6 +24,15 @@ context("Certificate storage", () => {
                             .then((index) => {
                                 return crypto.certStorage.indexOf(cert)
                                     .then((found) => {
+                                        assert.equal(found, null);
+                                    })
+                                    .then(() => {
+                                        return crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, ["verify"]);
+                                    })
+                                    .then((cert) => {
+                                        return crypto.certStorage.indexOf(cert);
+                                    })
+                                    .then((found) => {
                                         assert.equal(index, found);
                                     })
                             })
