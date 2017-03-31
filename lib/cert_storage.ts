@@ -19,6 +19,13 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         this.crypto = crypto;
     }
 
+    public async indexOf(item: Pkcs11CryptoCertificate) {
+        if (item instanceof Pkcs11CryptoCertificate && item.p11Object.token) {
+            return Pkcs11CryptoCertificate.getID(item.p11Object);
+        }
+        return null;
+    }
+
     public async keys() {
         const keys: string[] = [];
         TEMPLATES.forEach((template) => {

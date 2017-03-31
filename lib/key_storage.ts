@@ -26,6 +26,13 @@ export class KeyStorage implements IKeyStorage {
         return keys;
     }
 
+    public async indexOf(item: CryptoKey) {
+        if (item instanceof CryptoKey && item.key.token) {
+            return CryptoKey.getID(item.key.class, item.key.id);
+        }
+        return null;
+    }
+
     public async clear() {
         const keys: SessionObject[] = [];
         OBJECT_TYPES.forEach((objectClass) => {

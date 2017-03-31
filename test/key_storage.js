@@ -9,6 +9,34 @@ describe("KeyStorage", () => {
             .then(done, done);
     })
 
+    context("indexOf", () => {
+        ["privateKey", "publicKey"].forEach((type) => {
+            it(type, (done) => {
+                crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024 }, false, ["sign", "verify"])
+                    .then((keys) => {
+                        const key = keys[type];
+                        return crypto.keyStorage.setItem(key)
+                            .then((index) => {
+                                return crypto.keyStorage.indexOf(key)
+                                    .then((found) => {
+                                        assert.equal(found, null);
+                                    })
+                                    .then(() => {
+                                        return crypto.keyStorage.getItem(index);
+                                    })
+                                    .then((key) => {
+                                        return crypto.keyStorage.indexOf(key)
+                                    })
+                                    .then((found) => {
+                                        assert.equal(found, index);
+                                    })
+                            })
+                    })
+                    .then(done, done);
+            });
+        });
+    });
+
     it("set/get item", (done) => {
         crypto.keyStorage.keys()
             .then((indexes) => {
@@ -102,7 +130,7 @@ describe("KeyStorage", () => {
                                 return crypto.keyStorage.keys()
                                     .then((indexes) => {
                                         assert.equal(indexes.length, 1);
-                                        return crypto.keyStorage.getItem(index, {name: "RSASSA-PKCS1-v1_5", hash: "SHA-512"}, ["verify"]);
+                                        return crypto.keyStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-512" }, ["verify"]);
                                     })
                                     .then((key) => {
                                         assert.equal(key.algorithm.name, "RSASSA-PKCS1-v1_5");
@@ -170,7 +198,7 @@ describe("KeyStorage", () => {
                     })
                     .then(done, done);
             })
-            
+
             it("ECDSA P-521", (done) => {
                 crypto.subtle.generateKey({
                     name: "ECDSA",

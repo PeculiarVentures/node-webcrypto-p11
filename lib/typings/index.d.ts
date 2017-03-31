@@ -36,6 +36,11 @@ interface IKeyStorage {
      */
     keys(): Promise<string[]>;
     /**
+     * Returns identity of item from storage.
+     * If item is not found, then returns `null`
+     */
+    indexOf(item: CryptoKey): Promise<string | null>;
+    /**
      * Returns key from storage
      * 
      * @param {string} key 
@@ -101,28 +106,34 @@ interface CertificateStorage {
 
     keys(): Promise<string[]>;
 
-        /**
-         * Import certificate from data
-         * 
-         * @param {CertificateItemType} type Type of certificate
-         * @param {(ArrayBuffer)} data Raw of certificate item
-         * @returns {Promise<CryptoCertificate>} 
-         * 
-         * @memberOf CertificateStorage
-         */
-        importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
-        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
-        importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+    /**
+     * Returns identity of item from storage.
+     * If item is not found, then returns `null`
+     */
+    indexOf(item: CryptoCertificate): Promise<string | null>;
 
-        exportCert(type: "pem", item: CryptoCertificate): Promise<string>
-        exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
-        exportCert(type: string, item: CryptoCertificate): Promise<ArrayBuffer | string>
+    /**
+     * Import certificate from data
+     * 
+     * @param {CertificateItemType} type Type of certificate
+     * @param {(ArrayBuffer)} data Raw of certificate item
+     * @returns {Promise<CryptoCertificate>} 
+     * 
+     * @memberOf CertificateStorage
+     */
+    importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+    importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
+    importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
 
-        setItem(item: CryptoCertificate): Promise<string>;
-        getItem(key: string): Promise<CryptoCertificate>;
-        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
-        removeItem(key: string): Promise<void>;
-        clear(): Promise<void>;
+    exportCert(type: "pem", item: CryptoCertificate): Promise<string>
+    exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
+    exportCert(type: string, item: CryptoCertificate): Promise<ArrayBuffer | string>
+
+    setItem(item: CryptoCertificate): Promise<string>;
+    getItem(key: string): Promise<CryptoCertificate>;
+    getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+    removeItem(key: string): Promise<void>;
+    clear(): Promise<void>;
 
 }
 
