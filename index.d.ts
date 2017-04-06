@@ -144,6 +144,7 @@ declare module "node-webcrypto-p11" {
 
     interface IProvider {
         id: string;
+        slot: number;
         name: string;
         serialNumber: string;
         algorithms: string[];

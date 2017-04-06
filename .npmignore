@@ -9,3 +9,6 @@ coverage
 
 # Log files
 *.log
+
+# Test
+/test*.js

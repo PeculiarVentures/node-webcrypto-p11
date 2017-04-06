@@ -71,8 +71,18 @@ function calculateProviderID(slot: Slot) {
 }
 
 export function getProviderInfo(slot: Slot) {
+    // get index of slot
+    const slots = slot.module.getSlots(true);
+    let index = -1;
+    for (let i = 0; i < slots.length; i++) {
+        if (slots.items(i).handle.equals(slot.handle)) {
+            index = i;
+            break;
+        }
+    }
     const provider: IProvider = {
         id: calculateProviderID(slot),
+        slot: index,
         name: slot.slotDescription,
         serialNumber: slot.getToken().serialNumber,
         algorithms: [],

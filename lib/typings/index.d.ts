@@ -145,6 +145,7 @@ interface IModule {
 interface IProvider {
     id: string;
     name: string;
+    slot: number;
     serialNumber: string;
     algorithms: string[];
 }
