@@ -108,10 +108,15 @@ export class Provider extends EventEmitter {
             if (error) {
                 this.emit("error", error);
             } else {
-                if (stdout !== "-1") {
-                    cb(JSON.parse(stdout));
-                } else {
-                    this.emit("error", new Error("Cannot get info from watcher.\n" + stderr));
+                try {
+                    const json = JSON.parse(stdout);
+                    if ("message" in json) {
+                        this.emit("error", new Error(error.message));
+                    } else {
+                        cb(json);
+                    }
+                } catch (err) {
+                    this.emit("error", new Error("Cannot parse info from watcher."));
                 }
             }
         });

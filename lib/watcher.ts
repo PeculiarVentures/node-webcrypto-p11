@@ -8,28 +8,42 @@
 import { Module } from "graphene-pk11";
 import { getProviderInfo } from "./utils";
 
-// get arguments from process
-const libPath = process.argv[2];
-const mod = Module.load(libPath);
+function printError(err: Error) {
+    const obj = {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+    } as Error;
+    console.log(JSON.stringify(obj));
+}
 
 try {
-    mod.initialize();
 
-    const slots = mod.getSlots(true);
+    // get arguments from process
+    const libPath = process.argv[2];
+    const mod = Module.load(libPath);
 
-    const info: IModule = {
-        name: mod.libraryDescription,
-        providers: [],
-    };
-    for (let i = 0; i < slots.length; i++) {
-        const slot = slots.items(i);
-        const provider = getProviderInfo(slot);
+    try {
+        mod.initialize();
 
-        info.providers.push(provider);
+        const slots = mod.getSlots(true);
+
+        const info: IModule = {
+            name: mod.libraryDescription,
+            providers: [],
+        };
+        for (let i = 0; i < slots.length; i++) {
+            const slot = slots.items(i);
+            const provider = getProviderInfo(slot);
+
+            info.providers.push(provider);
+        }
+        console.log(JSON.stringify(info));
+
+    } catch (err) {
+        printError(err);
     }
-    console.log(JSON.stringify(info));
-
+    mod.finalize();
 } catch (err) {
-    console.log(-1);
+    printError(err);
 }
-mod.finalize();
