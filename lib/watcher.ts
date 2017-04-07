@@ -14,9 +14,10 @@ function printError(err: Error) {
         name: err.name,
         stack: err.stack,
     } as Error;
-    console.log(JSON.stringify(obj));
+    console.log(JSON.stringify(obj).replace(/\\/g, "\\\\"));
 }
 
+let error = false;
 try {
 
     // get arguments from process
@@ -41,9 +42,13 @@ try {
         console.log(JSON.stringify(info));
 
     } catch (err) {
+        error = true;
         printError(err);
     }
     mod.finalize();
 } catch (err) {
-    printError(err);
+    if (!error) {
+        // don't print error if it was printed before
+        printError(err);
+    }
 }

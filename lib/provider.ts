@@ -1,7 +1,7 @@
 import * as childProcess from "child_process";
 import { EventEmitter } from "events";
 
-const TOKEN_WATCHER_INTERVAL = 2e3;
+const TOKEN_WATCHER_INTERVAL = 4e3;
 
 type ProviderTokenHandler = (info: { removed: IProvider[], added: IProvider[] }) => void;
 type ProviderListeningHandler = (info: IModule) => void;
@@ -111,7 +111,7 @@ export class Provider extends EventEmitter {
                 try {
                     const json = JSON.parse(stdout);
                     if ("message" in json) {
-                        this.emit("error", new Error(error.message));
+                        this.emit("error", new Error(json.message));
                     } else {
                         cb(json);
                     }
