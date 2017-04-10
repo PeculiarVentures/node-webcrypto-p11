@@ -55,6 +55,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PUBLIC_KEY,
             keyType: KeyType.RSA,
+            private: false,
             label,
             id: idKey,
             verify: keyUsages.indexOf("verify") > -1,

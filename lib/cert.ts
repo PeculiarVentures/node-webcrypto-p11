@@ -8,6 +8,8 @@ import { WebCrypto } from "./webcrypto";
 
 const PkiJs = require("pkijs");
 
+PkiJs.CertificationRequest.prototype.getPublicKey = PkiJs.Certificate.prototype.getPublicKey;
+
 /**
  * List of OIDs
  * Source: https://msdn.microsoft.com/ru-ru/library/windows/desktop/aa386991(v=vs.85).aspx
@@ -131,6 +133,7 @@ export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
     public abstract exportCert(): Promise<ArrayBuffer>;
     public abstract exportKey(): Promise<CryptoKey>;
     public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+
 }
 
 // X509Certificate
@@ -183,6 +186,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
             issuer: new Buffer(this.schema.issuer.toSchema(true).toBER(false)),
             token: false,
             ski: hashSPKI,
+            private: false,
             value: new Buffer(data),
         }).toType<P11X509Certificate>();
     }
@@ -285,6 +289,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
             class: ObjectClass.DATA,
             label: "X509 Request",
             token: false,
+            private: false,
             value: new Buffer(data),
         }).toType<P11Data>();
     }
@@ -309,8 +314,17 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
             const publicKeyID = this.id.replace(/\w+/i, "public");
             this.publicKey = await this.crypto.keyStorage.getItem(publicKeyID, algorithm, usages);
             if (!this.publicKey) {
-                const spki = this.getData().subjectPublicKeyInfo.toJSON();
-                this.publicKey = await this.crypto.subtle.importKey("jwk", spki, algorithm, true, usages);
+                let params: { algorithm: { algorithm: any, usages: string[] } };
+                if (algorithm) {
+                    params = {
+                        algorithm: {
+                            algorithm: PrepareAlgorithm(algorithm),
+                            usages,
+                        },
+                    };
+                }
+                PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+                this.publicKey = await this.getData().getPublicKey(params);
             }
         }
         return this.publicKey;

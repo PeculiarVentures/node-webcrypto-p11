@@ -48,6 +48,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
             class: ObjectClass.PUBLIC_KEY,
             keyType,
+            private: false,
             label,
             id: idKey,
             derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
