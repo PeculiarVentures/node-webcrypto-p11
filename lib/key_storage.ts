@@ -20,7 +20,7 @@ export class KeyStorage implements IKeyStorage {
         OBJECT_TYPES.forEach((objectClass) => {
             this.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
-                keys.push(CryptoKey.getID(objectClass, item.id));
+                keys.push(CryptoKey.getID(item));
             });
         });
         return keys;
@@ -28,7 +28,7 @@ export class KeyStorage implements IKeyStorage {
 
     public async indexOf(item: CryptoKey) {
         if (item instanceof CryptoKey && item.key.token) {
-            return CryptoKey.getID(item.key.class, item.key.id);
+            return CryptoKey.getID(item.key);
         }
         return null;
     }
@@ -128,12 +128,14 @@ export class KeyStorage implements IKeyStorage {
 
         // don't copy object from token
         if (!(this.hasItem(data) && p11Key.key.token)) {
-            this.session.copy(p11Key.key, {
+            const obj = this.session.copy(p11Key.key, {
                 token: true,
             });
+            return CryptoKey.getID(obj.toType<any>());
+        } else {
+            return data.id;
         }
 
-        return data.id;
     }
 
     public hasItem(key: CryptoKey) {
@@ -146,7 +148,7 @@ export class KeyStorage implements IKeyStorage {
         OBJECT_TYPES.forEach((objectClass) => {
             this.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
-                if (id === CryptoKey.getID(objectClass, item.id)) {
+                if (id === CryptoKey.getID(item)) {
                     key = item;
                     return false;
                 }

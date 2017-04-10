@@ -2,6 +2,7 @@ import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate
 import { Base64Url, PrepareAlgorithm } from "webcrypto-core";
 
 import * as Asn1Js from "asn1js";
+import { ID_DIGEST } from "./const";
 import { CryptoKey } from "./key";
 import { digest } from "./utils";
 import { WebCrypto } from "./webcrypto";
@@ -113,7 +114,7 @@ export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
         if (!type) {
             throw new Error("Unsupported PKCS#11 object");
         }
-        return `${type}-${id.toString("hex")}`;
+        return `${type}-${p11Object.handle.toString("hex")}-${id.toString("hex")}`;
     }
 
     public get id() {
@@ -175,7 +176,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
         this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
 
-        const hashSPKI = digest("SHA-1", publicKeyInfoBuffer);
+        const hashSPKI = digest(ID_DIGEST, publicKeyInfoBuffer);
 
         this.p11Object = this.crypto.session.create({
             id: hashSPKI,
@@ -281,7 +282,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
 
         this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
 
-        const hashSPKI = digest("SHA-1", publicKeyInfoBuffer);
+        const hashSPKI = digest(ID_DIGEST, publicKeyInfoBuffer);
 
         this.p11Object = this.crypto.session.create({
             objectId: hashSPKI,

@@ -19,7 +19,7 @@ export function create_template(session: Session, alg: AesKeyGenParams, extracta
         class: ObjectClass.SECRET_KEY,
         keyType: KeyType.AES,
         label: `AES-${alg.length}`,
-        id: new Buffer(id),
+        id,
         extractable,
         derive: false,
         sign: keyUsages.indexOf("sign") !== -1,

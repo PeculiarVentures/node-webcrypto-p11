@@ -84,11 +84,13 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
         // don't copy object from token
         if (!data.p11Object.token) {
-            this.session.copy(data.p11Object, {
+            const obj = this.session.copy(data.p11Object, {
                 token: true,
             });
+            return Pkcs11CryptoCertificate.getID(obj.toType<any>());
+        } else {
+            return data.id;
         }
-        return data.id;
     }
 
     public async exportCert(format: CryptoCertificateFormat, cert: Pkcs11CryptoCertificate): Promise<ArrayBuffer | string> {

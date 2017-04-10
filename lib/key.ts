@@ -15,9 +15,9 @@ export interface CryptoKeyPair extends NativeCryptoKey {
 
 export class CryptoKey implements NativeCryptoKey {
 
-    public static getID(type: ObjectClass, id: Buffer) {
+    public static getID(p11Key: Key) {
         let name: string;
-        switch (type) {
+        switch (p11Key.class) {
             case ObjectClass.PRIVATE_KEY:
                 name = "private";
                 break;
@@ -28,9 +28,9 @@ export class CryptoKey implements NativeCryptoKey {
                 name = "secret";
                 break;
             default:
-                throw new Error(`Unsupported Object type '${ObjectClass[type]}'`);
+                throw new Error(`Unsupported Object type '${ObjectClass[p11Key.class]}'`);
         }
-        return `${name}-${id.toString("hex")}`;
+        return `${name}-${p11Key.handle.toString("hex")}-${p11Key.id.toString("hex")}`;
     }
 
     public type: string;
@@ -60,7 +60,7 @@ export class CryptoKey implements NativeCryptoKey {
                 throw new WebCryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
         }
         this.algorithm = alg;
-        this.id = CryptoKey.getID(key.class, key.id);
+        this.id = CryptoKey.getID(key);
     }
 
     public toJSON() {

@@ -27,7 +27,7 @@ const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
 
 function create_template(session: Session, alg: EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
-    const idKey = new Buffer(utils.GUID(session));
+    const idKey = utils.GUID(session);
     const keyType = KeyType.ECDSA;
     return {
         privateKey: {
@@ -61,7 +61,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
 
 export class EcCrypto extends BaseCrypto {
 
-    public static generateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKeyPair> {
+    public static generateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey | CryptoKeyPair> {
         return super.generateKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {

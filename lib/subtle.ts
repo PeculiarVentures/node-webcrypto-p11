@@ -5,6 +5,7 @@ const PrepareAlgorithm = webcrypto.PrepareAlgorithm;
 const AlgorithmNames = webcrypto.AlgorithmNames;
 import * as graphene from "graphene-pk11";
 
+import { ID_DIGEST } from "./const";
 import { CryptoKey, CryptoKeyPair } from "./key";
 
 import * as aes from "./crypto/aes";
@@ -78,7 +79,24 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.generateKey(alg as any, extractable, keyUsages, this.session);
+                return AlgClass.generateKey(alg as any, extractable, keyUsages, this.session)
+                    .then((keys) => {
+                        const publicKey = (keys as CryptoKeyPair).publicKey;
+                        const privateKey = (keys as CryptoKeyPair).privateKey;
+                        if (publicKey) {
+                            return this.exportKey("spki", publicKey)
+                                .then((spki) => {
+                                    const digest = utils.digest(ID_DIGEST, spki);
+                                    publicKey.key.id = digest;
+                                    publicKey.id = CryptoKey.getID(publicKey.key);
+                                    privateKey.key.id = digest;
+                                    privateKey.id = CryptoKey.getID(privateKey.key);
+                                    return keys;
+                                });
+                        } else {
+                            return keys;
+                        }
+                    });
             });
     }
 
@@ -238,7 +256,21 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.importKey(format, data, alg, extractable, keyUsages, this.session);
+                return AlgClass.importKey(format, data, alg, extractable, keyUsages, this.session)
+                    .then((key) => {
+                        // update key id for type 'public'
+                        if (key.type === "public") {
+                            return this.exportKey("spki", key)
+                                .then((spki) => {
+                                    const digest = utils.digest(ID_DIGEST, spki);
+                                    key.key.id = digest;
+                                    key.id = CryptoKey.getID(key.key);
+                                    return key;
+                                });
+                        } else {
+                            return key;
+                        }
+                    });
             });
     }
 

@@ -3,6 +3,8 @@ import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 import { Session } from "graphene-pk11";
 
+import { CryptoKey, CryptoKeyPair } from "./key";
+
 export class BaseCrypto extends webcrypto.BaseCrypto {
 
     public static generateKey(algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey | CryptoKeyPair> {

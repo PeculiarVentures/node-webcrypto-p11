@@ -30,6 +30,7 @@ context("Certificate storage", () => {
                                         return crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, ["verify"]);
                                     })
                                     .then((cert) => {
+                                        assert.equal(!!cert, true, "Cannot get cert item from storage");
                                         return crypto.certStorage.indexOf(cert);
                                     })
                                     .then((found) => {

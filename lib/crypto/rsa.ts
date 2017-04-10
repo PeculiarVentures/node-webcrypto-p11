@@ -35,7 +35,7 @@ const HASH_PREFIXES: { [alg: string]: Buffer } = {
 
 function create_template(session: Session, alg: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `RSA-${alg.modulusLength}`;
-    const idKey = new Buffer(utils.GUID(session));
+    const idKey = utils.GUID(session);
     return {
         privateKey: {
             token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
@@ -67,7 +67,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
 
 export abstract class RsaCrypto extends BaseCrypto {
 
-    public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKeyPair> {
+    public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey | CryptoKeyPair> {
         return super.generateKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
