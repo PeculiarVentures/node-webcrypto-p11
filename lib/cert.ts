@@ -91,8 +91,9 @@ export function nameToString(name: any, splitter: string = ","): string {
     const res: string[] = [];
     name.typesAndValues.forEach((typeValue: any) => {
         const type = typeValue.type;
-        const value = OID[type.toString()].short;
-        res.push(`${value ? value : type}=${typeValue.value.valueBlock.value}`);
+        const oidValue = OID[type.toString()];
+        const oidName = oidValue && oidValue.short ? oidValue.short : type.toString();
+        res.push(oidName + "=" + typeValue.value.valueBlock.value);
     });
     return res.join(splitter + " ");
 }
