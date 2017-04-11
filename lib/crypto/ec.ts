@@ -171,7 +171,6 @@ export class EcCrypto extends BaseCrypto {
         });
     }
 
-
     protected static async exportJwkPublicKey(key: CryptoKey) {
         const pkey: ITemplate = (key as CryptoKey).key.getAttribute({
             pointEC: null,
@@ -431,8 +430,10 @@ class EcUtils {
     public static encodePoint(point: IEcPoint, curve: INamedCurve): Buffer {
         // get field size in bytes (rounding up)
         const n = Math.ceil(curve.size / 8);
-        const xb = this.trimZeroes(point.x);
-        const yb = this.trimZeroes(point.y);
+        // const xb = this.trimZeroes(point.x);
+        // const yb = this.trimZeroes(point.y);
+        const xb = this.padZeroes(point.x, n);
+        const yb = this.padZeroes(point.y, n);
         if ((xb.length > n) || (yb.length > n)) {
             throw new Error("Point coordinates do not match field size");
         }
@@ -453,6 +454,12 @@ class EcUtils {
         }
 
         return b.slice(i, b.length);
+    }
+
+    public static padZeroes(b: Buffer, size: number): Buffer {
+        const pad = new Buffer(size - b.length);
+        pad.fill(0, 0, pad.length);
+        return Buffer.concat([pad, b]);
     }
 
     public static encodeAsn1Length(length: number): Buffer {
