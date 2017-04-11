@@ -214,8 +214,14 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
     public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
     public async exportKey(algorithm?: Algorithm, usages?: string[]) {
         if (!this.publicKey) {
-            const publicKeyID = this.id.replace(/\w+/i, "public");
-            this.publicKey = await this.crypto.keyStorage.getItem(publicKeyID, algorithm, usages);
+            const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
+            const keyIndexes = await this.crypto.keyStorage.keys();
+            for (const keyIndex of keyIndexes) {
+                if (keyIndex.replace(/\w+-\w+-/i, "").indexOf(publicKeyID) !== -1) {
+                    this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+                    break;
+                }
+            }
             if (!this.publicKey) {
                 let params: { algorithm: { algorithm: any, usages: string[] } };
                 if (algorithm) {
@@ -313,8 +319,14 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
     public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
     public async exportKey(algorithm?: Algorithm, usages?: string[]) {
         if (!this.publicKey) {
-            const publicKeyID = this.id.replace(/\w+/i, "public");
-            this.publicKey = await this.crypto.keyStorage.getItem(publicKeyID, algorithm, usages);
+            const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
+            const keyIndexes = await this.crypto.keyStorage.keys();
+            for (const keyIndex of keyIndexes) {
+                if (keyIndex.replace(/\w+-\w+-/i, "").indexOf(publicKeyID) !== -1) {
+                    this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+                    break;
+                }
+            }
             if (!this.publicKey) {
                 let params: { algorithm: { algorithm: any, usages: string[] } };
                 if (algorithm) {
