@@ -148,6 +148,7 @@ declare module "node-webcrypto-p11" {
         name: string;
         serialNumber: string;
         algorithms: string[];
+        isRemovable: boolean;
     }
 
     type ProviderTokenHandler = (info: { removed: IProvider[], added: IProvider[] }) => void;

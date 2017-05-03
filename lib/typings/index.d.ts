@@ -148,4 +148,5 @@ interface IProvider {
     slot: number;
     serialNumber: string;
     algorithms: string[];
+    isRemovable: boolean;
 }

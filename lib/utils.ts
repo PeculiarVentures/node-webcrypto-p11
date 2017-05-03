@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { Session, Slot } from "graphene-pk11";
+import { Session, Slot, SlotFlag } from "graphene-pk11";
 import * as webcrypto from "webcrypto-core";
 import { ID_DIGEST } from "./const";
 
@@ -53,12 +53,14 @@ export function getProviderInfo(slot: Slot) {
             break;
         }
     }
+
     const provider: IProvider = {
         id: calculateProviderID(slot),
         slot: index,
         name: slot.slotDescription,
         serialNumber: slot.getToken().serialNumber,
         algorithms: [],
+        isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE)
     };
 
     const algorithms = slot.getMechanisms();
