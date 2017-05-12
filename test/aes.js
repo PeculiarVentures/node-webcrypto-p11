@@ -8,6 +8,7 @@ describe("WebCrypto Aes", function () {
 
     var TEST_MESSAGE = new Buffer("1234567890123456");
     var KEYS = [
+        { alg: "AES-ECB", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
         { alg: "AES-CBC", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
         { alg: "AES-GCM", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
     ];
@@ -43,6 +44,26 @@ describe("WebCrypto Aes", function () {
     });
 
     context("Encrypt/Decrypt", () => {
+
+        context("AES-ECB", () => {
+
+            // Filter CBC
+            keys.filter(key => /AES-ECB/.test(key.name))
+                .forEach(key => {
+                    it(`${key.name}`, done => {
+                        var alg = { name: "AES-ECB" };
+                        crypto.subtle.encrypt(alg, key.key, TEST_MESSAGE)
+                            .then(enc => {
+                                assert(!!enc, true, "Encrypted message is empty");
+                                return crypto.subtle.decrypt(alg, key.key, enc);
+                            })
+                            .then(dec => {
+                                assert(new Buffer(dec).toString(), TEST_MESSAGE.toString(), "Decrypted message is wrong");
+                            })
+                            .then(done, done);
+                    });
+                });
+        });
 
         context("AES-CBC", () => {
 

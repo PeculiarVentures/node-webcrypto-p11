@@ -66,6 +66,9 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     case AlgorithmNames.RsaOAEP.toLowerCase():
                         AlgClass = rsa.RsaOAEP;
                         break;
+                    case AlgorithmNames.AesECB.toLowerCase():
+                        AlgClass = aes.AesECB;
+                        break;
                     case AlgorithmNames.AesCBC.toLowerCase():
                         AlgClass = aes.AesCBC;
                         break;
@@ -147,6 +150,9 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     case AlgorithmNames.RsaOAEP.toLowerCase():
                         AlgClass = rsa.RsaOAEP;
                         break;
+                    case AlgorithmNames.AesECB.toLowerCase():
+                        AlgClass = aes.AesECB;
+                        break;
                     case AlgorithmNames.AesCBC.toLowerCase():
                         AlgClass = aes.AesCBC;
                         break;
@@ -171,6 +177,9 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                 switch (alg.name.toLowerCase()) {
                     case AlgorithmNames.RsaOAEP.toLowerCase():
                         AlgClass = rsa.RsaOAEP;
+                        break;
+                    case AlgorithmNames.AesECB.toLowerCase():
+                        AlgClass = aes.AesECB;
                         break;
                     case AlgorithmNames.AesCBC.toLowerCase():
                         AlgClass = aes.AesCBC;
@@ -201,6 +210,9 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                         break;
                     case AlgorithmNames.RsaOAEP.toLowerCase():
                         AlgClass = rsa.RsaOAEP;
+                        break;
+                    case AlgorithmNames.AesECB.toLowerCase():
+                        AlgClass = aes.AesECB;
                         break;
                     case AlgorithmNames.AesCBC.toLowerCase():
                         AlgClass = aes.AesCBC;
@@ -242,6 +254,9 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                         break;
                     case AlgorithmNames.RsaOAEP.toLowerCase():
                         AlgClass = rsa.RsaOAEP;
+                        break;
+                    case AlgorithmNames.AesECB.toLowerCase():
+                        AlgClass = aes.AesECB;
                         break;
                     case AlgorithmNames.AesCBC.toLowerCase():
                         AlgClass = aes.AesCBC;

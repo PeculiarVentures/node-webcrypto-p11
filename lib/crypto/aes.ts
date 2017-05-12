@@ -182,3 +182,9 @@ export class AesCBC extends AesCrypto {
         return { name: "AES_CBC_PAD", params: utils.PrepareData(alg.iv) };
     }
 }
+
+export class AesECB extends AesCrypto {
+    protected static wc2pk11(alg: Algorithm): IAlgorithm {
+        return { name: "AES_ECB", params: null };
+    }
+}

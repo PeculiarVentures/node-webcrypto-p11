@@ -47,6 +47,30 @@ webcrypto.subtle.generateKey({
 
 **At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.**
 
+## Algorithms
+
+## Supported algorithms
+
+| Algorithm name    | generateKey | digest  | export/import | sign/verify | encrypt/decrypt | wrapKey/unwrapKey | derive  |
+|-------------------|-------------|---------|---------------|-------------|-----------------|-------------------|---------|
+| SHA-1             |             |    X    |               |             |                 |                   |         |
+| SHA-256           |             |    X    |               |             |                 |                   |         |
+| SHA-384           |             |    X    |               |             |                 |                   |         |
+| SHA-512           |             |    X    |               |             |                 |                   |         |
+| RSASSA-PKCS1-v1_5 |      X      |         |       X       |      X      |                 |                   |         |
+| RSA-PSS           |      X      |         |       X       |      X      |                 |                   |         |
+| RSA-OAEP          |      X      |         |       X       |             |        X        |         X         |         |
+| AES-CBC           |      X      |         |       X       |             |        X        |         X         |         |
+| AES-ECB <sub>2</sub> |      X      |         |       X       |             |        X        |         X         |         |
+| AES-GCM           |      X      |         |       X       |             |        X        |         X         |         |
+| AES-KW            |      X      |         |       X       |             |                 |         X         |         |
+| ECDSA             |      X      |         |       X       |      X      |                 |                   |         |
+| ECDH              |      X      |         |       X       |             |                 |                   |    X    |
+| HMAC              |      X      |         |       X       |      X      |                 |                   |         |
+| PBKDF2            |             |         |       X       |             |                 |                   |    X    |
+
+<sub>2 ECB support is not defined by the WebCrypto specifications. Use of EBC in a safe way is hard, it was added for the purpose of enabling interoperability with an existing system. We recommend against its use unless needed for interoperability.</sub>
+
 ## Installation
 
 ### NPM
