@@ -75,6 +75,7 @@ export abstract class AesCrypto extends BaseCrypto {
                             break;
                         case "raw":
                             resolve(template.value!.buffer);
+                            break;
                         default:
                             throw new WebCryptoError(`Unknown format '${format}'`);
                     }
