@@ -112,6 +112,16 @@ export abstract class AesCrypto extends BaseCrypto {
     public static encrypt(algorithm: Algorithm, key: CryptoKey, data: Buffer, session?: Session): PromiseLike<ArrayBuffer> {
         return super.encrypt.apply(this, arguments)
             .then(() => {
+                // add padding if needed
+                if (this.padding) {
+                    const blockLength = 16;
+                    const mod = blockLength - (data.length % blockLength);
+                    const pad = new Buffer(mod);
+                    pad.fill(mod);
+                    data = Buffer.concat([data, pad]);
+                }
+            })
+            .then(() => {
                 return new Promise((resolve, reject) => {
                     session!.createCipher(this.wc2pk11(algorithm), key.key).once(data, new Buffer(this.getOutputBufferSize(key.algorithm as AesKeyAlgorithm, true, data.length)), (err, data2) => {
                         if (err) {
@@ -136,8 +146,22 @@ export abstract class AesCrypto extends BaseCrypto {
                         }
                     });
                 });
+            })
+            .then((dec: ArrayBuffer) => {
+                if (this.padding) {
+                    // Remove padding
+                    const buf = new Buffer(dec);
+                    const paddingLength = buf[buf.length - 1];
+
+                    const res = new Uint8Array(buf.slice(0, buf.length - paddingLength));
+                    return res.buffer;
+                } else {
+                    return dec;
+                }
             });
     }
+
+    protected static padding = false;
 
     protected static wc2pk11(alg: Algorithm): IAlgorithm {
         throw new WebCryptoError(WebCryptoError.NOT_SUPPORTED);
@@ -185,7 +209,11 @@ export class AesCBC extends AesCrypto {
 }
 
 export class AesECB extends AesCrypto {
+
+    protected static padding = true;
+
     protected static wc2pk11(alg: Algorithm): IAlgorithm {
         return { name: "AES_ECB", params: null };
     }
+
 }

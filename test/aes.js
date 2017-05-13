@@ -145,6 +145,27 @@ describe("WebCrypto Aes", function () {
     });
 
     context("Wrap/Unwrap", () => {
+        context("AES-ECB", () => {
+            // AES keys
+            keys.filter(key => /AES-ECB/.test(key.name)).forEach(key => {
+                ["jwk", "raw"].forEach(format => {
+                    it(`format:${format} ${key.name}`, done => {
+                        var _alg = { name: "AES-ECB" }
+                        crypto.subtle.wrapKey(format, key.key, key.key, _alg)
+                            .then(wrappedKey => {
+                                assert.equal(!!wrappedKey, true, "Wrapped key is empty");
+
+                                return crypto.subtle.unwrapKey(format, wrappedKey, key.key, _alg, key.key.algorithm, true, ["encrypt", "decrypt"]);
+                            })
+                            .then(key => {
+                                assert.equal(!!key, true, "Unwrapped key is empty");
+                            })
+                            .then(done, done);
+                    })
+
+                });
+            });
+        });
         context("AES-CBC", () => {
             // AES keys
             keys.filter(key => /AES-CBC/.test(key.name)).forEach(key => {
