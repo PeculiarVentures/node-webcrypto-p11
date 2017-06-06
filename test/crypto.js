@@ -1,6 +1,6 @@
-"use strict";
-var assert = require('assert');
-var crypto = require('./config').crypto;
+const assert = require('assert');
+const crypto = require('./config').crypto;
+const config = require('./config').config;
 
 describe("WebCrypto", () => {
 
@@ -15,5 +15,16 @@ describe("WebCrypto", () => {
         assert.throws(() => {
             crypto.getRandomValues(buf);
         }, Error);
+    })
+
+    it("reset", (done) => {
+        const currentHandle = crypto.session.handle.toString("hex");
+        crypto.reset()
+            .then(() => {
+                crypto.login(config.pin);
+                const newHandle = crypto.session.handle.toString("hex");
+                assert(currentHandle !== newHandle, true, "handle of session wasn't changed");
+            })
+            .then(done, done);
     })
 })

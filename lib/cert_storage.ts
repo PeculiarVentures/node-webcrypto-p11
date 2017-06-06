@@ -1,4 +1,4 @@
-import { CertificateType, Data as P11Data, ObjectClass, Session, SessionObject, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import { CertificateType, Data as P11Data, ObjectClass, SessionObject, X509Certificate as P11X509Certificate } from "graphene-pk11";
 
 import { Pkcs11CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
 import * as utils from "./utils";
@@ -11,11 +11,9 @@ const TEMPLATES = [
 
 export class Pkcs11CertificateStorage implements CertificateStorage {
 
-    protected session: Session;
     protected crypto: WebCrypto;
 
-    constructor(session: Session, crypto: WebCrypto) {
-        this.session = session;
+    constructor(crypto: WebCrypto) {
         this.crypto = crypto;
     }
 
@@ -29,7 +27,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
     public async keys() {
         const keys: string[] = [];
         TEMPLATES.forEach((template) => {
-            this.session.find(template, (obj) => {
+            this.crypto.session.find(template, (obj) => {
                 const item = obj.toType<any>();
                 const id = Pkcs11CryptoCertificate.getID(item);
                 keys.push(id);
@@ -41,7 +39,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
     public async clear() {
         const objects: SessionObject[] = [];
         TEMPLATES.forEach((template) => {
-            this.session.find(template, (obj) => {
+            this.crypto.session.find(template, (obj) => {
                 objects.push(obj);
             });
         });
@@ -84,7 +82,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
         // don't copy object from token
         if (!data.p11Object.token) {
-            const obj = this.session.copy(data.p11Object, {
+            const obj = this.crypto.session.copy(data.p11Object, {
                 token: true,
             });
             return Pkcs11CryptoCertificate.getID(obj.toType<any>());
@@ -127,7 +125,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
     protected getItemById(id: string) {
         let object: SessionObject = null;
         TEMPLATES.forEach((template) => {
-            this.session.find(template, (obj) => {
+            this.crypto.session.find(template, (obj) => {
                 const item = obj.toType<any>();
                 if (id === Pkcs11CryptoCertificate.getID(item)) {
                     object = item;
