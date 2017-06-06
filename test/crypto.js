@@ -1,5 +1,6 @@
 const assert = require('assert');
-const { crypto, config } = require('./config');
+const crypto = require('./config').crypto;
+const config = require('./config').config;
 
 describe("WebCrypto", () => {
 
