@@ -18,6 +18,9 @@ describe("WebCrypto", () => {
     })
 
     it("reset", (done) => {
+        var WebCrypto = require("../").WebCrypto;     
+    
+        const crypto = new WebCrypto(config);
         const currentHandle = crypto.session.handle.toString("hex");
         crypto.reset()
             .then(() => {

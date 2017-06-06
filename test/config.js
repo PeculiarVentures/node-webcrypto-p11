@@ -5,6 +5,7 @@ var config = {
     readWrite: true,
 	pin: "12345"
 }
+module.exports.config = config;
 
 var WebCrypto = require("../").WebCrypto;     
     
