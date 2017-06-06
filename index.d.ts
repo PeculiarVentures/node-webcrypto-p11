@@ -173,7 +173,11 @@ declare module "node-webcrypto-p11" {
         public once(event: "error", listener: ProviderErrorHandler): this;
 
         public open(watch?: boolean): void;
+        public reset(): void;
         public stop(): void;
+
+        public login(pin: string): void;
+        public logout(): void;
 
     }
 }
