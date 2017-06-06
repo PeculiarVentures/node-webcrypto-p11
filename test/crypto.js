@@ -17,12 +17,10 @@ describe("WebCrypto", () => {
     })
 
     it("reset", (done) => {
-        var WebCrypto = require("../").WebCrypto;     
-    
-        const crypto = new WebCrypto(config);
         const currentHandle = crypto.session.handle.toString("hex");
         crypto.reset()
             .then(() => {
+                crypto.login(config.pin);
                 const newHandle = crypto.session.handle.toString("hex");
                 assert(currentHandle !== newHandle, true, "handle of session wasn't changed");
             })
