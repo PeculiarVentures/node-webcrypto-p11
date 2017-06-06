@@ -1,24 +1,25 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { KeyType, NamedCurve, ObjectClass, SecretKey, Session, SessionObject } from "graphene-pk11";
+import { KeyType, NamedCurve, ObjectClass, SecretKey, SessionObject } from "graphene-pk11";
 import { PrepareAlgorithm } from "webcrypto-core";
 import { CryptoKey } from "./key";
+import { WebCrypto } from "./webcrypto";
 
 const OBJECT_TYPES = [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY, ObjectClass.SECRET_KEY];
 
 export class KeyStorage implements IKeyStorage {
 
-    protected session: Session;
+    protected crypto: WebCrypto;
 
-    constructor(session: Session) {
-        this.session = session;
+    constructor(crypto: WebCrypto) {
+        this.crypto = crypto;
     }
 
     public async keys() {
         const keys: string[] = [];
         OBJECT_TYPES.forEach((objectClass) => {
-            this.session.find({ class: objectClass, token: true }, (obj) => {
+            this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
                 keys.push(CryptoKey.getID(item));
             });
@@ -36,7 +37,7 @@ export class KeyStorage implements IKeyStorage {
     public async clear() {
         const keys: SessionObject[] = [];
         OBJECT_TYPES.forEach((objectClass) => {
-            this.session.find({ class: objectClass, token: true }, (obj) => {
+            this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
                 keys.push(obj);
             });
         });
@@ -128,7 +129,7 @@ export class KeyStorage implements IKeyStorage {
 
         // don't copy object from token
         if (!(this.hasItem(data) && p11Key.key.token)) {
-            const obj = this.session.copy(p11Key.key, {
+            const obj = this.crypto.session.copy(p11Key.key, {
                 token: true,
             });
             return CryptoKey.getID(obj.toType<any>());
@@ -146,7 +147,7 @@ export class KeyStorage implements IKeyStorage {
     protected getItemById(id: string) {
         let key: SessionObject = null;
         OBJECT_TYPES.forEach((objectClass) => {
-            this.session.find({ class: objectClass, token: true }, (obj) => {
+            this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
                 const item = obj.toType<any>();
                 if (id === CryptoKey.getID(item)) {
                     key = item;

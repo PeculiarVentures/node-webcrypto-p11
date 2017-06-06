@@ -59,9 +59,9 @@ export class WebCrypto implements NativeCrypto {
             Mechanism.vendor(props.vendors![i]);
         }
 
-        this.subtle = new SubtleCrypto(this.session);
-        this.keyStorage = new KeyStorage(this.session);
-        this.certStorage = new Pkcs11CertificateStorage(this.session, this);
+        this.subtle = new SubtleCrypto(this);
+        this.keyStorage = new KeyStorage(this);
+        this.certStorage = new Pkcs11CertificateStorage(this);
     }
 
     public open(rw?: boolean) {
@@ -71,6 +71,13 @@ export class WebCrypto implements NativeCrypto {
         }
         this.session = this.slot.open(flags);
         this.info = utils.getProviderInfo(this.session.slot);
+    }
+
+    public async reset() {
+        const flags = this.session.flags;
+        this.session.close();
+
+        this.open(!!(flags & SessionFlag.RW_SESSION));
     }
 
     public login(pin: string) {

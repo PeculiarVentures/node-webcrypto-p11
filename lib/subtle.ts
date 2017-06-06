@@ -3,7 +3,6 @@ import * as webcrypto from "webcrypto-core";
 const AlgorithmError = webcrypto.AlgorithmError;
 const PrepareAlgorithm = webcrypto.PrepareAlgorithm;
 const AlgorithmNames = webcrypto.AlgorithmNames;
-import * as graphene from "graphene-pk11";
 
 import { ID_DIGEST } from "./const";
 import { CryptoKey, CryptoKeyPair } from "./key";
@@ -15,14 +14,15 @@ import * as sha from "./crypto/sha";
 
 import { BaseCrypto } from "./base";
 import * as utils from "./utils";
+import { WebCrypto } from "./webcrypto";
 
 export class SubtleCrypto extends webcrypto.SubtleCrypto {
-    protected session: graphene.Session;
+    protected crypto: WebCrypto;
 
-    constructor(session: graphene.Session) {
+    constructor(crypto: WebCrypto) {
         super();
 
-        this.session = session;
+        this.crypto = crypto;
     }
 
     public digest(algorithm: AlgorithmIdentifier, data: NodeBufferSource): PromiseLike<ArrayBuffer> {
@@ -43,7 +43,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, algName);
                 }
-                return AlgClass.digest(alg, data2, this.session);
+                return AlgClass.digest(alg, data2, this.crypto.session);
             });
     }
 
@@ -82,7 +82,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.generateKey(alg as any, extractable, keyUsages, this.session)
+                return AlgClass.generateKey(alg as any, extractable, keyUsages, this.crypto.session)
                     .then((keys) => {
                         const publicKey = (keys as CryptoKeyPair).publicKey;
                         const privateKey = (keys as CryptoKeyPair).privateKey;
@@ -162,7 +162,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.encrypt(alg, key, data2, this.session);
+                return AlgClass.encrypt(alg, key, data2, this.crypto.session);
             });
     }
 
@@ -190,7 +190,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.decrypt(alg, key, data2, this.session);
+                return AlgClass.decrypt(alg, key, data2, this.crypto.session);
             });
     }
 
@@ -227,7 +227,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, key.algorithm.name);
                 }
-                return AlgClass.exportKey(format, key, this.session);
+                return AlgClass.exportKey(format, key, this.crypto.session);
             });
     }
 
@@ -271,7 +271,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.importKey(format, data, alg, extractable, keyUsages, this.session)
+                return AlgClass.importKey(format, data, alg, extractable, keyUsages, this.crypto.session)
                     .then((key) => {
                         // update key id for type 'public'
                         if (key.type === "public") {
@@ -310,7 +310,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.sign(alg as any, key, data2, this.session);
+                return AlgClass.sign(alg as any, key, data2, this.crypto.session);
             });
     }
 
@@ -336,7 +336,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.verify(alg as any, key, signature2, data2, this.session);
+                return AlgClass.verify(alg as any, key, signature2, data2, this.crypto.session);
             });
     }
 
@@ -355,7 +355,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.deriveKey(alg as any, baseKey, derivedKeyType2, extractable, keyUsages, this.session);
+                return AlgClass.deriveKey(alg as any, baseKey, derivedKeyType2, extractable, keyUsages, this.crypto.session);
             });
     }
 
@@ -373,7 +373,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.deriveBits(alg as any, baseKey, length, this.session);
+                return AlgClass.deriveBits(alg as any, baseKey, length, this.crypto.session);
             });
     }
 
