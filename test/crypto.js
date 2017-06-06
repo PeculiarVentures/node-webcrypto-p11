@@ -16,4 +16,14 @@ describe("WebCrypto", () => {
             crypto.getRandomValues(buf);
         }, Error);
     })
+
+    it("reset", (done) => {
+        const currentHandle = crypto.session.handle.toString("hex");
+        crypto.reset()
+            .then(() => {
+                const newHandle = crypto.session.handle.toString("hex");
+                assert(currentHandle !== newHandle, true, "handle of session wasn't changed");
+            })
+            .then(done, done);
+    })
 })
