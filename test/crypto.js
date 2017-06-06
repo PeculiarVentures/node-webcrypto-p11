@@ -1,6 +1,5 @@
-"use strict";
-var assert = require('assert');
-var crypto = require('./config').crypto;
+const assert = require('assert');
+const { crypto, config } = require('./config');
 
 describe("WebCrypto", () => {
 
