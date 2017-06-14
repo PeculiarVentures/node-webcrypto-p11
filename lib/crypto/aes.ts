@@ -196,7 +196,7 @@ export class AesGCM extends AesCrypto {
 
     protected static wc2pk11(alg: AesGcmParams): IAlgorithm {
         const aad = alg.additionalData ? utils.PrepareData(alg.additionalData) : undefined;
-        const params = new graphene.AesGcmParams(utils.PrepareData(alg.iv), aad, alg.tagLength);
+        const params = new graphene.AesGcmParams(utils.PrepareData(alg.iv), aad, alg.tagLength || 128);
         return { name: "AES_GCM", params };
     }
 
