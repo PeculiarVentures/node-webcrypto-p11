@@ -91,6 +91,8 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
     }
 
+    public exportCert(type: "pem", item: CryptoCertificate): Promise<string>;
+    public exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>;
     public async exportCert(format: CryptoCertificateFormat, cert: Pkcs11CryptoCertificate): Promise<ArrayBuffer | string> {
         switch (format) {
             case "pem": {
@@ -104,6 +106,8 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
     }
 
+    public importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
+    public importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
     public async importCert(type: string, data: NodeBufferSource, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate> {
         const preparedData = utils.PrepareData(data);
         switch (type.toLowerCase()) {

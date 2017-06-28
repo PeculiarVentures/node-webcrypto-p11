@@ -67,7 +67,7 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
 
 export abstract class RsaCrypto extends BaseCrypto {
 
-    public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey | CryptoKeyPair> {
+    public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session) {
         return super.generateKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
