@@ -24,7 +24,8 @@ elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
 
     # Installing SoftHSM dependencies
     brew update
-    brew install automake
+    # check if automake is installed 
+    command -v automake || brew install automake
     brew install openssl
     
     # seems to be needed
