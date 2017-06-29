@@ -217,7 +217,8 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
             const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
             const keyIndexes = await this.crypto.keyStorage.keys();
             for (const keyIndex of keyIndexes) {
-                if (keyIndex.replace(/\w+-\w+-/i, "").indexOf(publicKeyID) !== -1) {
+                const parts = keyIndex.split("-");
+                if (parts[0] === "public" && parts[2] === publicKeyID) {
                     this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
                     break;
                 }
@@ -322,7 +323,8 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
             const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
             const keyIndexes = await this.crypto.keyStorage.keys();
             for (const keyIndex of keyIndexes) {
-                if (keyIndex.replace(/\w+-\w+-/i, "").indexOf(publicKeyID) !== -1) {
+                const parts = keyIndex.split("-");
+                if (parts[0] === "public" && parts[2] === publicKeyID) {
                     this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
                     break;
                 }
