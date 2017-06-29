@@ -2,7 +2,8 @@ import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
 import { KeyType, NamedCurve, ObjectClass, SecretKey, SessionObject } from "graphene-pk11";
-import { PrepareAlgorithm } from "webcrypto-core";
+import { AlgorithmNames, PrepareAlgorithm } from "webcrypto-core";
+import { RsaCryptoKey } from "./crypto/rsa";
 import { CryptoKey } from "./key";
 import { WebCrypto } from "./webcrypto";
 
@@ -108,7 +109,17 @@ export class KeyStorage implements IKeyStorage {
                         throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
                 }
             }
-            return new CryptoKey(p11Key, alg);
+            let CryptoKeyClass: typeof CryptoKey;
+            switch (alg.name.toUpperCase()) {
+                case AlgorithmNames.RsaOAEP.toUpperCase():
+                case AlgorithmNames.RsaSSA.toUpperCase():
+                case AlgorithmNames.RsaPSS.toUpperCase():
+                    CryptoKeyClass = RsaCryptoKey;
+                    break;
+                default:
+                    CryptoKeyClass = CryptoKey;
+            }
+            return new CryptoKeyClass(p11Key, alg);
         } else {
             return null;
         }

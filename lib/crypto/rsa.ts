@@ -65,6 +65,19 @@ function create_template(session: Session, alg: RsaHashedKeyGenParams, extractab
     };
 }
 
+export class RsaCryptoKey extends CryptoKey {
+
+    constructor(key: graphene.Key, algorithm: Algorithm) {
+        super(key, algorithm);
+
+        // Fill algorithm parameters
+        const alg = this.algorithm as RsaHashedKeyGenParams;
+        alg.modulusLength = key.get("modulus").length << 3;
+        alg.publicExponent = new Uint8Array(key.get("publicExponent"));
+    }
+
+}
+
 export abstract class RsaCrypto extends BaseCrypto {
 
     public static generateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], session?: Session) {
@@ -87,8 +100,8 @@ export abstract class RsaCrypto extends BaseCrypto {
                                 reject(new WebCryptoError(`Rsa: Can not generate new key\n${err.message}`));
                             } else {
                                 const wcKeyPair: CryptoKeyPair = {
-                                    privateKey: new CryptoKey(keys.privateKey, algorithm),
-                                    publicKey: new CryptoKey(keys.publicKey, algorithm),
+                                    privateKey: new RsaCryptoKey(keys.privateKey, algorithm),
+                                    publicKey: new RsaCryptoKey(keys.publicKey, algorithm),
                                 };
                                 resolve(wcKeyPair);
                             }
@@ -220,7 +233,7 @@ export abstract class RsaCrypto extends BaseCrypto {
                 template.exp2 = utils.b64_decode(jwk.dq!);
                 template.coefficient = utils.b64_decode(jwk.qi!);
                 const p11key = session.create(template).toType<PrivateKey>();
-                return new CryptoKey(p11key, algorithm);
+                return new RsaCryptoKey(p11key, algorithm);
             });
     }
 
@@ -230,7 +243,8 @@ export abstract class RsaCrypto extends BaseCrypto {
             template.publicExponent = utils.b64_decode(jwk.e!);
             template.modulus = utils.b64_decode(jwk.n!);
             const p11key = session.create(template).toType<PublicKey>();
-            resolve(new CryptoKey(p11key, algorithm));
+            const key = new RsaCryptoKey(p11key, algorithm);
+            resolve(key);
         });
     }
 
