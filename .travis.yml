@@ -35,9 +35,9 @@ before_install:
   - npm --version
   - gcc --version
   - bash ./.travis.sh
-  - npm install coveralls
 
 script:
+  - npm run build:source
   - npm run coverage
 
 after_success:

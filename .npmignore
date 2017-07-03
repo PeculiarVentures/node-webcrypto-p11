@@ -1,6 +1,8 @@
+.DS_Store
 .vscode
-built
 node_modules
+.travis.yml
+.travis.sh
 
 # coverage
 coverage
@@ -12,3 +14,8 @@ coverage
 
 # Test
 /test*.js
+
+# build
+lib
+**/*.map
+ts*.json
