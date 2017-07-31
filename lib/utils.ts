@@ -68,7 +68,7 @@ export function getProviderInfo(slot: Slot) {
         const algorithm = algorithms.items(i);
         let algName = "";
         switch (algorithm.name) {
-            case "SHA1":
+            case "SHA_1":
                 algName = "SHA-1";
                 break;
             case "SHA256":
