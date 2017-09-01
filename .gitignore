@@ -8,3 +8,6 @@ npm-debug.log
 
 # Test
 /test*.js
+
+# OS X
+.DS_Store

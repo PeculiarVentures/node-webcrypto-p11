@@ -18,10 +18,7 @@
     "coverage": "nyc npm test",
     "precoveragehtml": "npm run coverage",
     "coveragehtml": "nyc report -r html",
-    "watch": "watch 'npm run coveragehtml' lib/ test/",
-    "live": "live-server -q --port=4005 --ignorePattern='(js|css|png)$' coverage",
     "predev": "if [ ! -f coverage/index.html ]; then mkdir coverage; cp .waiting.html coverage/index.html; fi",
-    "dev": "npm-run-all -p --silent watch live",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
@@ -29,13 +26,11 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "@types/asn1js": "0.0.1",
-    "@types/node": "^6",
     "asn1js": "^2.0.15",
-    "graphene-pk11": "^2.0.25",
-    "pkijs": "^2.0.55",
-    "ts-lib": "0.0.5",
-    "webcrypto-core": "^0.1.16"
+    "graphene-pk11": "^2.0.27",
+    "pkijs": "^2.0.64",
+    "tslib": "^1.7.1",
+    "webcrypto-core": "^0.1.17"
   },
   "keywords": [
     "crypto",
@@ -54,12 +49,11 @@
   },
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
+    "@types/asn1js": "0.0.1",
+    "@types/node": "^8",
     "coveralls": "^2.13.1",
-    "live-server": "^1",
     "mocha": "^3.4.2",
-    "npm-run-all": "^3",
     "nyc": "^8",
-    "typescript": "^2.4.1",
-    "watch": "^0"
+    "typescript": "^2.4.1"
   }
 }

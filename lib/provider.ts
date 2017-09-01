@@ -37,7 +37,7 @@ export class Provider extends EventEmitter {
     public on(event: "listening", listener: ProviderListeningHandler): this;
     public on(event: "token", listener: ProviderTokenHandler): this;
     public on(event: "error", listener: ProviderErrorHandler): this;
-    public on(event: string | symbol, listener: Function) {
+    public on(event: string | symbol, listener: (...args: any[]) => void) {
         return super.on(event, listener);
     }
 
@@ -45,7 +45,7 @@ export class Provider extends EventEmitter {
     public once(event: "listening", listener: ProviderListeningHandler): this;
     public once(event: "token", listener: ProviderTokenHandler): this;
     public once(event: "error", listener: ProviderErrorHandler): this;
-    public once(event: string | symbol, listener: Function) {
+    public once(event: string | symbol, listener: (...args: any[]) => void) {
         return super.once(event, listener);
     }
 
