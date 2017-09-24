@@ -40,9 +40,18 @@ export class WebCrypto implements NativeCrypto {
     constructor(props: P11WebCryptoParams) {
         const mod = this.module = Module.load(props.library, props.name);
         try {
-            mod.initialize();
+            if (props.libraryParameters) {
+                // mod.initialize({
+                //     libraryParameters: props.libraryParameters,
+                // });
+                mod.initialize();
+            } else {
+                mod.initialize();
+            }
         } catch (e) {
-            // console.log("Module already initialized");
+            if (!/CKR_CRYPTOKI_ALREADY_INITIALIZED/.test(e.message)) {
+                throw e;
+            }
         }
         this.initialized = true;
 
