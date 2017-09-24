@@ -233,7 +233,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
                         },
                     };
                 }
-                PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+                PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
                 this.publicKey = await this.getData().getPublicKey(params);
             }
         }
@@ -339,7 +339,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
                         },
                     };
                 }
-                PkiJs.setEngine("pkcs11", this.crypto, this.crypto.subtle);
+                PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
                 this.publicKey = await this.getData().getPublicKey(params);
             }
         }
