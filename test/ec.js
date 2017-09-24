@@ -53,7 +53,6 @@ describe("WebCrypto EC", () => {
                 // Hash
                 DIGEST.forEach(hash => {
                     it(`${hash}  \t${key.name}`, done => {
-                        if (isSoftHSM()) return done();
                         var alg = { name: key.privateKey.algorithm.name, hash: { name: hash } };
                         crypto.subtle.sign(alg, key.privateKey, TEST_MESSAGE)
                             .then(sig => {

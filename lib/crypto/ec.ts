@@ -232,7 +232,12 @@ export class Ecdsa extends EcCrypto {
         return super.sign.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createSign(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, (err, data2) => {
+                    const mechanism = this.wc2pk11(algorithm, key.algorithm);
+                    mechanism.name = this.getAlgorithm(session, mechanism.name);
+                    if (mechanism.name === "ECDSA") {
+                        data = this.prepareData((algorithm as any).hash.name, data);
+                    }
+                    session!.createSign(mechanism, key.key).once(data, (err, data2) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -247,7 +252,12 @@ export class Ecdsa extends EcCrypto {
         return super.verify.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
-                    session!.createVerify(this.wc2pk11(algorithm, key.algorithm), key.key).once(data, signature, (err, data2) => {
+                    const mechanism = this.wc2pk11(algorithm, key.algorithm);
+                    mechanism.name = this.getAlgorithm(session, mechanism.name);
+                    if (mechanism.name === "ECDSA") {
+                        data = this.prepareData((algorithm as any).hash.name, data);
+                    }
+                    session!.createVerify(mechanism, key.key).once(data, signature, (err, data2) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -256,6 +266,24 @@ export class Ecdsa extends EcCrypto {
                     });
                 });
             });
+    }
+
+    public static prepareData(hashAlgorithm: string, data: Buffer) {
+        // use nodejs crypto for digest calculating
+        return utils.digest(hashAlgorithm.replace("-", ""), data);
+    }
+
+    protected static getAlgorithm(session: Session, p11AlgorithmName: string) {
+        const mechanisms = session.slot.getMechanisms();
+        let res = "ECDSA";
+        for (let i = 0; i < mechanisms.length; i++) {
+            const mechanism = mechanisms.items(i);
+            if (mechanism.name === p11AlgorithmName) {
+                res = p11AlgorithmName;
+                break;
+            }
+        }
+        return res;
     }
 
     protected static wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): IAlgorithm {
