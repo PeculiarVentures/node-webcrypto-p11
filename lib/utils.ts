@@ -102,6 +102,7 @@ export function getProviderInfo(slot: Slot) {
             case "RSA_PKCS_OAEP":
                 algName = "RSA-OAEP";
                 break;
+            case "ECDSA":
             case "ECDSA_SHA1":
             case "ECDSA_SHA256":
             case "ECDSA_SHA384":
