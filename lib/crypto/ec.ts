@@ -31,8 +31,8 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
     const keyType = KeyType.ECDSA;
     return {
         privateKey: {
-            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
-            sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
+            token: !!process.env.WEBCRYPTO_PKCS11_TOKEN,
+            sensitive: !!process.env.WEBCRYPTO_PKCS11_SENSITIVE,
             class: ObjectClass.PRIVATE_KEY,
             keyType,
             private: true,
@@ -45,7 +45,7 @@ function create_template(session: Session, alg: EcKeyGenParams, extractable: boo
             unwrap: keyUsages.indexOf("unwrapKey") !== -1,
         },
         publicKey: {
-            token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
+            token: !!process.env.WEBCRYPTO_PKCS11_TOKEN,
             class: ObjectClass.PUBLIC_KEY,
             keyType,
             private: false,
@@ -275,15 +275,14 @@ export class Ecdsa extends EcCrypto {
 
     protected static getAlgorithm(session: Session, p11AlgorithmName: string) {
         const mechanisms = session.slot.getMechanisms();
-        let res = "ECDSA";
+        const ECDSA = "ECDSA";
         for (let i = 0; i < mechanisms.length; i++) {
             const mechanism = mechanisms.items(i);
-            if (mechanism.name === p11AlgorithmName) {
-                res = p11AlgorithmName;
-                break;
+            if (mechanism.name === ECDSA) {
+                return ECDSA;
             }
         }
-        return res;
+        return p11AlgorithmName;
     }
 
     protected static wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): IAlgorithm {
