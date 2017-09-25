@@ -60,7 +60,7 @@ export function getProviderInfo(slot: Slot) {
         name: slot.slotDescription,
         serialNumber: slot.getToken().serialNumber,
         algorithms: [],
-        isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE)
+        isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE),
     };
 
     const algorithms = slot.getMechanisms();

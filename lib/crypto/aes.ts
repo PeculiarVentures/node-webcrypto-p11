@@ -14,8 +14,8 @@ export function create_template(session: Session, alg: AesKeyGenParams, extracta
 
     const id = utils.GUID(session);
     return {
-        token: !!process.env["WEBCRYPTO_PKCS11_TOKEN"],
-        sensitive: !!process.env["WEBCRYPTO_PKCS11_SENSITIVE"],
+        token: !!process.env.WEBCRYPTO_PKCS11_TOKEN,
+        sensitive: !!process.env.WEBCRYPTO_PKCS11_SENSITIVE,
         class: ObjectClass.SECRET_KEY,
         keyType: KeyType.AES,
         label: `AES-${alg.length}`,
