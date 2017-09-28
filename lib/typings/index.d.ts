@@ -145,8 +145,10 @@ interface IModule {
 interface IProvider {
     id: string;
     name: string;
+    reader: string;
     slot: number;
     serialNumber: string;
     algorithms: string[];
     isRemovable: boolean;
+    isHardware: boolean;
 }

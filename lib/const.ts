@@ -1,1 +1,1 @@
-export const ID_DIGEST = "SHA-1";
+export const ID_DIGEST = "SHA-256";

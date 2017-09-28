@@ -54,13 +54,16 @@ export function getProviderInfo(slot: Slot) {
         }
     }
 
+    const token = slot.getToken();
     const provider: IProvider = {
         id: calculateProviderID(slot),
         slot: index,
-        name: slot.slotDescription,
+        name: token.label,
+        reader: slot.slotDescription,
         serialNumber: slot.getToken().serialNumber,
         algorithms: [],
         isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE),
+        isHardware: !!(slot.flags & SlotFlag.HW_SLOT),
     };
 
     const algorithms = slot.getMechanisms();

@@ -55,10 +55,12 @@ export class WebCrypto implements NativeCrypto {
         }
         this.initialized = true;
 
-        this.slot = mod.getSlots(props.slot || 0);
-        if (!this.slot) {
+        const slotIndex = props.slot || 0;
+        const slots = mod.getSlots();
+        if (!(0 <= slotIndex && slotIndex < slots.length )) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
         }
+        this.slot = slots.items(slotIndex);
         this.open(props.readWrite);
 
         if (props.pin) {

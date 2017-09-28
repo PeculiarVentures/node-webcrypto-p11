@@ -50,7 +50,7 @@
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
     "@types/asn1js": "0.0.1",
-    "@types/node": "^8.0.30",
+    "@types/node": "^8.0.31",
     "coveralls": "^2.13.1",
     "mocha": "^3.5.3",
     "nyc": "^8",
