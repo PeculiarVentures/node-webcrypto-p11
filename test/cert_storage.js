@@ -18,7 +18,6 @@ context("Certificate storage", () => {
         .then((keys) => {
             if (keys.length) {
                 return Promise.resolve().then(() => {
-                    console.log("Clear storage");
                     return crypto.certStorage.clear()
                 })
                 .then(() => {

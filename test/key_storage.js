@@ -12,7 +12,6 @@ describe("KeyStorage", () => {
             .then((keys) => {
                 if (keys.length) {
                     return Promise.resolve().then(() => {
-                        console.log("Clear storage");
                         return crypto.keyStorage.clear()
                     })
                     .then(() => {
