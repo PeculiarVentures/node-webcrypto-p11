@@ -11,8 +11,25 @@ const PRIVATE_KEY_RAW = new Buffer("308204BD020100300D06092A864886F70D0101010500
 context("Certificate storage", () => {
 
     beforeEach((done) => {
-        crypto.certStorage.clear()
-            .then(done, done);
+        Promise.resolve()
+        .then(() => {
+            return crypto.certStorage.keys()
+        })
+        .then((keys) => {
+            if (keys.length) {
+                return Promise.resolve().then(() => {
+                    console.log("Clear storage");
+                    return crypto.certStorage.clear()
+                })
+                .then(() => {
+                    return crypto.certStorage.keys()
+                })
+                .then((keys) => {
+                    assert.equal(keys.length, 0);
+                })
+            }
+        })
+        .then(done, done);
     })
 
     context("indexOf", () => {

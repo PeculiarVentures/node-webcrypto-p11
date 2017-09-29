@@ -5,7 +5,24 @@ var isSoftHSM = require('./config').isSoftHSM;
 describe("KeyStorage", () => {
 
     beforeEach((done) => {
-        crypto.keyStorage.clear()
+        Promise.resolve()
+            .then(() => {
+                return crypto.keyStorage.keys()
+            })
+            .then((keys) => {
+                if (keys.length) {
+                    return Promise.resolve().then(() => {
+                        console.log("Clear storage");
+                        return crypto.keyStorage.clear()
+                    })
+                    .then(() => {
+                        return crypto.keyStorage.keys()
+                    })
+                    .then((keys) => {
+                        assert.equal(keys.length, 0);
+                    })
+                }
+            })
             .then(done, done);
     })
 
