@@ -136,7 +136,7 @@ describe("WebCrypto Aes", function () {
                         })
                         .then(k => {
                             assert.equal(!!k, true, "Imported key is empty")
-                            assert.equal(!!k._key, true, "Has no native key value");
+                            assert.equal(!!k.p11Object, true, "Has no native key value");
                         })
                         .then(done, done);
                 });

@@ -15,9 +15,16 @@ declare module "node-webcrypto-p11" {
 
     type CryptoCertificateFormat = string | "x509" | "request";
 
-    interface CryptoCertificate {
+    interface Pkcs11Object {
+        p11Object: GraphenePkcs11.Storage;
+    }
+
+    interface Pkcs11CryptoKey extends  Pkcs11Object, CryptoKey {
+    }
+
+    interface CryptoCertificate extends Pkcs11Object {
         type: CryptoCertificateFormat;
-        publicKey: CryptoKey;
+        publicKey: Pkcs11CryptoKey;
     }
 
     interface CryptoX509Certificate extends CryptoCertificate {
@@ -43,20 +50,20 @@ declare module "node-webcrypto-p11" {
 
         /**
          * Import certificate from data
-         * 
+         *
          * @param {CertificateItemType} type Type of certificate
          * @param {(ArrayBuffer)} data Raw of certificate item
-         * @returns {Promise<CryptoCertificate>} 
-         * 
+         * @returns {Promise<CryptoCertificate>}
+         *
          * @memberOf CertificateStorage
          */
         importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
         importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
         importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
 
-        exportCert(format: "pem", item: CryptoCertificate): Promise<string>
-        exportCert(format: "raw", item: CryptoCertificate): Promise<ArrayBuffer>
-        exportCert(format: CryptoCertificateFormat, item: CryptoCertificate): Promise<ArrayBuffer | string>
+        exportCert(format: "pem", item: CryptoCertificate): Promise<string>;
+        exportCert(format: "raw", item: CryptoCertificate): Promise<ArrayBuffer>;
+        exportCert(format: CryptoCertificateFormat, item: CryptoCertificate): Promise<ArrayBuffer | string>;
 
         setItem(item: CryptoCertificate): Promise<string>;
         getItem(key: string): Promise<CryptoCertificate>;
@@ -69,9 +76,9 @@ declare module "node-webcrypto-p11" {
 
         /**
          * Return list of names of stored keys
-         * 
-         * @returns {Promise<string[]>} 
-         * 
+         *
+         * @returns {Promise<string[]>}
+         *
          * @memberOf KeyStorage
          */
         keys(): Promise<string[]>;
@@ -79,34 +86,34 @@ declare module "node-webcrypto-p11" {
          * Returns identity of item from storage.
          * If item is not found, then returns `null`
          */
-        indexOf(item: CryptoKey): Promise<string | null>;
+        indexOf(item: Pkcs11CryptoKey): Promise<string | null>;
         /**
          * Returns key from storage
-         * 
-         * @param {string} key 
-         * @returns {Promise<CryptoKey>} 
-         * 
+         *
+         * @param {string} key
+         * @returns {Promise<Pkcs11CryptoKey>}
+         *
          * @memberOf KeyStorage
          */
-        getItem(key: string): Promise<CryptoKey>;
-        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        getItem(key: string): Promise<Pkcs11CryptoKey>;
+        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<Pkcs11CryptoKey>;
         /**
          * Add key to storage
-         * 
-         * @param {string} key 
-         * @param {CryptoKey} value 
-         * @returns {Promise<void>} 
-         * 
+         *
+         * @param {string} key
+         * @param {Pkcs11CryptoKey} value
+         * @returns {Promise<void>}
+         *
          * @memberOf KeyStorage
          */
-        setItem(value: CryptoKey): Promise<string>;
+        setItem(value: Pkcs11CryptoKey): Promise<string>;
 
         /**
          * Removes item from storage by given key
-         * 
-         * @param {string} key 
-         * @returns {Promise<void>} 
-         * 
+         *
+         * @param {string} key
+         * @returns {Promise<void>}
+         *
          * @memberOf KeyStorage
          */
         removeItem(key: string): Promise<void>;
@@ -114,19 +121,19 @@ declare module "node-webcrypto-p11" {
     }
 
     class WebCrypto implements NativeCrypto {
-        readonly info: IProvider;
-        isLoggedIn: boolean;
-        subtle: SubtleCrypto;
-        keyStorage: KeyStorage;
-        certStorage: CertificateStorage;
-        getRandomValues(array: NodeBufferSource): NodeBufferSource;
-        getRandomValues(array: ArrayBufferView): ArrayBufferView;
-        getGUID(): string;
+        public readonly info: IProvider;
+        public isLoggedIn: boolean;
+        public subtle: SubtleCrypto;
+        public keyStorage: KeyStorage;
+        public certStorage: CertificateStorage;
         constructor(props: P11WebCryptoParams);
-        open(rw?: boolean): void;
-        close(): void;
-        login(pin: string): void;
-        logout(): void;
+        public getRandomValues(array: NodeBufferSource): NodeBufferSource;
+        public getRandomValues(array: ArrayBufferView): ArrayBufferView;
+        public getGUID(): string;
+        public open(rw?: boolean): void;
+        public close(): void;
+        public login(pin: string): void;
+        public logout(): void;
     }
 
     interface P11WebCryptoParams extends Object {

@@ -1,9 +1,10 @@
+import * as Asn1Js from "asn1js";
 import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate as P11X509Certificate } from "graphene-pk11";
 import { Base64Url, PrepareAlgorithm } from "webcrypto-core";
 
-import * as Asn1Js from "asn1js";
 import { ID_DIGEST } from "./const";
 import { CryptoKey } from "./key";
+import { Pkcs11Object } from "./p11_object";
 import { digest } from "./utils";
 import { WebCrypto } from "./webcrypto";
 
@@ -100,7 +101,7 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
+export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements CryptoCertificate {
 
     public static getID(p11Object: Storage) {
         let type: string;
@@ -123,11 +124,11 @@ export abstract class Pkcs11CryptoCertificate implements CryptoCertificate {
     }
     public type: string;
     public publicKey: CryptoKey;
-    public p11Object: Storage;
 
     protected crypto: WebCrypto;
 
     constructor(crypto: WebCrypto) {
+        super();
         this.crypto = crypto;
     }
 

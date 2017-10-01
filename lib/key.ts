@@ -2,6 +2,7 @@
 import { WebCryptoError } from "webcrypto-core";
 
 import { ITemplate, Key, ObjectClass, PrivateKey, PublicKey, SecretKey } from "graphene-pk11";
+import { Pkcs11Object } from "./p11_object";
 
 export interface ITemplatePair {
     privateKey: ITemplate;
@@ -13,7 +14,7 @@ export interface CryptoKeyPair extends NativeCryptoKey {
     publicKey: CryptoKey;
 }
 
-export class CryptoKey implements NativeCryptoKey {
+export class CryptoKey extends Pkcs11Object implements NativeCryptoKey {
 
     public static getID(p11Key: Key) {
         let name: string;
@@ -38,14 +39,14 @@ export class CryptoKey implements NativeCryptoKey {
     public algorithm: KeyAlgorithm;
     public id: string;
     public usages: string[] = [];
-
-    private _key: Key | PrivateKey | PublicKey | SecretKey;
+    public p11Object: Key | SecretKey | PublicKey | PrivateKey;
 
     public get key(): Key {
-        return this._key;
+        return this.p11Object.toType<Key>();
     }
 
     constructor(key: Key, alg: Algorithm) {
+        super(key);
         switch (key.class) {
             case ObjectClass.PUBLIC_KEY:
                 this.initPublicKey(key.toType<PublicKey>());
@@ -73,7 +74,7 @@ export class CryptoKey implements NativeCryptoKey {
     }
 
     protected initPrivateKey(key: PrivateKey) {
-        this._key = key;
+        this.p11Object = key;
         this.type = "private";
         try {
             // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
@@ -98,7 +99,7 @@ export class CryptoKey implements NativeCryptoKey {
     }
 
     protected initPublicKey(key: PublicKey) {
-        this._key = key;
+        this.p11Object = key;
         this.type = "public";
         this.extractable = true;
         if (key.encrypt) {
@@ -113,7 +114,7 @@ export class CryptoKey implements NativeCryptoKey {
     }
 
     protected initSecretKey(key: SecretKey) {
-        this._key = key;
+        this.p11Object = key;
         this.type = "secret";
         try {
             // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
