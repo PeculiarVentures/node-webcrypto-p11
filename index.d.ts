@@ -19,12 +19,9 @@ declare module "node-webcrypto-p11" {
         p11Object: GraphenePkcs11.Storage;
     }
 
-    interface Pkcs11CryptoKey extends  Pkcs11Object, CryptoKey {
-    }
-
     interface CryptoCertificate extends Pkcs11Object {
         type: CryptoCertificateFormat;
-        publicKey: Pkcs11CryptoKey;
+        publicKey: CryptoKey;
     }
 
     interface CryptoX509Certificate extends CryptoCertificate {
@@ -86,27 +83,27 @@ declare module "node-webcrypto-p11" {
          * Returns identity of item from storage.
          * If item is not found, then returns `null`
          */
-        indexOf(item: Pkcs11CryptoKey): Promise<string | null>;
+        indexOf(item: CryptoKey): Promise<string | null>;
         /**
          * Returns key from storage
          *
          * @param {string} key
-         * @returns {Promise<Pkcs11CryptoKey>}
+         * @returns {Promise<CryptoKey>}
          *
          * @memberOf KeyStorage
          */
-        getItem(key: string): Promise<Pkcs11CryptoKey>;
-        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<Pkcs11CryptoKey>;
+        getItem(key: string): Promise<CryptoKey>;
+        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
         /**
          * Add key to storage
          *
          * @param {string} key
-         * @param {Pkcs11CryptoKey} value
+         * @param {CryptoKey} value
          * @returns {Promise<void>}
          *
          * @memberOf KeyStorage
          */
-        setItem(value: Pkcs11CryptoKey): Promise<string>;
+        setItem(value: CryptoKey): Promise<string>;
 
         /**
          * Removes item from storage by given key
