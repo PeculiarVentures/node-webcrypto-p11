@@ -164,6 +164,23 @@ describe("WebCrypto RSA", () => {
                 });
             });
         });
+
+        it("raw", (done) => {
+            Promise.resolve()
+                .then(() => {
+                    const spki = Buffer.from("30820122300d06092a864886f70d01010105000382010f003082010a0282010100f2076e8b7161b7367fde1e80ddf6435aa6a76734d2b7a89f4395fc3bd25fad65a052252398825e8cf9f4d800fc1b5d42e0cb6c8f001a4e131f15f30ee17a598395742b170ab53c5ac80e7652771c26275ddcc006ca182eee69b49f817a70d3d461bd29c0c285f489dae65d7fb24c7bee4acd678965d3276214c39ae6b50e2a56527b5445a2c9f9f9f7b1b839d41c9b6ad938a2b01e0cf4e962344b91a80065a2442ef1193d5d6b4506b51475107d8973718f65d1eb0a50945e20799ddf684b107f29e86523550a1a5fa04725ea29151db1ea6bc208d03516de35476510106633c309bbcbb6333912fbb9821da676c318865f1a12591dcca48515976e02a3870d0203010001", "hex");
+                    const alg = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
+                    return crypto.subtle.importKey("spki", spki, alg, true, ["verify"]);
+                })
+                .then((key) => {
+                    return crypto.subtle.exportKey("raw", key)
+                })
+                .then((raw) => {
+                    const vector = Buffer.from("3082010a0282010100f2076e8b7161b7367fde1e80ddf6435aa6a76734d2b7a89f4395fc3bd25fad65a052252398825e8cf9f4d800fc1b5d42e0cb6c8f001a4e131f15f30ee17a598395742b170ab53c5ac80e7652771c26275ddcc006ca182eee69b49f817a70d3d461bd29c0c285f489dae65d7fb24c7bee4acd678965d3276214c39ae6b50e2a56527b5445a2c9f9f9f7b1b839d41c9b6ad938a2b01e0cf4e962344b91a80065a2442ef1193d5d6b4506b51475107d8973718f65d1eb0a50945e20799ddf684b107f29e86523550a1a5fa04725ea29151db1ea6bc208d03516de35476510106633c309bbcbb6333912fbb9821da676c318865f1a12591dcca48515976e02a3870d0203010001", "hex");
+                    assert.equal(Buffer.from(raw).equals(vector), true);
+                })
+                .then(done, done);
+        });
     });
 
     context("Wrap/Unwrap", () => {

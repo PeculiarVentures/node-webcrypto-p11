@@ -144,6 +144,23 @@ describe("WebCrypto EC", () => {
                 });
             });
         });
+
+        it("raw", (done) => {
+            Promise.resolve()
+                .then(() => {
+                    const spki = Buffer.from("3059301306072a8648ce3d020106082a8648ce3d030107034200043ff61b3c7afc727338d24da52724abf2f430641be01000549bb81d80ca2e6550c0eaa09e90eca600fef445ddcd131d0a88b61df2802e4b16feac9c1dfe1d92e6", "hex");
+                    const alg = { name: "ECDSA", namedCurve: "P-256" };
+                    return crypto.subtle.importKey("spki", spki, alg, true, ["verify"]);
+                })
+                .then((key) => {
+                    return crypto.subtle.exportKey("raw", key)
+                })
+                .then((raw) => {
+                    const vector = Buffer.from("043ff61b3c7afc727338d24da52724abf2f430641be01000549bb81d80ca2e6550c0eaa09e90eca600fef445ddcd131d0a88b61df2802e4b16feac9c1dfe1d92e6", "hex");
+                    assert.equal(Buffer.from(raw).equals(vector), true);
+                })
+                .then(done, done);
+        });
     });
 
 });

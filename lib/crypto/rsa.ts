@@ -1,5 +1,6 @@
 // Core
 import * as webcrypto from "webcrypto-core";
+
 const WebCryptoError = webcrypto.WebCryptoError;
 const AlgorithmError = webcrypto.AlgorithmError;
 const Base64Url = webcrypto.Base64Url;
@@ -133,6 +134,13 @@ export abstract class RsaCrypto extends BaseCrypto {
                 const publicKey = new PublicKeyInfo();
                 publicKey.fromJSON(jwk);
                 return publicKey.toSchema(true).toBER(false);
+            }
+            case "raw": {
+                // export subjectPublicKey BIT_STRING value
+                const jwk = await this.exportJwkPublicKey(key);
+                const publicKey = new PublicKeyInfo();
+                publicKey.fromJSON(jwk);
+                return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
             }
             default:
                 throw new Error(`Not supported format '${format}'`);

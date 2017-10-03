@@ -111,6 +111,13 @@ export class EcCrypto extends BaseCrypto {
                 publicKey.fromJSON(jwk);
                 return publicKey.toSchema(true).toBER(false);
             }
+            case "raw": {
+                // export subjectPublicKey BIT_STRING value
+                const jwk = await this.exportJwkPublicKey(key);
+                const publicKey = new PublicKeyInfo();
+                publicKey.fromJSON(jwk);
+                return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+            }
             default:
                 throw new Error(`Not supported format '${format}'`);
         }
