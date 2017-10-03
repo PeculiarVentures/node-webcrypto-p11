@@ -87,7 +87,14 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                         const publicKey = (keys as CryptoKeyPair).publicKey;
                         const privateKey = (keys as CryptoKeyPair).privateKey;
                         if (publicKey) {
-                            return this.exportKey("spki", publicKey)
+                            /**
+                             * `raw` format is better than `spki`
+                             * `raw` returns der encoded value of SubjectPublicKeyInfo.subjectPublicKey.BIT_STRING
+                             * `spki` return der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo 
+                             * can be different from one provider to another. Because AlgorithmIdentifier has optional `parameters`,
+                             * which can be NULL, empty or have value.
+                             */
+                            return this.exportKey("raw", publicKey)
                                 .then((spki) => {
                                     const digest = utils.digest(ID_DIGEST, spki);
                                     publicKey.key.id = digest;
@@ -275,7 +282,14 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     .then((key) => {
                         // update key id for type 'public'
                         if (key.type === "public") {
-                            return this.exportKey("spki", key)
+                            /**
+                             * `raw` format is better than `spki`
+                             * `raw` returns der encoded value of SubjectPublicKeyInfo.subjectPublicKey.BIT_STRING
+                             * `spki` return der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo 
+                             * can be different from one provider to another. Because AlgorithmIdentifier has optional `parameters`,
+                             * which can be NULL, empty or have value.
+                             */
+                            return this.exportKey("raw", key)
                                 .then((spki) => {
                                     const digest = utils.digest(ID_DIGEST, spki);
                                     key.key.id = digest;
