@@ -2,10 +2,8 @@ import * as Asn1Js from "asn1js";
 import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate as P11X509Certificate } from "graphene-pk11";
 import { Base64Url, PrepareAlgorithm } from "webcrypto-core";
 
-import { ID_DIGEST } from "./const";
 import { CryptoKey } from "./key";
 import { Pkcs11Object } from "./p11_object";
-import { digest } from "./utils";
 import { WebCrypto } from "./webcrypto";
 
 const PkiJs = require("pkijs");
@@ -178,7 +176,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
         this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
 
-        const hashSPKI = digest(ID_DIGEST, publicKeyInfoBuffer);
+        const hashSPKI = this.publicKey.p11Object.id;
 
         this.p11Object = this.crypto.session.create({
             id: hashSPKI,
@@ -291,7 +289,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
 
         this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
 
-        const hashSPKI = digest(ID_DIGEST, publicKeyInfoBuffer);
+        const hashSPKI = this.publicKey.p11Object.id;
 
         this.p11Object = this.crypto.session.create({
             objectId: hashSPKI,
