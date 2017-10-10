@@ -17,14 +17,12 @@ describe("WebCrypto", () => {
         }, Error);
     })
 
-    it("reset", (done) => {
+    it("reset", () => {
         const currentHandle = crypto.session.handle.toString("hex");
         crypto.reset()
-            .then(() => {
-                crypto.login(config.pin);
-                const newHandle = crypto.session.handle.toString("hex");
-                assert(currentHandle !== newHandle, true, "handle of session wasn't changed");
-            })
-            .then(done, done);
+
+        crypto.login(config.pin);
+        const newHandle = crypto.session.handle.toString("hex");
+        assert(currentHandle !== newHandle, true, "handle of session wasn't changed");
     })
 })

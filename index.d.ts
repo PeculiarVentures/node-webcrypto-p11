@@ -120,6 +120,8 @@ declare module "node-webcrypto-p11" {
     class WebCrypto implements NativeCrypto {
         public readonly info: IProvider;
         public isLoggedIn: boolean;
+        public isReadWrite: boolean;
+        public isLoginRequired: boolean;
         public subtle: SubtleCrypto;
         public keyStorage: KeyStorage;
         public certStorage: CertificateStorage;
@@ -131,6 +133,7 @@ declare module "node-webcrypto-p11" {
         public close(): void;
         public login(pin: string): void;
         public logout(): void;
+        public reset(): void;
     }
 
     interface P11WebCryptoParams extends Object {
