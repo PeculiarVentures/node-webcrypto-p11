@@ -2,7 +2,7 @@
 import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
-import { Mechanism, Module, Session, SessionFlag, Slot } from "graphene-pk11";
+import { Mechanism, Module, Session, SessionFlag, Slot, Token, TokenFlag } from "graphene-pk11";
 import { Pkcs11CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
@@ -24,11 +24,14 @@ export class WebCrypto implements NativeCrypto {
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
     public certStorage: Pkcs11CertificateStorage;
-    public isLoggedIn: boolean = false;
     public session: Session;
+    public isReadWrite: boolean;
+    public isLoggedIn: boolean;
+    public isLoginRequired: boolean;
 
     private module: Module;
     private slot: Slot;
+    private token: Token;
     private initialized: boolean;
 
     /**
@@ -46,7 +49,7 @@ export class WebCrypto implements NativeCrypto {
             //     });
             //     mod.initialize();
             // } else {
-                mod.initialize();
+            mod.initialize();
             // }
         } catch (e) {
             if (!/CKR_CRYPTOKI_ALREADY_INITIALIZED/.test(e.message)) {
@@ -56,14 +59,18 @@ export class WebCrypto implements NativeCrypto {
         this.initialized = true;
 
         const slotIndex = props.slot || 0;
-        const slots = mod.getSlots();
-        if (!(0 <= slotIndex && slotIndex < slots.length )) {
+        const slots = mod.getSlots(true);
+        if (!(0 <= slotIndex && slotIndex < slots.length)) {
             throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
         }
         this.slot = slots.items(slotIndex);
+        this.token = this.slot.getToken();
+        this.isLoginRequired = !!(this.token.flags & TokenFlag.LOGIN_REQUIRED);
+        this.isLoggedIn = !this.isLoginRequired;
+        this.isReadWrite = !!props.readWrite;
         this.open(props.readWrite);
 
-        if (props.pin) {
+        if (props.pin && this.isLoginRequired) {
             this.login(props.pin);
         }
         for (const i in props.vendors!) {
@@ -84,20 +91,44 @@ export class WebCrypto implements NativeCrypto {
         this.info = utils.getProviderInfo(this.session.slot);
     }
 
-    public async reset() {
-        const flags = this.session.flags;
+    public reset() {
+        if (this.isLoggedIn && this.isLoginRequired) {
+            this.logout();
+        }
         this.session.close();
 
-        this.open(!!(flags & SessionFlag.RW_SESSION));
+        this.open(this.isReadWrite);
     }
 
     public login(pin: string) {
-        this.session.login(pin);
+        if (!this.isLoginRequired) {
+            return;
+        }
+
+        try {
+            this.session.login(pin);
+        } catch (error) {
+            if (!/CKR_USER_ALREADY_LOGGED_IN\:256/.test(error.message)) {
+                throw error;
+            }
+        }
+
         this.isLoggedIn = true;
     }
 
     public logout() {
-        this.session.logout();
+        if (!this.isLoginRequired) {
+            return;
+        }
+
+        try {
+            this.session.logout();
+        } catch (error) {
+            if (!/CKR_USER_NOT_LOGGED_IN\:257/.test(error.message)) {
+                throw error;
+            }
+        }
+
         this.isLoggedIn = false;
     }
 
