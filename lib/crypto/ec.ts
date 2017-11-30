@@ -1,7 +1,6 @@
 // Core
 import * as webcrypto from "webcrypto-core";
 const AlgorithmError = webcrypto.AlgorithmError;
-const AlgorithmNames = webcrypto.AlgorithmNames;
 const Base64Url = webcrypto.Base64Url;
 
 import {
