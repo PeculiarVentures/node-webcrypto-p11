@@ -325,18 +325,6 @@ export class Ecdh extends EcCrypto {
             .then(() => {
                 return new Promise((resolve, reject) => {
 
-                    let AesClass: any = null;
-                    switch (derivedKeyType.name.toLowerCase()) {
-                        case AlgorithmNames.AesGCM.toLowerCase():
-                            AesClass = aes.AesGCM;
-                            break;
-                        case AlgorithmNames.AesCBC.toLowerCase():
-                            AesClass = aes.AesCBC;
-                            break;
-                        default:
-                            throw new AlgorithmError(AlgorithmError.UNSUPPORTED_ALGORITHM, derivedKeyType.name);
-                    }
-
                     const template = aes.create_template(session!, derivedKeyType, extractable, keyUsages);
                     template.valueLen = derivedKeyType.length >> 3;
                     // derive key
