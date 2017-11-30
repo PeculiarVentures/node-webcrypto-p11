@@ -186,7 +186,6 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
             subject: new Buffer(this.schema.subject.toSchema(true).toBER(false)),
             issuer: new Buffer(this.schema.issuer.toSchema(true).toBER(false)),
             token: false,
-            ski: hashSPKI,
             private: false,
             value: new Buffer(data),
         }).toType<P11X509Certificate>();
