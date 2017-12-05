@@ -142,7 +142,7 @@ export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements Cr
 export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX509Certificate {
 
     public get serialNumber() {
-        return this.p11Object.serialNumber;
+        return new Buffer(this.getData().serialNumber.valueBlock._valueHex).toString("hex");
     }
     public get notBefore() {
         return this.getData().notBefore.value;
