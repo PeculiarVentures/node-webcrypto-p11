@@ -71,7 +71,7 @@ context("Certificate storage", () => {
                     assert.equal(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
                     assert.equal(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
                     assert.equal(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
-                    assert.equal(json.serialNumber, "020900fedce3010fc948ff");
+                    assert.equal(json.serialNumber, "00fedce3010fc948ff");
                     assert.equal(json.type, "x509");
                 })
                 .then(done, done);
