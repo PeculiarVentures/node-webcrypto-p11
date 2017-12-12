@@ -158,6 +158,7 @@ export class WebCrypto implements NativeCrypto {
             this.session.logout();
             this.session.close();
             this.module.finalize();
+            this.module.close();
         }
     }
 }
