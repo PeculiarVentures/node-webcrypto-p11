@@ -71,6 +71,12 @@ webcrypto.subtle.generateKey({
 
 <sub>2 ECB support is not defined by the WebCrypto specifications. Use of EBC in a safe way is hard, it was added for the purpose of enabling interoperability with an existing system. We recommend against its use unless needed for interoperability.</sub>
 
+## Elliptic curve secp256k1
+
+`secp256k1` curve is not defined by the WebCrypto specifications. This module implements `K-256` curve for ECDSA algorithm.
+
+[K-256 curve examples](https://github.com/PeculiarVentures/webcrypto-core/blob/master/spec/EC_K_256.md)
+
 ## Installation
 
 ### NPM
