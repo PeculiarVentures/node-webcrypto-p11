@@ -22,7 +22,7 @@ import { CryptoKey, ITemplatePair } from "../key";
 import * as utils from "../utils";
 
 import * as Asn1Js from "asn1js";
-const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
+const { AlgorithmIdentifier, PrivateKeyInfo, PublicKeyInfo, ECPublicKey, ECPrivateKey } = require("pkijs");
 
 function create_template(session: Session, alg: EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
@@ -100,15 +100,11 @@ export class EcCrypto extends BaseCrypto {
             }
             case "pkcs8": {
                 const jwk = await this.exportJwkPrivateKey(key);
-                const privateKey = new PrivateKeyInfo();
-                privateKey.fromJSON(jwk);
-                return privateKey.toSchema(true).toBER(false);
+                return jwk2pkcs(jwk);
             }
             case "spki": {
                 const jwk = await this.exportJwkPublicKey(key);
-                const publicKey = new PublicKeyInfo();
-                publicKey.fromJSON(jwk);
-                return publicKey.toSchema(true).toBER(false);
+                return jwk2spki(jwk);
             }
             case "raw": {
                 // export subjectPublicKey BIT_STRING value
@@ -135,17 +131,11 @@ export class EcCrypto extends BaseCrypto {
                         }
                     }
                     case "spki": {
-                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
-                        const asn1 = Asn1Js.fromBER(arBuf);
-
-                        const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
+                        const jwk = spki2jwk(new Uint8Array(keyData as Uint8Array).buffer);
                         return this.importJwkPublicKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                     }
                     case "pkcs8": {
-                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
-                        const asn1 = Asn1Js.fromBER(arBuf);
-
-                        const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();
+                        const jwk = pkcs2jwk(new Uint8Array(keyData as Uint8Array).buffer);
                         return this.importJwkPrivateKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                     }
                     default:
@@ -156,7 +146,7 @@ export class EcCrypto extends BaseCrypto {
 
     protected static importJwkPrivateKey(session: Session, jwk: JsonWebKey, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[]) {
         return new Promise((resolve, reject) => {
-            const namedCurve = this.getNamedCurve(jwk.crv!);
+            const namedCurve = this.getNamedCurve(algorithm.namedCurve);
             const template = create_template(session, algorithm, extractable, keyUsages).privateKey;
             template.paramsEC = namedCurve.value;
             template.value = utils.b64_decode(jwk.d!);
@@ -167,7 +157,7 @@ export class EcCrypto extends BaseCrypto {
 
     protected static importJwkPublicKey(session: Session, jwk: JsonWebKey, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[]) {
         return new Promise((resolve, reject) => {
-            const namedCurve = this.getNamedCurve(jwk.crv!);
+            const namedCurve = this.getNamedCurve(algorithm.namedCurve);
             const template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.paramsEC = namedCurve.value;
             const pointEc = EcUtils.encodePoint({ x: utils.b64_decode(jwk.x!), y: utils.b64_decode(jwk.y!) }, namedCurve);
@@ -215,6 +205,14 @@ export class EcCrypto extends BaseCrypto {
             case "P-192":
                 namedCurve = "secp192r1";
                 break;
+            case "K-256":
+                const p256 = NamedCurve.getByName("secp256r1");
+                return {
+                    name: "secp256k1",
+                    oid: "1.3.132.0.10",
+                    value: Buffer.from("06052b8104000A", "hex"),
+                    size: p256.size,
+                };
             case "P-256":
                 namedCurve = "secp256r1";
                 break;
@@ -500,4 +498,188 @@ class EcUtils {
         }
         return new Buffer(enc);
     }
+}
+
+function getCoordinate(b64: string, coordinateLength: number) {
+    const buf = Base64Url.decode(b64);
+    const offset = coordinateLength - buf.byteLength;
+    const res = new Uint8Array(coordinateLength);
+    res.set(buf, offset);
+
+    return res.buffer;
+}
+
+function jwk2spki(jwk: JsonWebKey) {
+    const parsedKey = new ECPublicKey();
+    let coordinateLength = 0;
+
+    if ("crv" in jwk) {
+        switch (jwk.crv.toUpperCase()) {
+            case "K-256":
+                parsedKey.namedCurve = "1.3.132.0.10";
+                coordinateLength = 32;
+                break;
+            case "P-256":
+                parsedKey.namedCurve = "1.2.840.10045.3.1.7";
+                coordinateLength = 32;
+                break;
+            case "P-384":
+                parsedKey.namedCurve = "1.3.132.0.34";
+                coordinateLength = 48;
+                break;
+            case "P-521":
+                parsedKey.namedCurve = "1.3.132.0.35";
+                coordinateLength = 66;
+                break;
+            default:
+        }
+    } else {
+        throw new Error("Absent mandatory parameter \"crv\"");
+    }
+
+    ["x", "y"].forEach((name) => {
+        if (name in jwk) {
+            parsedKey[name] = getCoordinate((jwk as any)[name], coordinateLength);
+        } else {
+            throw new Error(`Absent mandatory parameter '${name}'`);
+        }
+    });
+
+    const spki = new PublicKeyInfo();
+    spki.algorithm = new AlgorithmIdentifier({
+        algorithmId: "1.2.840.10045.2.1",
+        algorithmParams: new Asn1Js.ObjectIdentifier({ value: parsedKey.namedCurve }),
+    });
+    spki.subjectPublicKey = new Asn1Js.BitString({ valueHex: parsedKey.toSchema().toBER(false) });
+
+    return spki.toSchema().toBER(false);
+}
+
+function spki2jwk(raw: ArrayBuffer): JsonWebKey {
+    const asn1Spki = Asn1Js.fromBER(raw);
+    const spki = new PublicKeyInfo({ schema: asn1Spki.result });
+
+    if (spki.algorithm.algorithmId !== "1.2.840.10045.2.1") {
+        throw new Error("SPKI is not EC public key");
+    }
+
+    const algId = spki.algorithm.algorithmParams.valueBlock.toString();
+    let crvName = algId;
+
+    switch (crvName) {
+        case "1.3.132.0.10": // K-256
+            crvName = "K-256";
+            break;
+        case "1.2.840.10045.3.1.7": // P-256
+            crvName = "P-256";
+            break;
+        case "1.3.132.0.34": // P-384
+            crvName = "P-384";
+            break;
+        case "1.3.132.0.35": // P-521
+            crvName = "P-521";
+            break;
+        default:
+            throw new Error(`Unsupported EC named curve '${crvName}'`);
+    }
+
+    const parsedKey = new ECPublicKey({
+        namedCurve: algId === "1.3.132.0.10" ? "1.2.840.10045.3.1.7" : algId,
+        schema: spki.subjectPublicKey.valueBlock.valueHex,
+    });
+
+    return {
+        kty: "EC",
+        crv: crvName,
+        x: Base64Url.encode(new Uint8Array(parsedKey.x)),
+        y: Base64Url.encode(new Uint8Array(parsedKey.y)),
+    };
+}
+
+function jwk2pkcs(jwk: JsonWebKey): ArrayBuffer {
+    const parsedKey = new ECPrivateKey();
+    let coordinateLength = 0;
+
+    if ("crv" in jwk) {
+        switch (jwk.crv.toUpperCase()) {
+            case "K-256":
+                parsedKey.namedCurve = "1.3.132.0.10";
+                coordinateLength = 32;
+                break;
+            case "P-256":
+                parsedKey.namedCurve = "1.2.840.10045.3.1.7";
+                coordinateLength = 32;
+                break;
+            case "P-384":
+                parsedKey.namedCurve = "1.3.132.0.34";
+                coordinateLength = 48;
+                break;
+            case "P-521":
+                parsedKey.namedCurve = "1.3.132.0.35";
+                coordinateLength = 66;
+                break;
+            default:
+        }
+    } else {
+        throw new Error("Absent mandatory parameter \"crv\"");
+    }
+
+    ["d"].forEach((name) => {
+        if (name in jwk) {
+            parsedKey.privateKey = new Asn1Js.OctetString({ valueHex: getCoordinate((jwk as any)[name], coordinateLength) });
+        } else {
+            throw new Error(`Absent mandatory parameter '${name}'`);
+        }
+    });
+
+    const pkcs8 = new PrivateKeyInfo();
+    pkcs8.privateKeyAlgorithm = new AlgorithmIdentifier({
+        algorithmId: "1.2.840.10045.2.1",
+        algorithmParams: new Asn1Js.ObjectIdentifier({ value: parsedKey.namedCurve }),
+    });
+    pkcs8.privateKey = new Asn1Js.OctetString({ valueHex: parsedKey.toSchema().toBER(false) });
+
+    return pkcs8.toSchema().toBER(false);
+}
+
+function pkcs2jwk(raw: ArrayBuffer): JsonWebKey {
+    const asn1Pkcs8 = Asn1Js.fromBER(raw);
+    const pkcs8 = new PrivateKeyInfo({ schema: asn1Pkcs8.result });
+
+    if (pkcs8.privateKeyAlgorithm.algorithmId !== "1.2.840.10045.2.1") {
+        throw new Error("PKCS8 is not EC private key");
+    }
+
+    const algId = pkcs8.privateKeyAlgorithm.algorithmParams.valueBlock.toString();
+    let crvName = algId;
+
+    switch (crvName) {
+        case "1.3.132.0.10": // K-256
+            crvName = "K-256";
+            break;
+        case "1.2.840.10045.3.1.7": // P-256
+            crvName = "P-256";
+            break;
+        case "1.3.132.0.34": // P-384
+            crvName = "P-384";
+            break;
+        case "1.3.132.0.35": // P-521
+            crvName = "P-521";
+            break;
+        default:
+            throw new Error(`Unsupported EC named curve '${crvName}'`);
+    }
+
+    const asn1PrvKey = Asn1Js.fromBER(pkcs8.privateKey.valueBlock.valueHex);
+
+    const parsedKey = new ECPrivateKey({
+        namedCurve: algId === "1.3.132.0.10" ? "1.2.840.10045.3.1.7" : algId,
+        schema: asn1PrvKey.result,
+    });
+
+    return {
+        kty: "EC",
+        crv: crvName,
+        d: Base64Url.encode(new Uint8Array(parsedKey.privateKey.valueBlock.valueHex)),
+    };
 }
