@@ -27,10 +27,10 @@
   },
   "dependencies": {
     "asn1js": "^2.0.15",
-    "graphene-pk11": "^2.0.31",
-    "pkijs": "^2.1.11",
-    "tslib": "^1.8.1",
-    "webcrypto-core": "^0.1.17"
+    "graphene-pk11": "^2.0.32",
+    "pkijs": "^2.1.13",
+    "tslib": "^1.9.0",
+    "webcrypto-core": "^0.1.19"
   },
   "keywords": [
     "crypto",
@@ -40,7 +40,8 @@
     "rsa",
     "aes",
     "ec",
-    "digest"
+    "digest",
+    "secp256k1"
   ],
   "author": "",
   "license": "MIT",
@@ -50,10 +51,11 @@
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
     "@types/asn1js": "0.0.1",
-    "@types/node": "^8.0.58",
+    "@types/node": "^8.5.9",
     "coveralls": "^2.13.3",
     "mocha": "^3.5.3",
     "nyc": "^8",
-    "typescript": "^2.6.2"
+    "pvtsutils": "^1.0.2",
+    "typescript": "^2.7.1"
   }
 }
