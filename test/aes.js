@@ -188,7 +188,6 @@ describe("WebCrypto Aes", function () {
         });
         context("AES-GCM", () => {
             if (isSoftHSM("AES-GCM Wrap/Unwrap")) return;
-            if (isNSS("AES-GCM Wrap/Unwrap")) return;
             // AES keys
             keys.filter(key => /AES-GCM/.test(key.name)).forEach(key => {
                 ["jwk", "raw"].forEach(format => {

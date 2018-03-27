@@ -1,6 +1,6 @@
 var assert = require('assert');
 var crypto = require('./config').crypto;
-var isSoftHSM = require('./config').isSoftHSM;
+var { isSoftHSM, isNSS } = require('./config');
 
 describe("WebCrypto EC", () => {
 
@@ -19,7 +19,10 @@ describe("WebCrypto EC", () => {
         KEYS.forEach(key => {
             // namedCurve
             NAMED_CURVES.forEach(namedCurve => {
-                if (namedCurve === "X25519" && isSoftHSM(`Generate key ${key.alg} X25519`)) {
+                if (namedCurve === "K-256" && isNSS(`Generate key NSS ${key.alg} K-256`)) {
+                    return;
+                }
+                if (namedCurve === "X25519" && isSoftHSM(`Generate key SoftHSM ${key.alg} X25519`)) {
                     return;
                 }
                 if (namedCurve === "X25519" && key.alg === "ECDSA") { // skip ECDSA for X25529
@@ -131,7 +134,12 @@ describe("WebCrypto EC", () => {
         keys.forEach(key => {
             // Format
             ["jwk", "spki", "pkcs8"].forEach(format => {
-                it(`${format}\t${key.name}`, done => {
+                const itName = `${format}\t${key.name}`;
+                if (key.name === "ECDH crv:X25519" && format !== "jwk") {
+                    it.skip(itName);
+                    return;
+                }
+                it(itName, done => {
                     var promise = Promise.resolve();
                     // Check public and private keys
                     [key.privateKey, key.publicKey].forEach(_key => {

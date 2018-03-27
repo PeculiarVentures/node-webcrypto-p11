@@ -1,21 +1,25 @@
-var config = {
-	library: "/usr/local/lib/softhsm/libsofthsm2.so",
-	name: "SoftHSMv2",
-	slot: 0,
-    readWrite: true,
-	pin: "12345"
-};
-// var config = {
-// 	library: "/usr/local/opt/nss/lib/libsoftokn3.dylib",
-// 	libraryParameters: `configdir='/Users/microshine/tmp/nss' certPrefix='' keyPrefix='' secmod='' flags= updatedir='' updateCertPrefix='' updateKeyPrefix='' updateid='' updateTokenDescription=''`,
-// 	name: "NSS",
-// 	slot: 1,
-//     readWrite: true,
-// };
+var os = require("os");
+
+var config = process.env.PV_CRYPTO === "nss" ?
+	{
+		library: os.platform() === "darwin" ?  "/usr/local/opt/nss/lib/libsoftokn3.dylib" : "/usr/lib/x86_64-linux-gnu/nss/libsoftokn3.so",
+		libraryParameters: `configdir='' certPrefix='' keyPrefix='' secmod='' flags=readOnly,noCertDB,noModDB,forceOpen,optimizeSpace`,
+		name: "NSS",
+		slot: 1,
+		readWrite: true,
+	}
+	:
+	{
+		library: "/usr/local/lib/softhsm/libsofthsm2.so",
+		name: "SoftHSMv2",
+		slot: 0,
+		readWrite: true,
+		pin: "12345"
+	};
 module.exports.config = config;
 
-var WebCrypto = require("../").WebCrypto;     
-    
+var WebCrypto = require("../").WebCrypto;
+
 module.exports.crypto = new WebCrypto(config);
 
 function test_manufacturer(manufacturerID, message) {
