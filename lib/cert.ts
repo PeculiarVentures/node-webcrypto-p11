@@ -167,14 +167,14 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
     public p11Object: P11X509Certificate;
     protected schema: any;
 
-    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
+    public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: string[]) {
         const array = new Uint8Array(data);
         this.parse(array.buffer as ArrayBuffer);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm as string, true, keyUsages);
 
         const hashSPKI = this.publicKey.p11Object.id;
 
@@ -279,14 +279,14 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
      * @param algorithm
      * @param keyUsages
      */
-    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
+    public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: string[]) {
         const array = new Uint8Array(data).buffer as ArrayBuffer;
         this.parse(array);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm as string, true, keyUsages);
 
         const hashSPKI = this.publicKey.p11Object.id;
 
