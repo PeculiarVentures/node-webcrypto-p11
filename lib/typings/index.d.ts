@@ -22,6 +22,10 @@ interface P11WebCryptoParams extends Object {
      * list of vendor json files
      */
     vendors?: string[];
+    /**
+     * NSS library parameters
+     */
+    libraryParameters?: string;
 }
 
 // TODO: Remove interfaces to webcrypto-core

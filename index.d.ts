@@ -126,8 +126,7 @@ declare module "node-webcrypto-p11" {
         public keyStorage: KeyStorage;
         public certStorage: CertificateStorage;
         constructor(props: P11WebCryptoParams);
-        public getRandomValues(array: NodeBufferSource): NodeBufferSource;
-        public getRandomValues(array: ArrayBufferView): ArrayBufferView;
+        public getRandomValues(array: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null): Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null;
         public getGUID(): string;
         public open(rw?: boolean): void;
         public close(): void;
@@ -143,6 +142,7 @@ declare module "node-webcrypto-p11" {
         readWrite?: boolean;
         pin?: string;
         vendors?: string[];
+        libraryParameters?: string;
     }
 
     interface IModule {
