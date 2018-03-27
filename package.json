@@ -8,7 +8,9 @@
   "scripts": {
     "clean": "rm -rf built/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",
     "prepare": "npm run build",
-    "test": "mocha test",
+    "test": "npm run test:softhsm && npm run test:nss",
+    "test:softhsm": "mocha test",
+    "test:nss": "PV_CRYPTO=nss mocha test/aes && PV_CRYPTO=nss mocha test/ec",
     "build": "npm run build:es5",
     "build:es5": "tsc",
     "build:es2015": "tsc --module es2015 --target es2015",
@@ -28,7 +30,7 @@
   "dependencies": {
     "asn1js": "^2.0.18",
     "babel-polyfill": "^6.26.0",
-    "graphene-pk11": "^2.0.33",
+    "graphene-pk11": "^2.0.34",
     "pkijs": "^2.1.29",
     "tslib": "^1.9.0",
     "webcrypto-core": "^0.1.20"
