@@ -109,9 +109,13 @@ export class EcCrypto extends BaseCrypto {
             case "raw": {
                 // export subjectPublicKey BIT_STRING value
                 const jwk = await this.exportJwkPublicKey(key);
-                const publicKey = new PublicKeyInfo();
-                publicKey.fromJSON(jwk);
-                return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+                if ((key.algorithm as EcKeyGenParams).namedCurve === "X25519") {
+                    return Base64Url.decode(jwk.x!).buffer as ArrayBuffer;
+                } else {
+                    const publicKey = new PublicKeyInfo();
+                    publicKey.fromJSON(jwk);
+                    return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+                }
             }
             default:
                 throw new Error(`Not supported format '${format}'`);

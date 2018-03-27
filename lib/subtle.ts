@@ -90,7 +90,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                             /**
                              * `raw` format is better than `spki`
                              * `raw` returns der encoded value of SubjectPublicKeyInfo.subjectPublicKey.BIT_STRING
-                             * `spki` return der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo 
+                             * `spki` returns der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo
                              * can be different from one provider to another. Because AlgorithmIdentifier has optional `parameters`,
                              * which can be NULL, empty or have value.
                              */
@@ -285,7 +285,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                             /**
                              * `raw` format is better than `spki`
                              * `raw` returns der encoded value of SubjectPublicKeyInfo.subjectPublicKey.BIT_STRING
-                             * `spki` return der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo 
+                             * `spki` returns der encoded SubjectPublicKeyInfo. `algorithm` param of SubjectPublicKeyInfo
                              * can be different from one provider to another. Because AlgorithmIdentifier has optional `parameters`,
                              * which can be NULL, empty or have value.
                              */
