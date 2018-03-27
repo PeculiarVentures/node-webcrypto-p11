@@ -12,8 +12,8 @@ describe("WebCrypto RSA", () => {
         { alg: "RSA-OAEP", usages: ["encrypt", "decrypt", "wrapKey", "unwrapKey"] },
     ];
     var DIGEST = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
-    var PUBLIC_EXPONENT = [new Uint8Array([3]), new Uint8Array([1, 0, 1])];
-    var MODULUS_LENGTH = [1024/*, 2048, /*4096*/];
+    var PUBLIC_EXPONENT = [/*new Uint8Array([3]),*/ new Uint8Array([1, 0, 1])];
+    var MODULUS_LENGTH = [2048, /*4096*/];
 
     var keys = [];
 

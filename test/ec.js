@@ -10,7 +10,7 @@ describe("WebCrypto EC", () => {
         { alg: "ECDH", usages: ["deriveKey", "deriveBits"] },
     ];
     var DIGEST = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
-    var NAMED_CURVES = ["P-256", "P-384", "P-521", "K-256"];
+    var NAMED_CURVES = ["P-256", "P-384", "P-521", "K-256", "X25519"];
 
     var keys = [];
 
@@ -19,6 +19,13 @@ describe("WebCrypto EC", () => {
         KEYS.forEach(key => {
             // namedCurve
             NAMED_CURVES.forEach(namedCurve => {
+                if (namedCurve === "X25519" && isSoftHSM(`Generate key ${key.alg} X25519`)) {
+                    return;
+                }
+                if (namedCurve === "X25519" && key.alg === "ECDSA") { // skip ECDSA for X25529
+                    return;
+                }
+
                 var keyName = `${key.alg} crv:${namedCurve}`
                 var keyTemplate = {
                     name: keyName,
