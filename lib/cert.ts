@@ -161,7 +161,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
     public publicKey: CryptoKey;
 
     public get value(): ArrayBuffer {
-        return new Uint8Array(this.p11Object.value).buffer;
+        return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
     }
 
     public p11Object: P11X509Certificate;
@@ -169,7 +169,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
     public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
         const array = new Uint8Array(data);
-        this.parse(array.buffer);
+        this.parse(array.buffer as ArrayBuffer);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
@@ -267,7 +267,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
     public publicKey: CryptoKey;
 
     public get value(): ArrayBuffer {
-        return new Uint8Array(this.p11Object.value).buffer;
+        return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
     }
 
     public p11Object: P11Data;
@@ -280,7 +280,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
      * @param keyUsages
      */
     public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
-        const array = new Uint8Array(data).buffer;
+        const array = new Uint8Array(data).buffer as ArrayBuffer;
         this.parse(array);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
