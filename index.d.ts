@@ -15,16 +15,12 @@ declare module "node-webcrypto-p11" {
 
     type CryptoCertificateFormat = string | "x509" | "request";
 
-    interface Pkcs11Object {
-        p11Object: GraphenePkcs11.Storage;
-    }
-
-    interface CryptoCertificate extends Pkcs11Object {
+    interface ICryptoCertificate {
         type: CryptoCertificateFormat;
         publicKey: CryptoKey;
     }
 
-    interface CryptoX509Certificate extends CryptoCertificate {
+    interface ICryptoX509Certificate extends ICryptoCertificate {
         notBefore: Date;
         notAfter: Date;
         serialNumber: HexString;
@@ -32,44 +28,44 @@ declare module "node-webcrypto-p11" {
         subjectName: string;
     }
 
-    interface CryptoX509CertificateRequest extends CryptoCertificate {
+    interface ICryptoX509CertificateRequest extends ICryptoCertificate {
         subjectName: string;
     }
 
-    interface CertificateStorage {
+    interface ICertificateStorage {
 
         keys(): Promise<string[]>;
         /**
          * Returns identity of item from storage.
          * If item is not found, then returns `null`
          */
-        indexOf(item: CryptoCertificate): Promise<string | null>;
+        indexOf(item: ICryptoCertificate): Promise<string | null>;
 
         /**
          * Import certificate from data
          *
          * @param {CertificateItemType} type Type of certificate
          * @param {(ArrayBuffer)} data Raw of certificate item
-         * @returns {Promise<CryptoCertificate>}
+         * @returns {Promise<ICryptoCertificate>}
          *
          * @memberOf CertificateStorage
          */
-        importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
-        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
-        importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+        importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509CertificateRequest>;
+        importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509Certificate>;
+        importCert(type: CryptoCertificateFormat, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoCertificate>;
 
-        exportCert(format: "pem", item: CryptoCertificate): Promise<string>;
-        exportCert(format: "raw", item: CryptoCertificate): Promise<ArrayBuffer>;
-        exportCert(format: CryptoCertificateFormat, item: CryptoCertificate): Promise<ArrayBuffer | string>;
+        exportCert(format: "pem", item: ICryptoCertificate): Promise<string>;
+        exportCert(format: "raw", item: ICryptoCertificate): Promise<ArrayBuffer>;
+        exportCert(format: CryptoCertificateFormat, item: ICryptoCertificate): Promise<ArrayBuffer | string>;
 
-        setItem(item: CryptoCertificate): Promise<string>;
-        getItem(key: string): Promise<CryptoCertificate>;
-        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoCertificate>;
+        setItem(item: ICryptoCertificate): Promise<string>;
+        getItem(key: string): Promise<ICryptoCertificate>;
+        getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoCertificate>;
         removeItem(key: string): Promise<void>;
         clear(): Promise<void>;
     }
 
-    interface KeyStorage {
+    interface IKeyStorage {
 
         /**
          * Return list of names of stored keys
@@ -123,9 +119,11 @@ declare module "node-webcrypto-p11" {
         public isReadWrite: boolean;
         public isLoginRequired: boolean;
         public subtle: SubtleCrypto;
-        public keyStorage: KeyStorage;
-        public certStorage: CertificateStorage;
+        public keyStorage: IKeyStorage;
+        public certStorage: ICertificateStorage;
+
         constructor(props: P11WebCryptoParams);
+        
         public getRandomValues(array: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null): Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null;
         public getGUID(): string;
         public open(rw?: boolean): void;
@@ -133,6 +131,34 @@ declare module "node-webcrypto-p11" {
         public login(pin: string): void;
         public logout(): void;
         public reset(): void;
+    }
+
+    export class SubtleCrypto implements NativeSubtleCrypto {
+        protected crypto: WebCrypto;
+
+        constructor(crypto: WebCrypto);
+
+        public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): PromiseLike<ArrayBuffer>;
+        public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public digest(algorithm: string | Algorithm, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public exportKey(format: "jwk", key: CryptoKey): PromiseLike<JsonWebKey>;
+        public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): PromiseLike<ArrayBuffer>;
+        public exportKey(format: string, key: CryptoKey): PromiseLike<ArrayBuffer | JsonWebKey>;
+        public exportKey(format: any, key: any): PromiseLike<ArrayBuffer | JsonWebKey>;
+        public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey | CryptoKeyPair>;
+        public generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair>;
+        public generateKey(algorithm: Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public generateKey(algorithm: any, extractable: any, keyUsages: any): PromiseLike<CryptoKey | CryptoKeyPair>;
+        public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public importKey(format: "raw" | "pkcs8" | "spki", keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public importKey(format: string, keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public importKey(format: any, keyData: any, algorithm: any, extractable: any, keyUsages: any): PromiseLike<CryptoKey>;
+        public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public unwrapKey(format: string, wrappedKey: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, signature: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<boolean>;
+        public wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): PromiseLike<ArrayBuffer>;
     }
 
     interface P11WebCryptoParams extends Object {
@@ -190,4 +216,161 @@ declare module "node-webcrypto-p11" {
         public logout(): void;
 
     }
+
+    export class KeyStorage implements IKeyStorage {
+
+        protected crypto: WebCrypto;
+
+        constructor(crypto: WebCrypto);
+
+        /**
+         * Return list of names of stored keys
+         */
+        public keys(): Promise<string[]>;
+        /**
+         * Returns identity of item from storage.
+         * If item is not found, then returns `null`
+         */
+        public indexOf(item: CryptoKey): Promise<string>;
+        public getItem(key: string): Promise<CryptoKey>;
+        public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        public getItem(key: any, algorithm?: any, usages?: any): Promise<CryptoKey>;
+        /**
+         * Add key to storage
+         */
+        public setItem(value: CryptoKey): Promise<string>;
+        /**
+         * Removes item from storage by given key
+         */
+        public removeItem(key: string): Promise<void>;
+        public clear(): Promise<void>;
+        public hasItem(key: CryptoKey): boolean;
+        protected getItemById(id: string): GraphenePkcs11.SessionObject;
+    }
+
+    export class CertificateStorage implements ICertificateStorage {
+        public keys(): Promise<string[]>;
+        /**
+         * Returns identity of item from storage.
+         * If item is not found, then returns `null`
+         */
+        public indexOf(item: ICryptoCertificate): Promise<string>;
+        public importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509CertificateRequest>;
+        public importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509Certificate>;
+        public importCert(type: string, data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoCertificate>;
+        public importCert(type: any, data: any, algorithm: any, keyUsages: any): Promise<ICryptoCertificate>;
+        public exportCert(format: "pem", item: ICryptoCertificate): Promise<string>;
+        public exportCert(format: "raw", item: ICryptoCertificate): Promise<ArrayBuffer>;
+        public exportCert(format: string, item: ICryptoCertificate): Promise<string | ArrayBuffer>;
+        public exportCert(format: any, item: any): Promise<string | ArrayBuffer>;
+        public setItem(item: ICryptoCertificate): Promise<string>;
+        public getItem(key: string): Promise<ICryptoCertificate>;
+        public getItem(key: string, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoCertificate>;
+        public getItem(key: any, algorithm?: any, keyUsages?: any): Promise<ICryptoCertificate>;
+        public removeItem(key: string): Promise<void>;
+        public clear(): Promise<void>;
+    }
+
+    class Pkcs11Object {
+        public p11Object: GraphenePkcs11.Storage;
+
+        constructor(object?: GraphenePkcs11.Storage);
+    }
+
+    export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoCertificate {
+        public static getID(p11Object: Storage): string;
+
+        public readonly id: string;
+        public type: string;
+        public publicKey: CryptoKey;
+        protected crypto: WebCrypto;
+
+        constructor(crypto: WebCrypto);
+
+        public abstract importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+        public abstract exportCert(): Promise<ArrayBuffer>;
+        public abstract exportKey(): Promise<CryptoKey>;
+        public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+    }
+
+    interface JsonPublicKey {
+        algorithm: Algorithm;
+        type: string;
+        usages: string[];
+        extractable: boolean;
+    }
+
+    interface JsonX509Certificate {
+        publicKey: JsonPublicKey;
+        notBefore: Date;
+        notAfter: Date;
+        subjectName: string;
+        issuerName: string;
+        serialNumber: string;
+        type: string;
+        value: string;
+    }
+
+    export class X509Certificate extends CryptoCertificate implements ICryptoX509Certificate {
+        public notBefore: Date;
+        public notAfter: Date;
+        public serialNumber: string;
+        public issuerName: string;
+        public subjectName: string;
+        public readonly value: ArrayBuffer;
+        public importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+        public exportCert(): Promise<ArrayBuffer>;
+        public exportKey(): Promise<CryptoKey>;
+        public exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        public exportKey(algorithm?: any, usages?: any): Promise<CryptoKey>;
+        public toJSON(): JsonX509Certificate;
+        protected parse(data: ArrayBuffer): void;
+        /**
+         * returns parsed ASN1 value
+         */
+        protected getData(): any;
+    }
+
+    interface JsonX509CertificateRequest {
+        publicKey: JsonPublicKey;
+        subjectName: string;
+        type: string;
+        value: string;
+    }
+
+    export class X509CertificateRequest extends CryptoCertificate implements ICryptoX509CertificateRequest {
+        public subjectName: string;
+        public readonly value: ArrayBuffer;
+        public importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+        public exportCert(): Promise<ArrayBuffer>;
+        public exportKey(): Promise<CryptoKey>;
+        public exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        public exportKey(algorithm?: any, usages?: any): Promise<CryptoKey>;
+        public toJSON(): JsonX509CertificateRequest;
+        protected parse(data: ArrayBuffer): void;
+        /**
+         * returns parsed ASN1 value
+         */
+        protected getData(): any;
+    }
+
+    export class CryptoKey extends Pkcs11Object implements NativeCryptoKey {
+        public static getID(p11Key: GraphenePkcs11.Key): string;
+
+        public id: string;
+        public algorithm: KeyAlgorithm;
+        public extractable: boolean;
+        public type: string;
+        public usages: string[];
+        public readonly key: GraphenePkcs11.Key;
+
+        constructor(key: GraphenePkcs11.Key, alg: Algorithm);
+
+        public toJSON(): JsonPublicKey;
+        protected initPrivateKey(key: GraphenePkcs11.PrivateKey): void;
+        protected initPublicKey(key: GraphenePkcs11.PublicKey): void;
+        protected initSecretKey(key: GraphenePkcs11.SecretKey): void;
+
+    }
+
 }
