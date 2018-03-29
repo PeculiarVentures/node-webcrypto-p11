@@ -255,7 +255,7 @@ export class X509Certificate extends CryptoCertificate implements ICryptoX509Cer
 
 }
 
-// X509Certificate
+// X509CertificateRequest
 
 export class X509CertificateRequest extends CryptoCertificate implements ICryptoX509CertificateRequest {
 
