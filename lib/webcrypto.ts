@@ -3,7 +3,7 @@ import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
 import { Mechanism, Module, Session, SessionFlag, Slot, Token, TokenFlag } from "graphene-pk11";
-import { Pkcs11CertificateStorage } from "./cert_storage";
+import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
@@ -23,7 +23,7 @@ export class WebCrypto implements NativeCrypto {
     public info: IProvider;
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
-    public certStorage: Pkcs11CertificateStorage;
+    public certStorage: CertificateStorage;
     public session: Session;
     public isReadWrite: boolean;
     public isLoggedIn: boolean;
@@ -79,7 +79,7 @@ export class WebCrypto implements NativeCrypto {
 
         this.subtle = new SubtleCrypto(this);
         this.keyStorage = new KeyStorage(this);
-        this.certStorage = new Pkcs11CertificateStorage(this);
+        this.certStorage = new CertificateStorage(this);
     }
 
     public open(rw?: boolean) {

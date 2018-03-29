@@ -99,7 +99,7 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements CryptoCertificate {
+export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoCertificate {
 
     public static getID(p11Object: Storage) {
         let type: string;
@@ -118,7 +118,7 @@ export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements Cr
     }
 
     public get id() {
-        return Pkcs11CryptoCertificate.getID(this.p11Object);
+        return CryptoCertificate.getID(this.p11Object);
     }
     public type: string;
     public publicKey: CryptoKey;
@@ -139,7 +139,7 @@ export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements Cr
 
 // X509Certificate
 
-export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX509Certificate {
+export class X509Certificate extends CryptoCertificate implements ICryptoX509Certificate {
 
     public get serialNumber() {
         return new Buffer(this.getData().serialNumber.valueBlock._valueHex).toString("hex");
@@ -257,7 +257,7 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
 // X509Certificate
 
-export class X509CertificateRequest extends Pkcs11CryptoCertificate implements CryptoX509CertificateRequest {
+export class X509CertificateRequest extends CryptoCertificate implements ICryptoX509CertificateRequest {
 
     public get subjectName() {
         return nameToString(this.getData().subject);

@@ -1,6 +1,6 @@
 import { CertificateType, Data as P11Data, ObjectClass, SessionObject, X509Certificate as P11X509Certificate } from "graphene-pk11";
 
-import { Pkcs11CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
+import { CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
 import * as utils from "./utils";
 import { WebCrypto } from "./webcrypto";
 
@@ -9,7 +9,7 @@ const TEMPLATES = [
     { class: ObjectClass.DATA, token: true, label: "X509 Request" },
 ];
 
-export class Pkcs11CertificateStorage implements CertificateStorage {
+export class CertificateStorage implements ICertificateStorage {
 
     protected crypto: WebCrypto;
 
@@ -17,9 +17,9 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         this.crypto = crypto;
     }
 
-    public async indexOf(item: Pkcs11CryptoCertificate) {
-        if (item instanceof Pkcs11CryptoCertificate && item.p11Object.token) {
-            return Pkcs11CryptoCertificate.getID(item.p11Object);
+    public async indexOf(item: CryptoCertificate) {
+        if (item instanceof CryptoCertificate && item.p11Object.token) {
+            return CryptoCertificate.getID(item.p11Object);
         }
         return null;
     }
@@ -29,7 +29,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         TEMPLATES.forEach((template) => {
             this.crypto.session.find(template, (obj) => {
                 const item = obj.toType<any>();
-                const id = Pkcs11CryptoCertificate.getID(item);
+                const id = CryptoCertificate.getID(item);
                 keys.push(id);
             });
         });
@@ -48,8 +48,8 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         });
     }
 
-    public getItem(key: string): Promise<CryptoCertificate>;
-    public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate>;
+    public getItem(key: string): Promise<ICryptoCertificate>;
+    public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<ICryptoCertificate>;
     public async getItem(key: string, algorithm?: Algorithm, usages?: string[]) {
         const storageObject = this.getItemById(key);
         if (storageObject instanceof P11X509Certificate) {
@@ -76,8 +76,8 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
     }
 
-    public async setItem(data: Pkcs11CryptoCertificate) {
-        if (!(data instanceof Pkcs11CryptoCertificate)) {
+    public async setItem(data: CryptoCertificate) {
+        if (!(data instanceof CryptoCertificate)) {
             throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
         }
         // don't copy object from token
@@ -85,15 +85,15 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
             const obj = this.crypto.session.copy(data.p11Object, {
                 token: true,
             });
-            return Pkcs11CryptoCertificate.getID(obj.toType<any>());
+            return CryptoCertificate.getID(obj.toType<any>());
         } else {
             return data.id;
         }
     }
 
-    public exportCert(type: "pem", item: CryptoCertificate): Promise<string>;
-    public exportCert(type: "raw", item: CryptoCertificate): Promise<ArrayBuffer>;
-    public async exportCert(format: CryptoCertificateFormat, cert: Pkcs11CryptoCertificate): Promise<ArrayBuffer | string> {
+    public exportCert(type: "pem", item: ICryptoCertificate): Promise<string>;
+    public exportCert(type: "raw", item: ICryptoCertificate): Promise<ArrayBuffer>;
+    public async exportCert(format: CryptoCertificateFormat, cert: CryptoCertificate): Promise<ArrayBuffer | string> {
         switch (format) {
             case "pem": {
                 throw Error("PEM format is not implemented");
@@ -106,9 +106,9 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         }
     }
 
-    public importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509CertificateRequest>;
-    public importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<CryptoX509Certificate>;
-    public async importCert(type: string, data: NodeBufferSource, algorithm: Algorithm, usages: string[]): Promise<CryptoCertificate> {
+    public importCert(type: "request", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509CertificateRequest>;
+    public importCert(type: "x509", data: BufferSource, algorithm: Algorithm, keyUsages: string[]): Promise<ICryptoX509Certificate>;
+    public async importCert(type: string, data: NodeBufferSource, algorithm: Algorithm, usages: string[]): Promise<ICryptoCertificate> {
         const preparedData = utils.PrepareData(data);
         switch (type.toLowerCase()) {
             case "x509": {
@@ -131,7 +131,7 @@ export class Pkcs11CertificateStorage implements CertificateStorage {
         TEMPLATES.forEach((template) => {
             this.crypto.session.find(template, (obj) => {
                 const item = obj.toType<any>();
-                if (id === Pkcs11CryptoCertificate.getID(item)) {
+                if (id === CryptoCertificate.getID(item)) {
                     object = item;
                     return false;
                 }
