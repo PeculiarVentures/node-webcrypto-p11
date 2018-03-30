@@ -163,7 +163,7 @@ export abstract class AesCrypto extends BaseCrypto {
 
     protected static padding = false;
 
-    protected static wc2pk11(alg: Algorithm): IAlgorithm {
+    protected static wc2pk11(alg: Algorithm, session?: Session): IAlgorithm {
         throw new WebCryptoError(WebCryptoError.NOT_SUPPORTED);
     }
 
@@ -194,16 +194,22 @@ export abstract class AesCrypto extends BaseCrypto {
 
 export class AesGCM extends AesCrypto {
 
-    protected static wc2pk11(alg: AesGcmParams): IAlgorithm {
+    protected static wc2pk11(alg: AesGcmParams, session?: Session): IAlgorithm {
         const aad = alg.additionalData ? utils.PrepareData(alg.additionalData) : undefined;
-        const params = new graphene.AesGcmParams(utils.PrepareData(alg.iv), aad, alg.tagLength || 128);
+        let AesGcmParamsClass = graphene.AesGcmParams;
+        if (session &&
+            session.slot.module.cryptokiVersion.major >= 2 &&
+            session.slot.module.cryptokiVersion.minor >= 40) {
+            AesGcmParamsClass = graphene.AesGcm240Params;
+        }
+        const params = new AesGcmParamsClass(utils.PrepareData(alg.iv), aad, alg.tagLength || 128);
         return { name: "AES_GCM", params };
     }
 
 }
 
 export class AesCBC extends AesCrypto {
-    protected static wc2pk11(alg: AesCbcParams): IAlgorithm {
+    protected static wc2pk11(alg: AesCbcParams, session?: Session): IAlgorithm {
         return { name: "AES_CBC_PAD", params: utils.PrepareData(alg.iv) };
     }
 }
@@ -212,7 +218,7 @@ export class AesECB extends AesCrypto {
 
     protected static padding = true;
 
-    protected static wc2pk11(alg: Algorithm): IAlgorithm {
+    protected static wc2pk11(alg: Algorithm, session?: Session): IAlgorithm {
         return { name: "AES_ECB", params: null };
     }
 

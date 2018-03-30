@@ -1,6 +1,5 @@
-var assert = require('assert');
-var crypto = require('./config').crypto;
-var isSoftHSM = require('./config').isSoftHSM;
+const assert = require('assert');
+const { crypto, isSoftHSM, isNSS } = require('./config');
 
 var keys = [];
 
@@ -99,7 +98,7 @@ describe("WebCrypto Aes", function () {
                             // Tag
                             [32, 64, 96, 104, 112, 120, 128].forEach(tag => {
                                 it(`aad:${aad ? "+" : "-"} t:${tag}\t${key.name}`, done => {
-                                    var alg = { name: "AES-GCM", iv: iv, aad: aad, tagLength: tag };
+                                    var alg = { name: "AES-GCM", iv: iv, additionalData: aad, tagLength: tag };
                                     crypto.subtle.encrypt(alg, key.key, TEST_MESSAGE)
                                         .then(enc => {
                                             assert(!!enc, true, "Encrypted message is empty");

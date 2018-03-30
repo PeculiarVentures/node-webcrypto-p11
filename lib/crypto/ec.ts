@@ -109,9 +109,13 @@ export class EcCrypto extends BaseCrypto {
             case "raw": {
                 // export subjectPublicKey BIT_STRING value
                 const jwk = await this.exportJwkPublicKey(key);
-                const publicKey = new PublicKeyInfo();
-                publicKey.fromJSON(jwk);
-                return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+                if ((key.algorithm as EcKeyGenParams).namedCurve === "X25519") {
+                    return Base64Url.decode(jwk.x!).buffer as ArrayBuffer;
+                } else {
+                    const publicKey = new PublicKeyInfo();
+                    publicKey.fromJSON(jwk);
+                    return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+                }
             }
             default:
                 throw new Error(`Not supported format '${format}'`);
@@ -131,11 +135,11 @@ export class EcCrypto extends BaseCrypto {
                         }
                     }
                     case "spki": {
-                        const jwk = spki2jwk(new Uint8Array(keyData as Uint8Array).buffer);
+                        const jwk = spki2jwk(new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer);
                         return this.importJwkPublicKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                     }
                     case "pkcs8": {
-                        const jwk = pkcs2jwk(new Uint8Array(keyData as Uint8Array).buffer);
+                        const jwk = pkcs2jwk(new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer);
                         return this.importJwkPrivateKey(session!, jwk, algorithm as EcKeyGenParams, extractable, keyUsages);
                     }
                     default:
@@ -160,7 +164,12 @@ export class EcCrypto extends BaseCrypto {
             const namedCurve = this.getNamedCurve(algorithm.namedCurve);
             const template = create_template(session, algorithm, extractable, keyUsages).publicKey;
             template.paramsEC = namedCurve.value;
-            const pointEc = EcUtils.encodePoint({ x: utils.b64_decode(jwk.x!), y: utils.b64_decode(jwk.y!) }, namedCurve);
+            let pointEc: Buffer;
+            if (namedCurve.name === "curve25519") {
+                pointEc = utils.b64_decode(jwk.x!);
+            } else {
+                pointEc = EcUtils.encodePoint({ x: utils.b64_decode(jwk.x!), y: utils.b64_decode(jwk.y!) }, namedCurve);
+            }
             template.pointEC = pointEc;
             const p11key = session.create(template).toType();
             resolve(new CryptoKey(p11key as any, algorithm));
@@ -180,8 +189,10 @@ export class EcCrypto extends BaseCrypto {
             ext: true,
             key_ops: key.usages,
             x: Base64Url.encode(ecPoint.x),
-            y: Base64Url.encode(ecPoint.y),
         };
+        if (curve.name !== "curve25519") {
+            jwk.y = Base64Url.encode(ecPoint.y);
+        }
         return jwk;
     }
 
@@ -221,6 +232,9 @@ export class EcCrypto extends BaseCrypto {
                 break;
             case "P-521":
                 namedCurve = "secp521r1";
+                break;
+            case "X25519":
+                namedCurve = "curve25519";
                 break;
             default:
                 throw new Error(`Unsupported namedCurve in use ${name}`);
@@ -407,7 +421,7 @@ export class Ecdh extends EcCrypto {
 
 interface IEcPoint {
     x: Buffer;
-    y: Buffer;
+    y?: Buffer;
 }
 
 class EcUtils {
@@ -428,6 +442,12 @@ class EcUtils {
 
     // Used by SunPKCS11 and SunJSSE.
     public static decodePoint(data: Buffer, curve: INamedCurve): IEcPoint {
+        if (curve.name === "curve25519") {
+            return {
+                x: data,
+            };
+        }
+
         data = this.getData(data);
 
         if ((data.length === 0) || (data[0] !== 4)) {
@@ -506,7 +526,7 @@ function getCoordinate(b64: string, coordinateLength: number) {
     const res = new Uint8Array(coordinateLength);
     res.set(buf, offset);
 
-    return res.buffer;
+    return res.buffer as ArrayBuffer;
 }
 
 function jwk2spki(jwk: JsonWebKey) {

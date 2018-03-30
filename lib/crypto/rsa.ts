@@ -159,14 +159,14 @@ export abstract class RsaCrypto extends BaseCrypto {
                             return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
                         }
                     case "spki": {
-                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
                         const asn1 = Asn1Js.fromBER(arBuf);
 
                         const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
                         return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
                     }
                     case "pkcs8": {
-                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer;
+                        const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
                         const asn1 = Asn1Js.fromBER(arBuf);
 
                         const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();

@@ -99,7 +99,7 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements CryptoCertificate {
+export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoCertificate {
 
     public static getID(p11Object: Storage) {
         let type: string;
@@ -118,7 +118,7 @@ export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements Cr
     }
 
     public get id() {
-        return Pkcs11CryptoCertificate.getID(this.p11Object);
+        return CryptoCertificate.getID(this.p11Object);
     }
     public type: string;
     public publicKey: CryptoKey;
@@ -139,7 +139,7 @@ export abstract class Pkcs11CryptoCertificate extends Pkcs11Object implements Cr
 
 // X509Certificate
 
-export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX509Certificate {
+export class X509Certificate extends CryptoCertificate implements ICryptoX509Certificate {
 
     public get serialNumber() {
         return new Buffer(this.getData().serialNumber.valueBlock._valueHex).toString("hex");
@@ -161,20 +161,20 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
     public publicKey: CryptoKey;
 
     public get value(): ArrayBuffer {
-        return new Uint8Array(this.p11Object.value).buffer;
+        return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
     }
 
     public p11Object: P11X509Certificate;
     protected schema: any;
 
-    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
+    public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: string[]) {
         const array = new Uint8Array(data);
-        this.parse(array.buffer);
+        this.parse(array.buffer as ArrayBuffer);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm as string, true, keyUsages);
 
         const hashSPKI = this.publicKey.p11Object.id;
 
@@ -255,9 +255,9 @@ export class X509Certificate extends Pkcs11CryptoCertificate implements CryptoX5
 
 }
 
-// X509Certificate
+// X509CertificateRequest
 
-export class X509CertificateRequest extends Pkcs11CryptoCertificate implements CryptoX509CertificateRequest {
+export class X509CertificateRequest extends CryptoCertificate implements ICryptoX509CertificateRequest {
 
     public get subjectName() {
         return nameToString(this.getData().subject);
@@ -267,7 +267,7 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
     public publicKey: CryptoKey;
 
     public get value(): ArrayBuffer {
-        return new Uint8Array(this.p11Object.value).buffer;
+        return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
     }
 
     public p11Object: P11Data;
@@ -279,14 +279,14 @@ export class X509CertificateRequest extends Pkcs11CryptoCertificate implements C
      * @param algorithm
      * @param keyUsages
      */
-    public async importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]) {
-        const array = new Uint8Array(data).buffer;
+    public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: string[]) {
+        const array = new Uint8Array(data).buffer as ArrayBuffer;
         this.parse(array);
 
         const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
         const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages);
+        this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm as string, true, keyUsages);
 
         const hashSPKI = this.publicKey.p11Object.id;
 

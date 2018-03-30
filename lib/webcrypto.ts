@@ -3,7 +3,7 @@ import * as webcrypto from "webcrypto-core";
 const WebCryptoError = webcrypto.WebCryptoError;
 
 import { Mechanism, Module, Session, SessionFlag, Slot, Token, TokenFlag } from "graphene-pk11";
-import { Pkcs11CertificateStorage } from "./cert_storage";
+import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
@@ -23,15 +23,15 @@ export class WebCrypto implements NativeCrypto {
     public info: IProvider;
     public subtle: SubtleCrypto;
     public keyStorage: KeyStorage;
-    public certStorage: Pkcs11CertificateStorage;
+    public certStorage: CertificateStorage;
     public session: Session;
     public isReadWrite: boolean;
     public isLoggedIn: boolean;
     public isLoginRequired: boolean;
 
-    private module: Module;
-    private slot: Slot;
-    private token: Token;
+    public module: Module;
+    public slot: Slot;
+    public token: Token;
     private initialized: boolean;
 
     /**
@@ -43,14 +43,14 @@ export class WebCrypto implements NativeCrypto {
     constructor(props: P11WebCryptoParams) {
         const mod = this.module = Module.load(props.library, props.name);
         try {
-            // if (props.libraryParameters) {
-            //     mod.initialize({
-            //         libraryParameters: props.libraryParameters,
-            //     });
-            //     mod.initialize();
-            // } else {
-            mod.initialize();
-            // }
+            if (props.libraryParameters) {
+                mod.initialize({
+                    libraryParameters: props.libraryParameters,
+                });
+                mod.initialize();
+            } else {
+                mod.initialize();
+            }
         } catch (e) {
             if (!/CKR_CRYPTOKI_ALREADY_INITIALIZED/.test(e.message)) {
                 throw e;
@@ -79,7 +79,7 @@ export class WebCrypto implements NativeCrypto {
 
         this.subtle = new SubtleCrypto(this);
         this.keyStorage = new KeyStorage(this);
-        this.certStorage = new Pkcs11CertificateStorage(this);
+        this.certStorage = new CertificateStorage(this);
     }
 
     public open(rw?: boolean) {
@@ -137,9 +137,7 @@ export class WebCrypto implements NativeCrypto {
      * @param array Initialize array
      */
     // Based on: https://github.com/KenanY/get-random-values
-    public getRandomValues(array: NodeBufferSource): NodeBufferSource;
-    public getRandomValues(array: ArrayBufferView): ArrayBufferView;
-    public getRandomValues(array: NodeBufferSource): NodeBufferSource {
+    public getRandomValues(array: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null): Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null {
         if (array.byteLength > 65536) {
             const error = new webcrypto.WebCryptoError(ERR_RANDOM_VALUE_LENGTH, array.byteLength);
             error.code = 22;
