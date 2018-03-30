@@ -1,3 +1,4 @@
+require("babel-polyfill");
 var os = require("os");
 
 var config = process.env.PV_CRYPTO === "nss" ?
