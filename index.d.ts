@@ -17,7 +17,7 @@ declare module "node-webcrypto-p11" {
 
     interface ICryptoCertificate {
         type: CryptoCertificateFormat;
-        publicKey: CryptoKey;
+        publicKey: NativeCryptoKey;
     }
 
     interface ICryptoX509Certificate extends ICryptoCertificate {
@@ -79,7 +79,7 @@ declare module "node-webcrypto-p11" {
          * Returns identity of item from storage.
          * If item is not found, then returns `null`
          */
-        indexOf(item: CryptoKey): Promise<string | null>;
+        indexOf(item: NativeCryptoKey): Promise<string | null>;
         /**
          * Returns key from storage
          *
@@ -88,8 +88,8 @@ declare module "node-webcrypto-p11" {
          *
          * @memberOf KeyStorage
          */
-        getItem(key: string): Promise<CryptoKey>;
-        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+        getItem(key: string): Promise<NativeCryptoKey>;
+        getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<NativeCryptoKey>;
         /**
          * Add key to storage
          *
@@ -99,7 +99,7 @@ declare module "node-webcrypto-p11" {
          *
          * @memberOf KeyStorage
          */
-        setItem(value: CryptoKey): Promise<string>;
+        setItem(value: NativeCryptoKey): Promise<string>;
 
         /**
          * Removes item from storage by given key
@@ -115,6 +115,7 @@ declare module "node-webcrypto-p11" {
 
     class WebCrypto implements NativeCrypto {
         public readonly info: IProvider;
+        public session: GraphenePkcs11.Session;
         public isLoggedIn: boolean;
         public isReadWrite: boolean;
         public isLoginRequired: boolean;
@@ -122,8 +123,12 @@ declare module "node-webcrypto-p11" {
         public keyStorage: IKeyStorage;
         public certStorage: ICertificateStorage;
 
+        public module: GraphenePkcs11.Module;
+        public slot: GraphenePkcs11.Slot;
+        public token: GraphenePkcs11.Token;
+
         constructor(props: P11WebCryptoParams);
-        
+
         public getRandomValues(array: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null): Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null;
         public getGUID(): string;
         public open(rw?: boolean): void;
@@ -138,27 +143,27 @@ declare module "node-webcrypto-p11" {
 
         constructor(crypto: WebCrypto);
 
-        public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
-        public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): PromiseLike<ArrayBuffer>;
-        public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+        public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: NativeCryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: NativeCryptoKey, length: number): PromiseLike<ArrayBuffer>;
+        public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: NativeCryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
         public digest(algorithm: string | Algorithm, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
-        public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
-        public exportKey(format: "jwk", key: CryptoKey): PromiseLike<JsonWebKey>;
-        public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): PromiseLike<ArrayBuffer>;
-        public exportKey(format: string, key: CryptoKey): PromiseLike<ArrayBuffer | JsonWebKey>;
+        public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: NativeCryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public exportKey(format: "jwk", key: NativeCryptoKey): PromiseLike<JsonWebKey>;
+        public exportKey(format: "raw" | "pkcs8" | "spki", key: NativeCryptoKey): PromiseLike<ArrayBuffer>;
+        public exportKey(format: string, key: NativeCryptoKey): PromiseLike<ArrayBuffer | JsonWebKey>;
         public exportKey(format: any, key: any): PromiseLike<ArrayBuffer | JsonWebKey>;
-        public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey | CryptoKeyPair>;
-        public generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair>;
-        public generateKey(algorithm: Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        public generateKey(algorithm: any, extractable: any, keyUsages: any): PromiseLike<CryptoKey | CryptoKeyPair>;
-        public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        public importKey(format: "raw" | "pkcs8" | "spki", keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        public importKey(format: string, keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        public importKey(format: any, keyData: any, algorithm: any, extractable: any, keyUsages: any): PromiseLike<CryptoKey>;
-        public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
-        public unwrapKey(format: string, wrappedKey: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-        public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, signature: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<boolean>;
-        public wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): PromiseLike<ArrayBuffer>;
+        public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey | NativeCryptoKeyPair>;
+        public generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKeyPair>;
+        public generateKey(algorithm: Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
+        public generateKey(algorithm: any, extractable: any, keyUsages: any): PromiseLike<NativeCryptoKey | NativeCryptoKeyPair>;
+        public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
+        public importKey(format: "raw" | "pkcs8" | "spki", keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
+        public importKey(format: string, keyData: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | JsonWebKey, algorithm: string | HmacImportParams | RsaHashedImportParams | EcKeyImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
+        public importKey(format: any, keyData: any, algorithm: any, extractable: any, keyUsages: any): PromiseLike<NativeCryptoKey>;
+        public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: NativeCryptoKey, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<ArrayBuffer>;
+        public unwrapKey(format: string, wrappedKey: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, unwrappingKey: NativeCryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): PromiseLike<NativeCryptoKey>;
+        public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: NativeCryptoKey, signature: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView, data: ArrayBuffer | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView): PromiseLike<boolean>;
+        public wrapKey(format: string, key: NativeCryptoKey, wrappingKey: NativeCryptoKey, wrapAlgorithm: string | Algorithm): PromiseLike<ArrayBuffer>;
     }
 
     interface P11WebCryptoParams extends Object {
@@ -231,24 +236,28 @@ declare module "node-webcrypto-p11" {
          * Returns identity of item from storage.
          * If item is not found, then returns `null`
          */
-        public indexOf(item: CryptoKey): Promise<string>;
-        public getItem(key: string): Promise<CryptoKey>;
-        public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
-        public getItem(key: any, algorithm?: any, usages?: any): Promise<CryptoKey>;
+        public indexOf(item: NativeCryptoKey): Promise<string>;
+        public getItem(key: string): Promise<NativeCryptoKey>;
+        public getItem(key: string, algorithm: Algorithm, usages: string[]): Promise<NativeCryptoKey>;
+        public getItem(key: any, algorithm?: any, usages?: any): Promise<NativeCryptoKey>;
         /**
          * Add key to storage
          */
-        public setItem(value: CryptoKey): Promise<string>;
+        public setItem(value: NativeCryptoKey): Promise<string>;
         /**
          * Removes item from storage by given key
          */
         public removeItem(key: string): Promise<void>;
         public clear(): Promise<void>;
-        public hasItem(key: CryptoKey): boolean;
+        public hasItem(key: NativeCryptoKey): boolean;
         protected getItemById(id: string): GraphenePkcs11.SessionObject;
     }
 
     export class CertificateStorage implements ICertificateStorage {
+        protected crypto: WebCrypto;
+
+        constructor(crypto: WebCrypto);
+
         public keys(): Promise<string[]>;
         /**
          * Returns identity of item from storage.
@@ -269,6 +278,7 @@ declare module "node-webcrypto-p11" {
         public getItem(key: any, algorithm?: any, keyUsages?: any): Promise<ICryptoCertificate>;
         public removeItem(key: string): Promise<void>;
         public clear(): Promise<void>;
+        protected getItemById(id: string): GraphenePkcs11.SessionObject;
     }
 
     class Pkcs11Object {

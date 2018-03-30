@@ -29,9 +29,9 @@ export class WebCrypto implements NativeCrypto {
     public isLoggedIn: boolean;
     public isLoginRequired: boolean;
 
-    private module: Module;
-    private slot: Slot;
-    private token: Token;
+    public module: Module;
+    public slot: Slot;
+    public token: Token;
     private initialized: boolean;
 
     /**
