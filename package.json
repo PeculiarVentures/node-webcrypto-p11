@@ -44,7 +44,9 @@
     "aes",
     "ec",
     "digest",
-    "secp256k1"
+    "secp256k1",
+    "nss",
+    "x25519"
   ],
   "author": "",
   "license": "MIT",
