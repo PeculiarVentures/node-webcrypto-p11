@@ -47,7 +47,6 @@ export class WebCrypto implements NativeCrypto {
                 mod.initialize({
                     libraryParameters: props.libraryParameters,
                 });
-                mod.initialize();
             } else {
                 mod.initialize();
             }
