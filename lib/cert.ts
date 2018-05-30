@@ -178,8 +178,11 @@ export class X509Certificate extends CryptoCertificate implements ICryptoX509Cer
 
         const hashSPKI = this.publicKey.p11Object.id;
 
+        const label = this.getName();
+
         this.p11Object = this.crypto.session.create({
             id: hashSPKI,
+            label,
             class: ObjectClass.CERTIFICATE,
             certType: CertificateType.X_509,
             serial: new Buffer(this.schema.serialNumber.toBER(false)),
@@ -251,6 +254,19 @@ export class X509Certificate extends CryptoCertificate implements ICryptoX509Cer
             this.parse(this.value);
         }
         return this.schema;
+    }
+
+    /**
+     * Returns name from subject of the certificate
+     */
+    protected getName() {
+        const cert = this.getData();
+        for (const typeAndValue of cert.subject.typesAndValues) {
+            if (typeAndValue.type === "2.5.4.3") { // CN
+                return typeAndValue.value.valueBlock.value;
+            }
+        }
+        return this.subjectName;
     }
 
 }
