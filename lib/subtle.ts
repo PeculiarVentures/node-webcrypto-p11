@@ -278,7 +278,7 @@ export class SubtleCrypto extends webcrypto.SubtleCrypto {
                     default:
                         throw new AlgorithmError(AlgorithmError.NOT_SUPPORTED, alg.name);
                 }
-                return AlgClass.importKey(format, data, alg, extractable, keyUsages, this.crypto.session)
+                return AlgClass.importKey(format, data as any, alg as any, extractable, keyUsages, this.crypto.session)
                     .then((key) => {
                         // update key id for type 'public'
                         if (key.type === "public") {

@@ -122,7 +122,7 @@ export class EcCrypto extends BaseCrypto {
         }
     }
 
-    public static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
+    public static importKey(format: string, keyData: JsonWebKey | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, algorithm: string | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
         return super.importKey.apply(this, arguments)
             .then(() => {
                 switch (format.toLowerCase()) {

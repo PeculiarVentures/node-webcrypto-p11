@@ -83,7 +83,7 @@ export abstract class AesCrypto extends BaseCrypto {
             });
     }
 
-    public static importKey(format: string, keyData: JsonWebKey | BufferSource, algorithm: Algorithm, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
+    public static importKey(format: string, keyData: JsonWebKey | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, algorithm: string | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | DhImportKeyParams, extractable: boolean, keyUsages: string[], session?: Session): PromiseLike<CryptoKey> {
         return super.importKey.apply(this, arguments)
             .then(() => {
                 return new Promise((resolve, reject) => {
@@ -96,7 +96,7 @@ export abstract class AesCrypto extends BaseCrypto {
                     }
                     // prepare key algorithm
                     const aesAlg: AesKeyGenParams = {
-                        name: algorithm.name,
+                        name: (algorithm as Algorithm).name,
                         length: value.length * 8,
                     };
                     const template: ITemplate = create_template(session!, aesAlg, extractable, keyUsages);
