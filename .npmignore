@@ -1,8 +1,7 @@
 .DS_Store
 .vscode
 node_modules
-.travis.yml
-.travis.sh
+.circleci
 
 # coverage
 coverage
@@ -13,10 +12,10 @@ coverage
 *.log
 
 # Test
-test/
+test
 /test*.js
 
 # build
-lib
+src
 **/*.map
 ts*.json
