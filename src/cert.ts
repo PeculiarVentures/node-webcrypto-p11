@@ -1,5 +1,6 @@
 import * as Asn1Js from "asn1js";
 import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import * as core from "webcrypto-core";
 
 import { Convert } from "pvtsutils";
 import { Crypto } from "./crypto";
@@ -100,7 +101,7 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoCertificate {
+export abstract class CryptoCertificate extends Pkcs11Object implements core.CryptoCertificate {
 
   public static getID(p11Object: Storage) {
     let type: string;
@@ -121,7 +122,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoC
   public get id() {
     return CryptoCertificate.getID(this.p11Object);
   }
-  public type: string;
+  public type: core.CryptoCertificateType;
   public publicKey: CryptoKey;
 
   protected crypto: Crypto;
@@ -140,7 +141,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements ICryptoC
 
 // X509Certificate
 
-export class X509Certificate extends CryptoCertificate implements ICryptoX509Certificate {
+export class X509Certificate extends CryptoCertificate implements core.CryptoX509Certificate {
 
   public get serialNumber() {
     return Buffer.from(this.getData().serialNumber.valueBlock._valueHex).toString("hex");
@@ -157,7 +158,7 @@ export class X509Certificate extends CryptoCertificate implements ICryptoX509Cer
   public get subjectName() {
     return nameToString(this.getData().subject);
   }
-  public type = "x509";
+  public type: core.CryptoCertificateType = "x509";
 
   public publicKey: CryptoKey;
 
@@ -274,12 +275,12 @@ export class X509Certificate extends CryptoCertificate implements ICryptoX509Cer
 
 // X509CertificateRequest
 
-export class X509CertificateRequest extends CryptoCertificate implements ICryptoX509CertificateRequest {
+export class X509CertificateRequest extends CryptoCertificate implements core.CryptoX509CertificateRequest {
 
   public get subjectName() {
     return nameToString(this.getData().subject);
   }
-  public type = "request";
+  public type: core.CryptoCertificateType = "request";
 
   public publicKey: CryptoKey;
 

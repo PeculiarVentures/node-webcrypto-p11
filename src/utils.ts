@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import { Session, Slot, SlotFlag } from "graphene-pk11";
 import { Convert } from "pvtsutils";
+import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
 
 export interface HashedAlgorithm extends Algorithm {
@@ -16,11 +17,11 @@ export function b64UrlDecode(b64url: string): Buffer {
 }
 
 /**
- * Prepare array of data before it's using
+ * Converts BufferSource to Buffer
  * @param data Array which must be prepared
  */
-export function prepareData(data: NodeBufferSource): Buffer {
-  return ab2b(data);
+export function prepareData(data: BufferSource): Buffer {
+  return Buffer.from(BufferSourceConverter.toArrayBuffer(data));
 }
 
 export function isHashedAlgorithm(data: any): data is HashedAlgorithm {
@@ -44,21 +45,13 @@ export function prepareAlgorithm(algorithm: AlgorithmIdentifier): Algorithm {
 }
 
 /**
- * Converts ArrayBuffer to Buffer
- * @param ab ArrayBuffer value which must be converted to Buffer
- */
-function ab2b(ab: NodeBufferSource) {
-  return Buffer.from(ab as any);
-}
-
-/**
  * Calculates digest for given data
  * @param algorithm
  * @param data
  */
-export function digest(algorithm: string, data: NodeBufferSource): Buffer {
+export function digest(algorithm: string, data: BufferSource): Buffer {
   const hash = crypto.createHash(algorithm.replace("-", ""));
-  hash.update(prepareData(data));
+  hash.update(prepareData(Buffer.from(BufferSourceConverter.toArrayBuffer(data))));
   return hash.digest();
 }
 

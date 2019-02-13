@@ -178,7 +178,7 @@ export class AesCrypto {
         session.slot.module.cryptokiVersion.minor >= 40) {
         AesGcmParamsClass = graphene.AesGcm240Params;
       }
-      const params = new AesGcmParamsClass(utils.prepareData(algorithm.iv), aad, algorithm.tagLength || 128);
+      const params = new AesGcmParamsClass(utils.prepareData(algorithm.iv), Buffer.from(aad), algorithm.tagLength || 128);
       return { name: "AES_GCM", params };
     } else if (this.isAesCBC(algorithm)) {
       return { name: "AES_CBC_PAD", params: utils.prepareData(algorithm.iv) };
