@@ -3,23 +3,16 @@
         "tslint:recommended"
     ],
     "rules": {
-        "interface-name": [
-            false
-        ],
+        "interface-name": false,
         "prefer-const": true,
         "no-var-requires": false,
         "object-literal-sort-keys": false,
         "no-bitwise": false,
         "forin": false,
         "no-shadowed-variable": false,
-        "max-line-length": [
-            false
-        ],
-        "max-classes-per-file": [
-            false
-        ],
-        "no-console": [
-            false
-        ]
+        "max-line-length": false,
+        "max-classes-per-file": false,
+        "no-console": false,
+        "no-reference": false
     }
 }
