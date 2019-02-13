@@ -13,6 +13,7 @@ coverage
 *.log
 
 # Test
+test/
 /test*.js
 
 # build

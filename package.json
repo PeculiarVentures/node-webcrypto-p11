@@ -1,26 +1,19 @@
 {
   "name": "node-webcrypto-p11",
-  "version": "1.2.4",
+  "version": "2.0.0",
   "description": "A WebCrypto Polyfill built on PKCS11",
-  "main": "built/index.js",
+  "main": "build/index.js",
   "types": "index.d.ts",
-  "engineStrict": true,
   "scripts": {
-    "clean": "rm -rf built/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",
     "prepare": "npm run build",
-    "test": "npm run test:softhsm && npm run test:nss",
+    "test": "mocha",
     "test:softhsm": "mocha",
     "test:nss": "PV_CRYPTO=nss mocha",
-    "build": "npm run build:es5",
-    "build:es5": "tsc",
-    "build:es2015": "tsc --module es2015 --target es2015",
-    "build:source": "tsc --sourceMap",
+    "build": "tsc",
+    "lint": "tslint 'src/**/*.ts'",
+    "prepub": "npm run lint && npm run build",
     "pub": "npm version patch && npm publish && git push",
-    "sync": "git ac && git pull --rebase && git push",
     "coverage": "nyc npm test",
-    "precoveragehtml": "npm run coverage",
-    "coveragehtml": "nyc report -r html",
-    "predev": "if [ ! -f coverage/index.html ]; then mkdir coverage; cp .waiting.html coverage/index.html; fi",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
@@ -62,6 +55,7 @@
     "nyc": "^13.2.0",
     "pvtsutils": "^1.0.3",
     "ts-node": "^8.0.2",
+    "tslint": "^5.12.1",
     "typescript": "^3.3.3"
   },
   "nyc": {

@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
-        "target": "esnext",
+        "target": "es6",
         "noUnusedLocals": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "rootDir": "lib",
-        "outDir": "built",
+        "rootDir": "src",
+        "outDir": "build",
         "allowSyntheticDefaultImports": true,
         "removeComments": true,
         "declaration": false,
