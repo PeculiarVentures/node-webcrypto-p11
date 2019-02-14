@@ -158,7 +158,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public get subjectName() {
     return nameToString(this.getData().subject);
   }
-  public type: core.CryptoCertificateType = "x509";
+  public type: "x509" = "x509";
 
   public publicKey: CryptoKey;
 
@@ -280,7 +280,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   public get subjectName() {
     return nameToString(this.getData().subject);
   }
-  public type: core.CryptoCertificateType = "request";
+  public type: "request" = "request";
 
   public publicKey: CryptoKey;
 

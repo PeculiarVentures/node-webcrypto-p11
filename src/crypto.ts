@@ -18,7 +18,7 @@ import * as utils from "./utils";
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class Crypto implements core.Crypto {
+export class Crypto implements core.Crypto, core.CryptoStorages {
 
   public info: IProvider;
   public subtle: SubtleCrypto;
