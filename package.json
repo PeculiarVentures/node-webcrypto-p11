@@ -1,26 +1,19 @@
 {
   "name": "node-webcrypto-p11",
-  "version": "1.2.4",
+  "version": "2.0.1",
   "description": "A WebCrypto Polyfill built on PKCS11",
-  "main": "built/index.js",
+  "main": "build/index.js",
   "types": "index.d.ts",
-  "engineStrict": true,
   "scripts": {
-    "clean": "rm -rf built/ coverage/ .nyc_output/ npm-debug.log npm-debug.log.*",
     "prepare": "npm run build",
-    "test": "npm run test:softhsm && npm run test:nss",
-    "test:softhsm": "mocha test",
-    "test:nss": "PV_CRYPTO=nss mocha test/aes && PV_CRYPTO=nss mocha test/ec",
-    "build": "npm run build:es5",
-    "build:es5": "tsc",
-    "build:es2015": "tsc --module es2015 --target es2015",
-    "build:source": "tsc --sourceMap",
+    "test": "mocha",
+    "test:softhsm": "mocha",
+    "test:nss": "PV_CRYPTO=nss mocha",
+    "build": "tsc",
+    "lint": "tslint 'src/**/*.ts'",
+    "prepub": "npm run lint && npm run build",
     "pub": "npm version patch && npm publish && git push",
-    "sync": "git ac && git pull --rebase && git push",
     "coverage": "nyc npm test",
-    "precoveragehtml": "npm run coverage",
-    "coveragehtml": "nyc report -r html",
-    "predev": "if [ ! -f coverage/index.html ]; then mkdir coverage; cp .waiting.html coverage/index.html; fi",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
@@ -28,11 +21,11 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "asn1js": "^2.0.20",
-    "graphene-pk11": "^2.0.34",
-    "pkijs": "^2.1.55",
-    "tslib": "^1.9.2",
-    "webcrypto-core": "^0.1.22"
+    "asn1js": "^2.0.21",
+    "graphene-pk11": "^2.1.1",
+    "pkijs": "^2.1.74",
+    "tslib": "^1.9.3",
+    "webcrypto-core": "^1.0.4"
   },
   "keywords": [
     "crypto",
@@ -55,12 +48,30 @@
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
     "@types/asn1js": "0.0.1",
-    "@types/node": "^10.1.4",
+    "@types/node": "^10.12.24",
     "babel-polyfill": "^6.26.0",
-    "coveralls": "^3.0.1",
+    "coveralls": "^3.0.2",
     "mocha": "^5.2.0",
-    "nyc": "^11.8.0",
-    "pvtsutils": "^1.0.2",
-    "typescript": "^2.8.3"
+    "nyc": "^13.2.0",
+    "pvtsutils": "^1.0.3",
+    "ts-node": "^8.0.2",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.3"
+  },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "**/*.d.ts"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ]
   }
 }
