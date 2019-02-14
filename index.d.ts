@@ -43,10 +43,25 @@ export interface ProviderInfo {
   isHardware: boolean;
 }
 
-export declare class Crypto implements core.NativeCrypto, core.CryptoStorages {
+export declare const SubtleCrypto: {
+  readonly prototype: core.NativeSubtleCrypto;
+  new(crypto: Crypto): core.NativeSubtleCrypto;
+};
+
+export declare const KeyStorage: {
+  readonly prototype: core.CryptoKeyStorage
+  new(crypto: Crypto): core.CryptoKeyStorage;
+};
+
+export declare const CertificateStorage: {
+  readonly prototype: core.CryptoCertificateStorage;
+  new(crypto: Crypto): core.CryptoCertificateStorage;
+};
+
+export class Crypto implements core.NativeCrypto, core.CryptoStorages {
   public keyStorage: core.CryptoKeyStorage;
   public certStorage: core.CryptoCertificateStorage;
-  public subtle: SubtleCrypto;
+  public subtle: core.NativeSubtleCrypto;
 
   public info: ProviderInfo;
   public isReadWrite: boolean;
@@ -59,7 +74,7 @@ export declare class Crypto implements core.NativeCrypto, core.CryptoStorages {
    */
   constructor(props: CryptoParams);
 
-  public getRandomValues<T extends Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView>(array: T): T;
+  public getRandomValues<T extends Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | null>(array: T): T;
 
   public open(rw?: boolean): void;
   public reset(): void;
