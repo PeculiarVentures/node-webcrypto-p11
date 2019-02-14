@@ -8,11 +8,6 @@ export interface ITemplatePair {
   publicKey: ITemplate;
 }
 
-export interface CryptoKeyPair extends NativeCryptoKey {
-  privateKey: CryptoKey;
-  publicKey: CryptoKey;
-}
-
 export class CryptoKey<T extends KeyAlgorithm = KeyAlgorithm> extends core.CryptoKey {
 
   public static getID(p11Key: Key) {

@@ -1,10 +1,6 @@
-type NativeCrypto = Crypto;
-type NativeSubtleCrypto = SubtleCrypto;
-type NativeCryptoKey = CryptoKey;
-
-interface P11WebCryptoParams {
+interface CryptoParams {
     /**
-     * Path to labrary
+     * Path to library
      */
     library: string;
     /**
@@ -30,12 +26,7 @@ interface P11WebCryptoParams {
     libraryParameters?: string;
 }
 
-interface IModule {
-    name: string;
-    providers: IProvider[];
-}
-
-interface IProvider {
+interface ProviderInfo {
     id: string;
     name: string;
     reader: string;

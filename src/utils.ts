@@ -72,7 +72,7 @@ export function getProviderInfo(slot: Slot) {
   }
 
   const token = slot.getToken();
-  const provider: IProvider = {
+  const provider: ProviderInfo = {
     id: calculateProviderID(slot),
     slot: index,
     name: token.label,

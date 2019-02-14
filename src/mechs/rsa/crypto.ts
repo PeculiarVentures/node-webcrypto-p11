@@ -1,7 +1,7 @@
 import { ITemplate, KeyGenMechanism, KeyType, ObjectClass, PrivateKey, PublicKey } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
-import { CryptoKey, CryptoKeyPair, ITemplatePair } from "../../key";
+import { CryptoKey, ITemplatePair } from "../../key";
 import { P11Session } from "../../p11_session";
 import * as utils from "../../utils";
 import { RsaCryptoKey } from "./key";

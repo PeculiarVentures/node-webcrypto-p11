@@ -20,7 +20,7 @@ import * as utils from "./utils";
  */
 export class Crypto implements core.Crypto, core.CryptoStorages {
 
-  public info: IProvider;
+  public info: ProviderInfo;
   public subtle: SubtleCrypto;
 
   public keyStorage: KeyStorage;
@@ -37,11 +37,9 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
 
   /**
    * Creates an instance of WebCrypto.
-   * @param {P11WebCryptoParams} props PKCS11 module init parameters
-   *
-   * @memberOf WebCrypto
+   * @param props PKCS11 module init parameters
    */
-  constructor(props: P11WebCryptoParams) {
+  constructor(props: CryptoParams) {
     const mod = Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {
