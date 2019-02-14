@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { CryptoKey } from "../src";
-import { CryptoKeyPair } from "../src/key";
 import { crypto } from "./config";
 import { isNSS } from "./helper";
 

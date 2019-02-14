@@ -134,6 +134,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
     }
   }
 
+  public async setItem(data: core.NativeCryptoKey): Promise<string>;
   public async setItem(data: CryptoKey) {
     if (!(data instanceof CryptoKey)) {
       throw new core.CryptoError("Parameter 1 is not P11CryptoKey");
