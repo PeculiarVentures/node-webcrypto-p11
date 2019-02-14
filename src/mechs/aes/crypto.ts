@@ -3,18 +3,17 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import * as utils from "../../utils";
 
 export class AesCrypto {
 
-  public static async generateKey(session: P11Session, algorithm: AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async generateKey(session: graphene.Session, algorithm: AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       const template = this.createTemplate(session!, algorithm, extractable, keyUsages);
       template.valueLen = algorithm.length >> 3;
 
       // PKCS11 generation
-      session.value.generateKey(KeyGenMechanism.AES, template, (err, aesKey) => {
+      session.generateKey(KeyGenMechanism.AES, template, (err, aesKey) => {
         try {
           if (err) {
             reject(new core.CryptoError(`Aes: Can not generate new key\n${err.message}`));
@@ -28,7 +27,7 @@ export class AesCrypto {
     });
   }
 
-  public static async exportKey(session: P11Session, format: string, key: CryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+  public static async exportKey(session: graphene.Session, format: string, key: CryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     const template = key.key.getAttribute({ value: null, valueLen: null });
     switch (format.toLowerCase()) {
       case "jwk":
@@ -49,7 +48,7 @@ export class AesCrypto {
     }
   }
 
-  public static async importKey(session: P11Session, format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: any, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async importKey(session: graphene.Session, format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: any, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -83,12 +82,12 @@ export class AesCrypto {
     template.value = Buffer.from(value);
 
     // create session object
-    const sessionObject = session.value.create(template);
+    const sessionObject = session.create(template);
     const key = new CryptoKey(sessionObject.toType<SecretKey>(), aesAlg);
     return key;
   }
 
-  public static async encrypt(session: P11Session, padding: boolean, algorithm: Algorithm, key: CryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public static async encrypt(session: graphene.Session, padding: boolean, algorithm: Algorithm, key: CryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     // add padding if needed
     if (padding) {
       const blockLength = 16;
@@ -101,7 +100,7 @@ export class AesCrypto {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       const enc = Buffer.alloc(this.getOutputBufferSize(key.algorithm as AesKeyAlgorithm, true, data.byteLength));
       const mechanism = this.wc2pk11(session, algorithm);
-      session.value.createCipher(mechanism, key.key)
+      session.createCipher(mechanism, key.key)
         .once(Buffer.from(data), enc, (err, data2) => {
           if (err) {
             reject(err);
@@ -112,11 +111,11 @@ export class AesCrypto {
     });
   }
 
-  public static async decrypt(session: P11Session, padding: boolean, algorithm: Algorithm, key: CryptoKey, data: Uint8Array): Promise<ArrayBuffer> {
+  public static async decrypt(session: graphene.Session, padding: boolean, algorithm: Algorithm, key: CryptoKey, data: Uint8Array): Promise<ArrayBuffer> {
     const dec = await new Promise<Buffer>((resolve, reject) => {
       const buf = Buffer.alloc(this.getOutputBufferSize(key.algorithm as AesKeyAlgorithm, false, data.length));
       const mechanism = this.wc2pk11(session, algorithm);
-      session.value.createDecipher(mechanism, key.key)
+      session.createDecipher(mechanism, key.key)
         .once(Buffer.from(data), buf, (err, data2) => {
           if (err) {
             reject(err);
@@ -136,9 +135,9 @@ export class AesCrypto {
     }
   }
 
-  protected static createTemplate(session: P11Session, alg: AesKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplate {
+  protected static createTemplate(session: graphene.Session, alg: AesKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplate {
 
-    const id = utils.GUID(session.value);
+    const id = utils.GUID(session);
     return {
       token: !!process.env.WEBCRYPTO_PKCS11_TOKEN,
       sensitive: !!process.env.WEBCRYPTO_PKCS11_SENSITIVE,
@@ -169,7 +168,7 @@ export class AesCrypto {
     return algorithm.name.toUpperCase() === "AES-ECB";
   }
 
-  protected static wc2pk11(session: P11Session, algorithm: Algorithm) {
+  protected static wc2pk11(session: graphene.Session, algorithm: Algorithm) {
     if (this.isAesGCM(algorithm)) {
       const aad = algorithm.additionalData ? utils.prepareData(algorithm.additionalData) : undefined;
       let AesGcmParamsClass = graphene.AesGcmParams;

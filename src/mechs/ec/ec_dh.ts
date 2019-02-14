@@ -1,19 +1,19 @@
 import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
+import { Crypto } from "../../crypto";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import { EcCrypto } from "./crypto";
 import { EcCryptoKey } from "./key";
 
 export class EcdhProvider extends core.EcdhProvider {
 
-  constructor(private session: P11Session) {
+  constructor(private crypto: Crypto) {
     super();
   }
 
   public async onGenerateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
     const key = await EcCrypto.generateKey(
-      this.session,
+      this.crypto.session,
       {
         ...algorithm,
         name: this.name,
@@ -25,11 +25,11 @@ export class EcdhProvider extends core.EcdhProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    return EcCrypto.exportKey(this.session, format, key);
+    return EcCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    const key = await EcCrypto.importKey(this.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 
@@ -68,7 +68,7 @@ export class EcdhProvider extends core.EcdhProvider {
       };
       // derive key
       const ecPoint = (algorithm.public as EcCryptoKey).key.getAttribute({ pointEC: null }).pointEC!;
-      this.session.value.deriveKey(
+      this.crypto.session.deriveKey(
         {
           name: "ECDH1_DERIVE",
           params: new graphene.EcdhParams(

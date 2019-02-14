@@ -4,10 +4,9 @@
 import * as core from "webcrypto-core";
 const WebCryptoError = core.CryptoError;
 
-import { Mechanism, Module, SessionFlag, TokenFlag } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
-import { P11Session } from "./p11_session";
 import { SubtleCrypto } from "./subtle";
 import * as utils from "./utils";
 
@@ -29,7 +28,26 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
   public isLoggedIn: boolean;
   public isLoginRequired: boolean;
 
-  public session = new P11Session();
+  /**
+   * PKCS11 Module
+   * @internal
+   */
+  public module: graphene.Module;
+  /**
+   * PKCS11 Slot
+   * @internal
+   */
+  public slot: graphene.Slot;
+  /**
+   * PKCS11 Token
+   * @internal
+   */
+  public token: graphene.Token;
+  /**
+   * PKCS11 token
+   * @internal
+   */
+  public session: graphene.Session;
 
   protected name?: string;
 
@@ -40,7 +58,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    * @param props PKCS11 module init parameters
    */
   constructor(props: CryptoParams) {
-    const mod = Module.load(props.library, props.name || props.library);
+    const mod = graphene.Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {
       if (props.libraryParameters) {
@@ -62,9 +80,9 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (!(0 <= slotIndex && slotIndex < slots.length)) {
       throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
     }
-    this.session.slot = slots.items(slotIndex);
-    this.session.token = this.session.slot.getToken();
-    this.isLoginRequired = !!(this.session.token.flags & TokenFlag.LOGIN_REQUIRED);
+    this.slot = slots.items(slotIndex);
+    this.token = this.slot.getToken();
+    this.isLoginRequired = !!(this.token.flags & graphene.TokenFlag.LOGIN_REQUIRED);
     this.isLoggedIn = !this.isLoginRequired;
     this.isReadWrite = !!props.readWrite;
     this.open(props.readWrite);
@@ -73,21 +91,21 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
       this.login(props.pin);
     }
     for (const i in props.vendors!) {
-      Mechanism.vendor(props.vendors![i]);
+      graphene.Mechanism.vendor(props.vendors![i]);
     }
 
-    this.subtle = new SubtleCrypto(this.session);
+    this.subtle = new SubtleCrypto(this);
     this.keyStorage = new KeyStorage(this);
     this.certStorage = new CertificateStorage(this);
   }
 
   public open(rw?: boolean) {
-    let flags = SessionFlag.SERIAL_SESSION;
+    let flags = graphene.SessionFlag.SERIAL_SESSION;
     if (rw) {
-      flags |= SessionFlag.RW_SESSION;
+      flags |= graphene.SessionFlag.RW_SESSION;
     }
-    this.session.value = this.session.slot.open(flags);
-    this.info = utils.getProviderInfo(this.session.slot);
+    this.session = this.slot.open(flags);
+    this.info = utils.getProviderInfo(this.slot);
     if (this.name) {
       this.info.name = this.name;
     }
@@ -97,7 +115,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (this.isLoggedIn && this.isLoginRequired) {
       this.logout();
     }
-    this.session.value.close();
+    this.session.close();
 
     this.open(this.isReadWrite);
   }
@@ -108,7 +126,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     }
 
     try {
-      this.session.value.login(pin);
+      this.session.login(pin);
     } catch (error) {
       if (!/CKR_USER_ALREADY_LOGGED_IN\:256/.test(error.message)) {
         throw error;
@@ -124,7 +142,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     }
 
     try {
-      this.session.value.logout();
+      this.session.logout();
     } catch (error) {
       if (!/CKR_USER_NOT_LOGGED_IN\:257/.test(error.message)) {
         throw error;
@@ -143,7 +161,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (array.byteLength > 65536) {
       throw new core.CryptoError(`Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (${array.byteLength}) exceeds the number of bytes of entropy available via this API (65536).`);
     }
-    const bytes = new Uint8Array(this.session.value.generateRandom(array.byteLength));
+    const bytes = new Uint8Array(this.session.generateRandom(array.byteLength));
     (array as unknown as Uint8Array).set(bytes);
     return array;
   }
@@ -153,10 +171,10 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    */
   public close() {
     if (this.initialized) {
-      this.session.value.logout();
-      this.session.value.close();
-      this.session.module.finalize();
-      this.session.module.close();
+      this.session.logout();
+      this.session.close();
+      this.module.finalize();
+      this.module.close();
     }
   }
 }

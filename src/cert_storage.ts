@@ -29,7 +29,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
   public async keys() {
     const keys: string[] = [];
     TEMPLATES.forEach((template) => {
-      this.crypto.session.value.find(template, (obj) => {
+      this.crypto.session.find(template, (obj) => {
         const item = obj.toType<any>();
         const id = CryptoCertificate.getID(item);
         keys.push(id);
@@ -41,7 +41,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
   public async clear() {
     const objects: SessionObject[] = [];
     TEMPLATES.forEach((template) => {
-      this.crypto.session.value.find(template, (obj) => {
+      this.crypto.session.find(template, (obj) => {
         objects.push(obj);
       });
     });
@@ -90,7 +90,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
     }
     // don't copy object from token
     if (!data.p11Object.token) {
-      const obj = this.crypto.session.value.copy(data.p11Object, {
+      const obj = this.crypto.session.copy(data.p11Object, {
         token: true,
       });
       return CryptoCertificate.getID(obj.toType<any>());
@@ -183,7 +183,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
   protected getItemById(id: string) {
     let object: SessionObject = null;
     TEMPLATES.forEach((template) => {
-      this.crypto.session.value.find(template, (obj) => {
+      this.crypto.session.find(template, (obj) => {
         const item = obj.toType<any>();
         if (id === CryptoCertificate.getID(item)) {
           object = item;

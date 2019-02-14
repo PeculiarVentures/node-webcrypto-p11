@@ -182,7 +182,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
 
     const label = this.getName();
 
-    this.p11Object = this.crypto.session.value.create({
+    this.p11Object = this.crypto.session.create({
       id: hashSPKI,
       label,
       class: ObjectClass.CERTIFICATE,
@@ -308,7 +308,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
 
     const hashSPKI = this.publicKey.p11Object.id;
 
-    this.p11Object = this.crypto.session.value.create({
+    this.p11Object = this.crypto.session.create({
       objectId: hashSPKI,
       application: "webcrypto-p11",
       class: ObjectClass.DATA,

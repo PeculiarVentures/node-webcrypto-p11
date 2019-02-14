@@ -1,7 +1,7 @@
 import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
+import { Crypto } from "../../crypto";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import { EcCrypto } from "./crypto";
 import { EcCryptoKey } from "./key";
 
@@ -9,13 +9,13 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public namedCurves = ["P-256", "P-384", "P-521", "K-256"];
 
-  constructor(private session: P11Session) {
+  constructor(private crypto: Crypto) {
     super();
   }
 
   public async onGenerateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
     const key = await EcCrypto.generateKey(
-      this.session,
+      this.crypto.session,
       {
         ...algorithm,
         name: this.name,
@@ -30,11 +30,11 @@ export class EcdsaProvider extends core.EcdsaProvider {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
-      mechanism.name = EcCrypto.getAlgorithm(this.session, mechanism.name);
+      mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
       if (mechanism.name === "ECDSA") {
         buf = EcCrypto.prepareData((algorithm.hash as Algorithm).name, buf);
       }
-      this.session.value.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      this.crypto.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -48,11 +48,11 @@ export class EcdsaProvider extends core.EcdsaProvider {
     return new Promise<boolean>((resolve, reject) => {
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
-      mechanism.name = EcCrypto.getAlgorithm(this.session, mechanism.name);
+      mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
       if (mechanism.name === "ECDSA") {
         buf = EcCrypto.prepareData((algorithm.hash as Algorithm).name, buf);
       }
-      this.session.value.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
+      this.crypto.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -63,11 +63,11 @@ export class EcdsaProvider extends core.EcdsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    return EcCrypto.exportKey(this.session, format, key);
+    return EcCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    const key = await EcCrypto.importKey(this.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 

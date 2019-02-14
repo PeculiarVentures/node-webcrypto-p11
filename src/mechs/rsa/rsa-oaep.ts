@@ -1,19 +1,19 @@
 import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
+import { Crypto } from "../../crypto";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import { RsaCrypto } from "./crypto";
 import { RsaCryptoKey } from "./key";
 
 export class RsaOaepProvider extends core.RsaOaepProvider {
 
-  constructor(private session: P11Session) {
+  constructor(private crypto: Crypto) {
     super();
   }
 
   public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
     const key = await RsaCrypto.generateKey(
-      this.session,
+      this.crypto.session,
       {
         ...algorithm,
         name: this.name,
@@ -29,7 +29,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
       const buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       const context = Buffer.alloc((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3);
-      this.session.value.createCipher(mechanism, key.key)
+      this.crypto.session.createCipher(mechanism, key.key)
         .once(buf, context, (err, data2) => {
           if (err) {
             reject(err);
@@ -45,7 +45,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
       const buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       const context = Buffer.alloc((key.algorithm as RsaHashedKeyAlgorithm).modulusLength >> 3);
-      this.session.value.createDecipher(mechanism, key.key)
+      this.crypto.session.createDecipher(mechanism, key.key)
         .once(buf, context, (err, data2) => {
           if (err) {
             reject(err);
@@ -57,11 +57,11 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    return RsaCrypto.exportKey(this.session, format, key);
+    return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    const key = await RsaCrypto.importKey(this.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 

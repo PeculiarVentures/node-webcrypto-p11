@@ -1,17 +1,17 @@
 import * as core from "webcrypto-core";
-import { P11Session } from "../../p11_session";
+import { Crypto } from "../../crypto";
 import { ShaCrypto } from "./crypto";
 
 export class Sha1Provider extends core.ProviderCrypto {
   public name = "SHA-1";
   public usages: KeyUsage[] = [];
 
-  constructor(public session: P11Session) {
+  constructor(public crypto: Crypto) {
     super();
   }
 
   public async onDigest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
-    return ShaCrypto.digest(this.session.value, algorithm, data);
+    return ShaCrypto.digest(this.crypto.session, algorithm, data);
   }
 
 }

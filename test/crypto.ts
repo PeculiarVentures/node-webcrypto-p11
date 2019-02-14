@@ -17,13 +17,13 @@ context("Crypto", () => {
   });
 
   it("reset", () => {
-    const currentHandle = crypto.session.value.handle.toString("hex");
+    const currentHandle = crypto.session.handle.toString("hex");
     crypto.reset();
 
     if (config.pin) {
       crypto.login(config.pin);
     }
-    const newHandle = crypto.session.value.handle.toString("hex");
+    const newHandle = crypto.session.handle.toString("hex");
     assert.equal(currentHandle !== newHandle, true, "handle of session wasn't changed");
   });
 

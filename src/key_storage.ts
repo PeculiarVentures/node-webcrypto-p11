@@ -18,7 +18,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   public async keys() {
     const keys: string[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.value.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
         const item = obj.toType<any>();
         keys.push(CryptoKey.getID(item));
       });
@@ -36,7 +36,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   public async clear() {
     const keys: SessionObject[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.value.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
         keys.push(obj);
       });
     });
@@ -143,7 +143,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
     // don't copy object from token
     if (!(this.hasItem(data) && p11Key.key.token)) {
-      const obj = this.crypto.session.value.copy(p11Key.key, {
+      const obj = this.crypto.session.copy(p11Key.key, {
         token: true,
       });
       return CryptoKey.getID(obj.toType<any>());
@@ -161,7 +161,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   protected getItemById(id: string) {
     let key: SessionObject = null;
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.value.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
         const item = obj.toType<any>();
         if (id === CryptoKey.getID(item)) {
           key = item;

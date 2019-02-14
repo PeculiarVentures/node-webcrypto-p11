@@ -2,7 +2,6 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 import { CryptoKey, ITemplatePair } from "../../key";
-import { P11Session } from "../../p11_session";
 import * as utils from "../../utils";
 import { EcCryptoKey } from "./key";
 import { EcUtils } from "./utils";
@@ -15,14 +14,14 @@ export class EcCrypto {
   public static publicKeyUsages = ["verify"];
   public static privateKeyUsages = ["sign", "deriveKey", "deriveBits"];
 
-  public static async generateKey(session: P11Session, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public static async generateKey(session: graphene.Session, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     return new Promise<CryptoKeyPair>((resolve, reject) => {
       const template = this.createTemplate(session!, algorithm, extractable, keyUsages);
 
       // EC params
       template.publicKey.paramsEC = this.getNamedCurve(algorithm.namedCurve).value;
       // PKCS11 generation
-      session.value.generateKeyPair(graphene.KeyGenMechanism.EC, template.publicKey, template.privateKey, (err, keys) => {
+      session.generateKeyPair(graphene.KeyGenMechanism.EC, template.publicKey, template.privateKey, (err, keys) => {
         try {
           if (err) {
             reject(err);
@@ -40,7 +39,7 @@ export class EcCrypto {
     });
   }
 
-  public static async exportKey(session: P11Session, format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+  public static async exportKey(session: graphene.Session, format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     switch (format.toLowerCase()) {
       case "jwk": {
         if (key.type === "private") {
@@ -73,7 +72,7 @@ export class EcCrypto {
     }
   }
 
-  public static async importKey(session: P11Session, format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async importKey(session: graphene.Session, format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk": {
         const jwk: any = keyData;
@@ -109,7 +108,7 @@ export class EcCrypto {
     }
   }
 
-  public static getAlgorithm(session: P11Session, p11AlgorithmName: string) {
+  public static getAlgorithm(session: graphene.Session, p11AlgorithmName: string) {
     const mechanisms = session.slot.getMechanisms();
     let EC: string;
     for (let i = 0; i < mechanisms.length; i++) {
@@ -161,16 +160,16 @@ export class EcCrypto {
     return graphene.NamedCurve.getByName(namedCurve);
   }
 
-  protected static importJwkPrivateKey(session: P11Session, jwk: JsonWebKey, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[]) {
+  protected static importJwkPrivateKey(session: graphene.Session, jwk: JsonWebKey, algorithm: EcKeyGenParams, extractable: boolean, keyUsages: string[]) {
     const namedCurve = this.getNamedCurve(algorithm.namedCurve);
     const template = this.createTemplate(session, algorithm, extractable, keyUsages).privateKey;
     template.paramsEC = namedCurve.value;
     template.value = utils.b64UrlDecode(jwk.d!);
-    const p11key = session.value.create(template).toType();
+    const p11key = session.create(template).toType();
     return new EcCryptoKey(p11key as any, algorithm);
   }
 
-  protected static importJwkPublicKey(session: P11Session, jwk: JsonWebKey, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
+  protected static importJwkPublicKey(session: graphene.Session, jwk: JsonWebKey, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
     const namedCurve = this.getNamedCurve(algorithm.namedCurve);
     const template = this.createTemplate(session, algorithm, extractable, keyUsages).publicKey;
     template.paramsEC = namedCurve.value;
@@ -181,7 +180,7 @@ export class EcCrypto {
       pointEc = EcUtils.encodePoint({ x: utils.b64UrlDecode(jwk.x!), y: utils.b64UrlDecode(jwk.y!) }, namedCurve);
     }
     template.pointEC = pointEc;
-    const p11key = session.value.create(template).toType();
+    const p11key = session.create(template).toType();
     return new EcCryptoKey(p11key as any, algorithm);
   }
 
@@ -219,9 +218,9 @@ export class EcCrypto {
     return jwk;
   }
 
-  protected static createTemplate(session: P11Session, alg: EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
+  protected static createTemplate(session: graphene.Session, alg: EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     const label = `EC-${alg.namedCurve}`;
-    const idKey = utils.GUID(session.value);
+    const idKey = utils.GUID(session);
     const keyType = graphene.KeyType.ECDSA;
     return {
       privateKey: {

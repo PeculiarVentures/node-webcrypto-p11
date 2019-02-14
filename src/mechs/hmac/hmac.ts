@@ -1,14 +1,14 @@
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
+import { Crypto } from "../../crypto";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import * as utils from "../../utils";
 import { HmacCryptoKey } from "./key";
 
 export class HmacProvider extends core.HmacProvider {
 
-  constructor(private session: P11Session) {
+  constructor(private crypto: Crypto) {
     super();
   }
 
@@ -22,7 +22,7 @@ export class HmacProvider extends core.HmacProvider {
       template.valueLen = algorithm.length << 3;
 
       // PKCS11 generation
-      this.session.value.generateKey(graphene.KeyGenMechanism.GENERIC_SECRET, template, (err, aesKey) => {
+      this.crypto.session.generateKey(graphene.KeyGenMechanism.GENERIC_SECRET, template, (err, aesKey) => {
         try {
           if (err) {
             reject(new core.CryptoError(`HMAC: Cannot generate new key\n${err.message}`));
@@ -39,7 +39,7 @@ export class HmacProvider extends core.HmacProvider {
   public async onSign(algorithm: Algorithm, key: HmacCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
-      this.session.value.createSign(mechanism, key.key).once(Buffer.from(data), (err, data2) => {
+      this.crypto.session.createSign(mechanism, key.key).once(Buffer.from(data), (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -52,7 +52,7 @@ export class HmacProvider extends core.HmacProvider {
   public async onVerify(algorithm: Algorithm, key: HmacCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
-      this.session.value.createVerify(mechanism, key.key).once(Buffer.from(data), Buffer.from(signature), (err, ok) => {
+      this.crypto.session.createVerify(mechanism, key.key).once(Buffer.from(data), Buffer.from(signature), (err, ok) => {
         if (err) {
           reject(err);
         } else {
@@ -88,7 +88,7 @@ export class HmacProvider extends core.HmacProvider {
     template.value = Buffer.from(value);
 
     // create session object
-    const sessionObject = this.session.value.create(template);
+    const sessionObject = this.crypto.session.create(template);
     const key = new HmacCryptoKey(sessionObject.toType<graphene.SecretKey>(), hmacAlg as HmacKeyAlgorithm);
     return key;
   }
@@ -121,7 +121,7 @@ export class HmacProvider extends core.HmacProvider {
   }
 
   protected createTemplate(alg: HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): graphene.ITemplate {
-    const id = utils.GUID(this.session.value);
+    const id = utils.GUID(this.crypto.session);
     return {
       token: !!process.env.WEBCRYPTO_PKCS11_TOKEN,
       sensitive: !!process.env.WEBCRYPTO_PKCS11_SENSITIVE,

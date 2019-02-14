@@ -1,19 +1,19 @@
 import { IAlgorithm } from "graphene-pk11";
 import * as core from "webcrypto-core";
+import { Crypto } from "../../crypto";
 import { CryptoKey } from "../../key";
-import { P11Session } from "../../p11_session";
 import { RsaCrypto } from "./crypto";
 import { RsaCryptoKey } from "./key";
 
 export class RsaSsaProvider extends core.RsaSsaProvider {
 
-  constructor(private session: P11Session) {
+  constructor(private crypto: Crypto) {
     super();
   }
 
   public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
     const key = await RsaCrypto.generateKey(
-      this.session,
+      this.crypto.session,
       {
         ...algorithm,
         name: this.name,
@@ -28,11 +28,11 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
-      mechanism.name = RsaCrypto.getAlgorithm(this.session, this.name, mechanism.name);
+      mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
       if (mechanism.name === "RSA_PKCS") {
         buf = RsaCrypto.prepareData((key as any).algorithm.hash.name, buf);
       }
-      this.session.value.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      this.crypto.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -46,11 +46,11 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
     return new Promise<boolean>((resolve, reject) => {
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
-      mechanism.name = RsaCrypto.getAlgorithm(this.session, this.name, mechanism.name);
+      mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
       if (mechanism.name === "RSA_PKCS") {
         buf = RsaCrypto.prepareData((key as any).algorithm.hash.name, buf);
       }
-      this.session.value.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
+      this.crypto.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -61,11 +61,11 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    return RsaCrypto.exportKey(this.session, format, key);
+    return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    const key = await RsaCrypto.importKey(this.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 
