@@ -30,7 +30,7 @@ context("Subtle", () => {
 
     });
 
-    context.only("import key", () => {
+    context("import key", () => {
 
       const spki = Buffer.from("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEoZMMqyfA16N6bvloFHmalk/SGMisr3zSXFZdR8F9UkaY7hF13hHiQtwp2YO+1zd7jwYi1Y7SMA9iUrC+ap2OCw==", "base64");
 
@@ -38,7 +38,6 @@ context("Subtle", () => {
         const key = await crypto.subtle.importKey("spki", spki, { name: "ECDSA", namedCurve: "P-256" } as EcKeyImportParams, true, ["verify"]);
 
         const id = await getId(key);
-        console.log(id);
         assert.equal((key as P11CryptoKey).key.id.toString("hex"), id);
         assert.equal((key as P11CryptoKey).id.includes(id), true);
       });
