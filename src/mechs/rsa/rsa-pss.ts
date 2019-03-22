@@ -12,7 +12,7 @@ export class RsaPssProvider extends core.RsaPssProvider {
     super();
   }
 
-  public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
+  public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await RsaCrypto.generateKey(
       this.crypto.session,
       {
