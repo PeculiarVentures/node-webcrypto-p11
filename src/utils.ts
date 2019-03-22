@@ -30,6 +30,10 @@ export function isHashedAlgorithm(data: any): data is HashedAlgorithm {
     && "hash" in data;
 }
 
+export function isCryptoKeyPair(data: any): data is CryptoKeyPair {
+  return data && data.privateKey && data.publicKey;
+}
+
 export function prepareAlgorithm(algorithm: AlgorithmIdentifier): Algorithm {
   if (typeof algorithm === "string") {
     return {
