@@ -1,6 +1,6 @@
 import { CryptoKey } from "../../key";
 
-export class RsaCryptoKey extends CryptoKey<RsaHashedKeyAlgorithm> {
+export class RsaCryptoKey extends CryptoKey<Pkcs11RsaHashedKeyAlgorithm> {
 
   protected onAssign() {
     this.algorithm.modulusLength = this.key.get("modulus").length << 3;

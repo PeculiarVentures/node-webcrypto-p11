@@ -3,6 +3,7 @@ import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate
 import * as core from "webcrypto-core";
 
 import { Convert } from "pvtsutils";
+import { Pkcs11ImportAlgorithms } from "./cert_storage";
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
 import { Pkcs11Object } from "./p11_object";
@@ -132,7 +133,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements core.Cry
     this.crypto = crypto;
   }
 
-  public abstract importCert(data: Buffer, algorithm: Algorithm, keyUsages: string[]): Promise<void>;
+  public abstract importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: string[]): Promise<void>;
   public abstract exportCert(): Promise<ArrayBuffer>;
   public abstract exportKey(): Promise<CryptoKey>;
   public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
@@ -169,7 +170,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public p11Object: P11X509Certificate;
   protected schema: any;
 
-  public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms , keyUsages: KeyUsage[]) {
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
@@ -190,7 +191,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       serial: Buffer.from(this.schema.serialNumber.toBER(false)),
       subject: Buffer.from(this.schema.subject.toSchema(true).toBER(false)),
       issuer: Buffer.from(this.schema.issuer.toSchema(true).toBER(false)),
-      token: false,
+      token: !!(algorithm.token),
       private: false,
       value: Buffer.from(data),
     }).toType<P11X509Certificate>();
@@ -297,14 +298,14 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param algorithm
    * @param keyUsages
    */
-  public async importCert(data: Buffer, algorithm: AlgorithmIdentifier, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms , keyUsages: KeyUsage[]) {
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
 
     const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
     const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm as string, true, keyUsages) as CryptoKey;
+    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
@@ -312,8 +313,8 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
       objectId: hashSPKI,
       application: "webcrypto-p11",
       class: ObjectClass.DATA,
-      label: "X509 Request",
-      token: false,
+      label: algorithm.label || "X509 Request",
+      token: !!(algorithm.token),
       private: false,
       value: Buffer.from(data),
     }).toType<P11Data>();

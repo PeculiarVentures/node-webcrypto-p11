@@ -2,7 +2,7 @@ import { KeyType, NamedCurve, ObjectClass, SecretKey, SessionObject } from "grap
 import * as core from "webcrypto-core";
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
-import { EcCryptoKey, RsaCryptoKey } from "./mechs";
+import { AesCryptoKey, EcCryptoKey, HmacCryptoKey, RsaCryptoKey } from "./mechs";
 import * as utils from "./utils";
 
 const OBJECT_TYPES = [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY, ObjectClass.SECRET_KEY];
@@ -51,12 +51,21 @@ export class KeyStorage implements core.CryptoKeyStorage {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
       const p11Key = subjectObject.toType<SecretKey>();
-      let alg: any;
+      let alg: Pkcs11KeyAlgorithm | undefined;
       if (algorithm) {
-        alg = utils.prepareAlgorithm(algorithm);
+        alg = {
+          ...utils.prepareAlgorithm(algorithm),
+          token: false,
+          sensitive: false,
+          label: "",
+        };
       } else {
-        // name
-        alg = {};
+        alg = {
+          name: "",
+          token: false,
+          sensitive: false,
+          label: "",
+        };
         switch (p11Key.type) {
           case KeyType.RSA: {
             if (p11Key.sign || p11Key.verify) {
@@ -64,7 +73,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             } else {
               alg.name = "RSA-OAEP";
             }
-            alg.hash = { name: "SHA-256" };
+            (alg as any).hash = { name: "SHA-256" };
             break;
           }
           case KeyType.EC: {
@@ -92,12 +101,13 @@ export class KeyStorage implements core.CryptoKeyStorage {
               default:
                 throw new Error(`Unsupported named curve for EC key '${pointEC.name}'`);
             }
-            alg.namedCurve = namedCurve;
+            (alg as any).namedCurve = namedCurve;
             break;
           }
+          case KeyType.GENERIC_SECRET:
           case KeyType.AES: {
             if (p11Key.sign || p11Key.verify) {
-              alg.name = "AES-HMAC";
+              alg.name = "HMAC";
             } else {
               alg.name = "AES-CBC";
             }
@@ -112,11 +122,19 @@ export class KeyStorage implements core.CryptoKeyStorage {
         case "RSASSA-PKCS1-V1_5":
         case "RSA-PSS":
         case "RSA-OAEP":
-          CryptoKeyClass = RsaCryptoKey as any;
+          CryptoKeyClass = RsaCryptoKey as typeof CryptoKey;
           break;
         case "ECDSA":
         case "ECDH":
-          CryptoKeyClass = EcCryptoKey as any;
+          CryptoKeyClass = EcCryptoKey as typeof CryptoKey;
+          break;
+        case "HMAC":
+          CryptoKeyClass = HmacCryptoKey as typeof CryptoKey;
+          break;
+        case "AES-CBC":
+        case "AES-ECB":
+        case "AES-GCM":
+          CryptoKeyClass = AesCryptoKey as typeof CryptoKey;
           break;
         default:
           CryptoKeyClass = CryptoKey;

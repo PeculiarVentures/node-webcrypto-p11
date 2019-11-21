@@ -4,6 +4,24 @@
 
 import * as core from "webcrypto-core";
 
+export interface Pkcs11KeyGenParams {
+  token?: boolean;
+  sensitive?: boolean;
+  label?: string;
+}
+
+export interface Pkcs11AesKeyGenParams extends AesKeyGenParams, Pkcs11KeyGenParams { }
+
+export interface Pkcs11HmacKeyGenParams extends HmacKeyGenParams, Pkcs11KeyGenParams { }
+
+export interface Pkcs11EcKeyGenParams extends EcKeyGenParams, Pkcs11KeyGenParams { }
+
+export interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyGenParams { }
+
+export interface Pkcs11RsaHashedKeyGenParams extends RsaHashedKeyGenParams, Pkcs11KeyGenParams { }
+
+export interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyGenParams { }
+
 export interface CryptoParams {
   /**
    * Path to library

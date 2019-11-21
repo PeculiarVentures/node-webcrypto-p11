@@ -15,6 +15,14 @@ context("Subtle", () => {
 
     context("generate key", () => {
 
+      before(async () => {
+        crypto.keyStorage.clear();
+      });
+
+      after(async () => {
+        crypto.keyStorage.clear();
+      });
+
       [
         { name: "RSA-PSS", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024 },
         { name: "ECDSA", namedCurve: "P-256" },
@@ -25,6 +33,31 @@ context("Subtle", () => {
           const id = await getId(keys.publicKey);
           assert.equal((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
           assert.equal((keys.publicKey as P11CryptoKey).id.includes(id), true);
+          assert.equal((keys.publicKey as P11CryptoKey).p11Object.token, false);
+          assert.equal((keys.publicKey as P11CryptoKey).p11Object.label === alg.name, false);
+          assert.equal((keys.privateKey as P11CryptoKey).p11Object.token, false);
+          assert.equal(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
+          assert.equal((keys.privateKey as P11CryptoKey).p11Object.label === alg.name, false);
+        });
+      });
+
+      context("pkcs11 attributes", () => {
+        [
+          { name: "RSA-PSS", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024, token: true, sensitive: true, label: "RSA-PSS" },
+          { name: "ECDSA", namedCurve: "P-256", token: true, sensitive: true, label: "ECDSA" },
+        ].map((alg) => {
+          it(alg.name, async () => {
+            const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
+
+            const id = await getId(keys.publicKey);
+            assert.equal((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
+            assert.equal((keys.publicKey as P11CryptoKey).id.includes(id), true);
+            assert.equal((keys.publicKey as P11CryptoKey).p11Object.token, true);
+            assert.equal((keys.publicKey as P11CryptoKey).p11Object.label, alg.name);
+            assert.equal((keys.privateKey as P11CryptoKey).p11Object.token, true);
+            assert.equal(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, true);
+            assert.equal((keys.privateKey as P11CryptoKey).p11Object.label, alg.name);
+          });
         });
       });
 
