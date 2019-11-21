@@ -13,6 +13,12 @@ const PkiJs = require("pkijs");
 
 PkiJs.CertificationRequest.prototype.getPublicKey = PkiJs.Certificate.prototype.getPublicKey;
 
+export interface Pkcs11CryptoCertificate extends CryptoCertificate {
+  token: boolean;
+  sensitive: boolean;
+  label: string;
+}
+
 /**
  * List of OIDs
  * Source: https://msdn.microsoft.com/ru-ru/library/windows/desktop/aa386991(v=vs.85).aspx
@@ -102,7 +108,7 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class CryptoCertificate extends Pkcs11Object implements core.CryptoCertificate {
+export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11CryptoCertificate {
 
   public static getID(p11Object: Storage) {
     let type: string;
@@ -125,6 +131,24 @@ export abstract class CryptoCertificate extends Pkcs11Object implements core.Cry
   }
   public type: core.CryptoCertificateType;
   public publicKey: CryptoKey;
+
+  public get token() {
+    try {
+      return this.p11Object.token;
+    } catch { /* nothing */ }
+    return false;
+  }
+
+  public get sensitive() {
+    return false;
+  }
+
+  public get label() {
+    try {
+      return this.p11Object.label;
+    } catch { /* nothing */ }
+    return "";
+  }
 
   protected crypto: Crypto;
 
@@ -170,22 +194,23 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public p11Object: P11X509Certificate;
   protected schema: any;
 
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms , keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
     const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
     const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages) as CryptoKey;
+    const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
+    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, keyAlg, true, keyUsages) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
-    const label = this.getName();
+    const certLabel = this.getName();
 
     this.p11Object = this.crypto.session.create({
       id: hashSPKI,
-      label,
+      label: algorithm.label || certLabel,
       class: ObjectClass.CERTIFICATE,
       certType: CertificateType.X_509,
       serial: Buffer.from(this.schema.serialNumber.toBER(false)),
@@ -298,14 +323,15 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param algorithm
    * @param keyUsages
    */
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms , keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
 
     const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
     const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages) as CryptoKey;
+    const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
+    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, keyAlg, true, keyUsages) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
