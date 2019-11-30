@@ -4,11 +4,12 @@
 
 import * as core from "webcrypto-core";
 
-export interface Pkcs11KeyGenParams {
+export interface Pkcs11Params {
   token?: boolean;
   sensitive?: boolean;
   label?: string;
 }
+export interface Pkcs11KeyGenParams extends Algorithm, Pkcs11Params { }
 
 export interface Pkcs11AesKeyGenParams extends AesKeyGenParams, Pkcs11KeyGenParams { }
 
@@ -16,11 +17,31 @@ export interface Pkcs11HmacKeyGenParams extends HmacKeyGenParams, Pkcs11KeyGenPa
 
 export interface Pkcs11EcKeyGenParams extends EcKeyGenParams, Pkcs11KeyGenParams { }
 
-export interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyGenParams { }
-
 export interface Pkcs11RsaHashedKeyGenParams extends RsaHashedKeyGenParams, Pkcs11KeyGenParams { }
 
-export interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyGenParams { }
+export interface Pkcs11KeyImportParams extends Algorithm, Pkcs11Params { }
+
+export interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyImportParams { }
+
+export interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyImportParams { }
+
+export interface Pkcs11HmacKeyImportParams extends HmacImportParams, Pkcs11KeyImportParams { }
+
+export interface Pkcs11AesKeyImportParams extends Algorithm, Pkcs11KeyImportParams { }
+
+export interface Pkcs11KeyAlgorithm extends KeyAlgorithm {
+  token: boolean;
+  sensitive: boolean;
+  label: string;
+}
+
+export interface Pkcs11RsaHashedKeyAlgorithm extends RsaHashedKeyAlgorithm, Pkcs11KeyAlgorithm { }
+
+export interface Pkcs11EcKeyAlgorithm extends EcKeyAlgorithm, Pkcs11KeyAlgorithm { }
+
+export interface Pkcs11AesKeyAlgorithm extends AesKeyAlgorithm, Pkcs11KeyAlgorithm { }
+
+export interface Pkcs11HmacKeyAlgorithm extends HmacKeyAlgorithm, Pkcs11KeyAlgorithm { }
 
 export interface CryptoParams {
   /**
@@ -61,25 +82,64 @@ export interface ProviderInfo {
   isHardware: boolean;
 }
 
-export declare const SubtleCrypto: {
-  readonly prototype: core.NativeSubtleCrypto;
-  new(crypto: Crypto): core.NativeSubtleCrypto;
-};
+export class SubtleCrypto implements core.NativeSubtleCrypto {
+  constructor(crypto: Crypto);
+  public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
+  public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): PromiseLike<ArrayBuffer>;
+  public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public digest(algorithm: string | Algorithm, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
+  public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
+  public exportKey(format: "jwk", key: CryptoKey): PromiseLike<JsonWebKey>;
+  public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): PromiseLike<ArrayBuffer>;
+  public exportKey(format: string, key: CryptoKey): PromiseLike<ArrayBuffer | JsonWebKey>;
+  public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey | CryptoKeyPair>;
+  public generateKey(algorithm: (RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair>;
+  public generateKey(algorithm: (Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public importKey(format: "raw" | "pkcs8" | "spki", keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public importKey(format: string, keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer | JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
+  public unwrapKey(format: string, wrappedKey: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
+  public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, signature: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<boolean>;
+  public wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): PromiseLike<ArrayBuffer>;
+}
 
-export declare const KeyStorage: {
-  readonly prototype: core.CryptoKeyStorage
-  new(crypto: Crypto): core.CryptoKeyStorage;
-};
+declare class KeyStorage implements core.CryptoKeyStorage {
+  public constructor(crypto: Crypto)
+  public getItem(index: string): Promise<CryptoKey>;
+  public getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
+  public keys(): Promise<string[]>;
+  public indexOf(item: CryptoKey): Promise<string | null>;
+  public setItem(item: CryptoKey): Promise<string>;
+  public hasItem(item: CryptoKey): Promise<boolean>;
+  public clear(): Promise<void>;
+  public removeItem(index: string): Promise<void>;
+}
 
-export declare const CertificateStorage: {
-  readonly prototype: core.CryptoCertificateStorage;
-  new(crypto: Crypto): core.CryptoCertificateStorage;
-};
+export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params
+
+export class CertificateStorage implements core.CryptoCertificateStorage {
+  public constructor(crypto: Crypto)
+  public getItem(index: string): Promise<CryptoCertificate>;
+  public getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<CryptoCertificate>;
+  public exportCert(format: core.CryptoCertificateFormat, item: core.CryptoCertificate): Promise<string | ArrayBuffer>;
+  public exportCert(format: "raw", item: CryptoCertificate): Promise<ArrayBuffer>;
+  public exportCert(format: "pem", item: CryptoCertificate): Promise<string>;
+  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<CryptoCertificate>;
+  public importCert(format: "raw", data: BufferSource, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<CryptoCertificate>;
+  public importCert(format: "pem", data: string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<CryptoCertificate>;
+  public keys(): Promise<string[]>;
+  public indexOf(item: CryptoCertificate): Promise<string | null>;
+  public setItem(item: CryptoCertificate): Promise<string>;
+  public hasItem(item: CryptoCertificate): Promise<boolean>;
+  public clear(): Promise<void>;
+  public removeItem(index: string): Promise<void>;
+}
 
 export class Crypto implements core.NativeCrypto, core.CryptoStorages {
-  public keyStorage: core.CryptoKeyStorage;
-  public certStorage: core.CryptoCertificateStorage;
-  public subtle: core.NativeSubtleCrypto;
+  public keyStorage: KeyStorage;
+  public certStorage: CertificateStorage;
+  public subtle: SubtleCrypto;
 
   public info: ProviderInfo;
   public isReadWrite: boolean;
@@ -103,9 +163,24 @@ export class Crypto implements core.NativeCrypto, core.CryptoStorages {
 
 export declare class CryptoKey extends core.CryptoKey {
   private constructor();
+  public algorithm: Pkcs11KeyAlgorithm;
 }
 
-export declare class CryptoCertificate implements core.CryptoCertificate {
+export interface CryptoKeyPair {
+  privateKey: CryptoKey;
+  publicKey: CryptoKey;
+}
+
+export interface Pkcs11CryptoCertificate extends core.CryptoCertificate {
+  token: boolean;
+  sensitive: boolean;
+  label: string;
+}
+
+export declare class CryptoCertificate implements core.CryptoCertificate, Pkcs11CryptoCertificate {
+  public readonly token: boolean;
+  public readonly sensitive: boolean;
+  public readonly label: string;
   public readonly type: core.CryptoCertificateType;
   public readonly publicKey: CryptoKey;
 }
