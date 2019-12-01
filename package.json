@@ -12,7 +12,11 @@
     "build": "tsc",
     "lint": "tslint 'src/**/*.ts'",
     "prepub": "npm run lint && npm run build",
-    "pub": "npm version patch && npm publish && git push",
+    "postpub": "git push && git push --tags origin master",
+    "pub": "npm version patch && npm publish",
+    "prepub:next": "npm run lint && npm run build",
+    "pub:next": "npm version prerelease --preid=next && npm publish --tag next",
+    "postpub:next": "git push",
     "coverage": "nyc npm test",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
