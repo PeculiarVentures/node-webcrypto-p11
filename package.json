@@ -1,6 +1,6 @@
 {
   "name": "node-webcrypto-p11",
-  "version": "2.0.3",
+  "version": "2.0.4-next.2",
   "description": "A WebCrypto Polyfill built on PKCS11",
   "main": "build/index.js",
   "types": "index.d.ts",
@@ -12,7 +12,11 @@
     "build": "tsc",
     "lint": "tslint 'src/**/*.ts'",
     "prepub": "npm run lint && npm run build",
-    "pub": "npm version patch && npm publish && git push",
+    "postpub": "git push && git push --tags origin master",
+    "pub": "npm version patch && npm publish",
+    "prepub:next": "npm run lint && npm run build",
+    "pub:next": "npm version prerelease --preid=next && npm publish --tag next",
+    "postpub:next": "git push",
     "coverage": "nyc npm test",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
@@ -21,11 +25,11 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "asn1js": "^2.0.22",
-    "graphene-pk11": "^2.1.2",
-    "pkijs": "^2.1.76",
-    "tslib": "^1.9.3",
-    "webcrypto-core": "^1.0.11"
+    "asn1js": "^2.0.26",
+    "graphene-pk11": "^2.1.3",
+    "pkijs": "^2.1.83",
+    "tslib": "^1.10.0",
+    "webcrypto-core": "^1.0.17"
   },
   "keywords": [
     "crypto",
@@ -48,14 +52,15 @@
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
     "@types/asn1js": "0.0.1",
-    "@types/node": "^10.12.24",
-    "coveralls": "^3.0.3",
-    "mocha": "^6.0.2",
-    "nyc": "^13.3.0",
-    "pvtsutils": "^1.0.4",
-    "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
-    "typescript": "^3.3.4000"
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.12.24",
+    "coveralls": "^3.0.9",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
+    "pvtsutils": "^1.0.9",
+    "ts-node": "^8.5.4",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.4"
   },
   "nyc": {
     "extension": [

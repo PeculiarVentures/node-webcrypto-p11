@@ -54,8 +54,8 @@ export class SubtleCrypto extends core.SubtleCrypto {
       const publicKey = keys.publicKey as P11CryptoKey;
       const privateKey = keys.privateKey as P11CryptoKey;
 
-      const raw = await this.exportKey("raw", publicKey);
-      const digest = utils.digest(ID_DIGEST, raw);
+      const raw = await this.exportKey("spki", publicKey);
+      const digest = utils.digest(ID_DIGEST, raw).slice(0, 16);
       publicKey.key.id = digest;
       publicKey.id = P11CryptoKey.getID(publicKey.key);
       privateKey.key.id = digest;
@@ -72,8 +72,8 @@ export class SubtleCrypto extends core.SubtleCrypto {
     if (key.type === "public" && extractable) {
       const publicKey = key as P11CryptoKey;
 
-      const raw = await this.exportKey("raw", publicKey);
-      const digest = utils.digest(ID_DIGEST, raw);
+      const raw = await this.exportKey("spki", publicKey);
+      const digest = utils.digest(ID_DIGEST, raw).slice(0, 16);
       publicKey.key.id = digest;
       publicKey.id = P11CryptoKey.getID(publicKey.key);
     }

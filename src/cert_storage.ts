@@ -10,6 +10,7 @@ const TEMPLATES = [
   { class: ObjectClass.DATA, token: true, label: "X509 Request" },
 ];
 
+export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params;
 export class CertificateStorage implements core.CryptoCertificateStorage {
 
   protected crypto: Crypto;
@@ -115,10 +116,10 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
     }
   }
 
-  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "raw", data: BufferSource, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "pem", data: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoCertificate> {
+  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
+  public importCert(format: "raw", data: BufferSource, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
+  public importCert(format: "pem", data: string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
+  public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Pkcs11ImportAlgorithms, usages: KeyUsage[]): Promise<CryptoCertificate> {
     let rawData: ArrayBuffer;
     let rawType: core.CryptoCertificateType | null = null;
 

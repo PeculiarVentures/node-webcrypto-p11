@@ -1,5 +1,7 @@
+import * as assert from "assert";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
+import { AesCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 import { testCrypto } from "./helper";
 
@@ -549,5 +551,41 @@ context("AES", () => {
     //#endregion
 
   ]);
+
+  context("token", () => {
+
+    it("generate", async () => {
+      const alg: Pkcs11AesKeyGenParams = {
+        name: "AES-CBC",
+        length: 128,
+        label: "custom",
+        token: true,
+        sensitive: true,
+      };
+
+      const key = await crypto.subtle.generateKey(alg, false, ["encrypt", "decrypt"]) as AesCryptoKey;
+
+      assert.equal(key.algorithm.token, true);
+      assert.equal(key.algorithm.label, alg.label);
+      assert.equal(key.algorithm.sensitive, true);
+    });
+
+    it("import", async () => {
+      const alg: Pkcs11AesKeyImportParams = {
+        name: "AES-CBC",
+        label: "custom",
+        token: true,
+        sensitive: true,
+      };
+      const raw = Buffer.from("1234567890abcdef1234567809abcdef");
+
+      const key = await crypto.subtle.importKey("raw", raw, alg, false, ["encrypt", "decrypt"]) as AesCryptoKey;
+
+      assert.equal(key.algorithm.token, true);
+      assert.equal(key.algorithm.label, alg.label);
+      assert.equal(key.algorithm.sensitive, true);
+    });
+
+  });
 
 });

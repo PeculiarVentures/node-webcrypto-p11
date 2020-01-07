@@ -11,13 +11,10 @@ export class EcdhProvider extends core.EcdhProvider {
     super();
   }
 
-  public async onGenerateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await EcCrypto.generateKey(
       this.crypto.session,
-      {
-        ...algorithm,
-        name: this.name,
-      },
+      { ...algorithm, name: this.name },
       extractable,
       keyUsages);
 

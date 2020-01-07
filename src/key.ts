@@ -8,7 +8,17 @@ export interface ITemplatePair {
   publicKey: ITemplate;
 }
 
-export class CryptoKey<T extends KeyAlgorithm = KeyAlgorithm> extends core.CryptoKey {
+export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extends core.CryptoKey {
+
+  public static defaultKeyAlgorithm() {
+    const alg: Pkcs11KeyAlgorithm = {
+      label: "",
+      name: "",
+      sensitive: false,
+      token: false,
+    };
+    return alg;
+  }
 
   public static getID(p11Key: Key) {
     let name: string;
@@ -40,7 +50,7 @@ export class CryptoKey<T extends KeyAlgorithm = KeyAlgorithm> extends core.Crypt
     return this.p11Object.toType<Key>();
   }
 
-  constructor(key: Key, alg: T) {
+  constructor(key: Key, alg: T | KeyAlgorithm) {
     super();
     this.p11Object = key;
     switch (key.class) {
@@ -56,8 +66,19 @@ export class CryptoKey<T extends KeyAlgorithm = KeyAlgorithm> extends core.Crypt
       default:
         throw new core.CryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
     }
-    this.algorithm = alg;
+    const { name, ...defaultAlg } = CryptoKey.defaultKeyAlgorithm();
+    this.algorithm = { ...alg, ...defaultAlg } as any;
     this.id = CryptoKey.getID(key);
+
+    try {
+      this.algorithm.label = key.label;
+    } catch { /*nothing*/ }
+    try {
+      this.algorithm.token = key.token;
+    } catch { /*nothing*/ }
+    try {
+      this.algorithm.sensitive = key.get("sensitive");
+    } catch { /*nothing*/ }
 
     this.onAssign();
   }
