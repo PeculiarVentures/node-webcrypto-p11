@@ -25,11 +25,11 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "asn1js": "^2.0.26",
-    "graphene-pk11": "^2.1.3",
-    "pkijs": "^2.1.83",
-    "tslib": "^1.10.0",
-    "webcrypto-core": "^1.0.17"
+    "@peculiar/asn1-schema": "^1.0.5",
+    "@peculiar/json-schema": "^1.1.10",
+    "graphene-pk11": "^2.1.6",
+    "tslib": "^1.11.1",
+    "webcrypto-core": "^1.0.19"
   },
   "keywords": [
     "crypto",
@@ -51,16 +51,18 @@
   },
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
+    "@peculiar/webcrypto-test": "^1.0.3",
     "@types/asn1js": "0.0.1",
-    "@types/mocha": "^5.2.7",
-    "@types/node": "^12.12.24",
-    "coveralls": "^3.0.9",
-    "mocha": "^6.2.2",
-    "nyc": "^14.1.1",
-    "pvtsutils": "^1.0.9",
-    "ts-node": "^8.5.4",
-    "tslint": "^5.20.1",
-    "typescript": "^3.7.4"
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^12.12.34",
+    "coveralls": "^3.0.11",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.1",
+    "pkijs": "^2.1.87",
+    "pvtsutils": "^1.0.10",
+    "ts-node": "^8.8.2",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
   },
   "nyc": {
     "extension": [
@@ -76,6 +78,15 @@
     "reporter": [
       "text-summary",
       "html"
+    ]
+  },
+  "mocha": {
+    "require": "ts-node/register",
+    "extension": [
+      "ts"
+    ],
+    "spec": [
+      "test/**/*.ts"
     ]
   }
 }

@@ -1,3 +1,5 @@
+import { AsnParser, AsnSerializer } from "@peculiar/asn1-schema";
+import { JsonParser, JsonSerializer } from "@peculiar/json-schema";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
@@ -6,8 +8,6 @@ import * as utils from "../../utils";
 import { EcCryptoKey } from "./key";
 import { EcUtils } from "./utils";
 
-const Asn1Js = require("asn1js");
-const pkijs = require("pkijs");
 export class EcCrypto {
 
   public static publicKeyUsages = ["verify"];
@@ -18,7 +18,7 @@ export class EcCrypto {
       const template = this.createTemplate(session!, algorithm, extractable, keyUsages);
 
       // EC params
-      template.publicKey.paramsEC = this.getNamedCurve(algorithm.namedCurve).value;
+      template.publicKey.paramsEC = this.getJsonNamedCurve(algorithm.namedCurve).value;
       // PKCS11 generation
       session.generateKeyPair(graphene.KeyGenMechanism.EC, template.publicKey, template.privateKey, (err, keys) => {
         try {
@@ -61,9 +61,8 @@ export class EcCrypto {
         if ((key.algorithm as EcKeyGenParams).namedCurve === "X25519") {
           return Convert.FromBase64Url(jwk.x);
         } else {
-          const publicKey = new pkijs.PublicKeyInfo();
-          publicKey.fromJSON(jwk);
-          return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+          const publicKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
+          return publicKey.value;
         }
       }
       default:
@@ -90,7 +89,7 @@ export class EcCrypto {
         return this.importJwkPrivateKey(session!, jwk, algorithm, extractable, keyUsages);
       }
       case "raw": {
-        const curve = this.getNamedCurve(algorithm.namedCurve);
+        const curve = this.getJsonNamedCurve(algorithm.namedCurve);
         const ecPoint = EcUtils.decodePoint(Buffer.from(keyData as Uint8Array), curve, false);
         const jwk: JsonWebKey = {
           kty: "EC",
@@ -127,7 +126,7 @@ export class EcCrypto {
     return utils.digest(hashAlgorithm.replace("-", ""), data);
   }
 
-  public static getNamedCurve(name: string): graphene.INamedCurve {
+  public static getJsonNamedCurve(name: string): graphene.INamedCurve {
     let namedCurve: string;
     switch (name) {
       case "P-192":
@@ -160,7 +159,7 @@ export class EcCrypto {
   }
 
   protected static importJwkPrivateKey(session: graphene.Session, jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
-    const namedCurve = this.getNamedCurve(algorithm.namedCurve);
+    const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
     const template = this.createTemplate(session, algorithm, extractable, keyUsages).privateKey;
     template.paramsEC = namedCurve.value;
     template.value = utils.b64UrlDecode(jwk.d!);
@@ -169,7 +168,7 @@ export class EcCrypto {
   }
 
   protected static importJwkPublicKey(session: graphene.Session, jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
-    const namedCurve = this.getNamedCurve(algorithm.namedCurve);
+    const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
     const template = this.createTemplate(session, algorithm, extractable, keyUsages).publicKey;
     template.paramsEC = namedCurve.value;
     let pointEc: Buffer;
@@ -188,7 +187,7 @@ export class EcCrypto {
       pointEC: null,
     });
     // TODO: lib.dom.d.ts has typedCurve
-    const curve = this.getNamedCurve((key.algorithm as EcKeyGenParams).namedCurve);
+    const curve = this.getJsonNamedCurve((key.algorithm as EcKeyGenParams).namedCurve);
     const ecPoint = EcUtils.decodePoint(pkey.pointEC!, curve, true);
     const jwk: JsonWebKey = {
       kty: "EC",
@@ -254,90 +253,60 @@ export class EcCrypto {
   }
 
   protected static spki2jwk(raw: ArrayBuffer): JsonWebKey {
-    const asn1Spki = Asn1Js.fromBER(raw);
-    const spki = new pkijs.PublicKeyInfo({ schema: asn1Spki.result });
+    const keyInfo = AsnParser.parse(raw, core.asn1.PublicKeyInfo);
 
-    if (spki.algorithm.algorithmId !== "1.2.840.10045.2.1") {
+    if (keyInfo.publicKeyAlgorithm.algorithm !== "1.2.840.10045.2.1") {
       throw new Error("SPKI is not EC public key");
     }
 
-    const algId = spki.algorithm.algorithmParams.valueBlock.toString();
-    let crvName = algId;
+    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.publicKeyAlgorithm.parameters, core.asn1.ObjectIdentifier));
 
-    switch (crvName) {
-      case "1.3.132.0.10": // K-256
-        crvName = "K-256";
-        break;
-      case "1.2.840.10045.3.1.7": // P-256
-        crvName = "P-256";
-        break;
-      case "1.3.132.0.34": // P-384
-        crvName = "P-384";
-        break;
-      case "1.3.132.0.35": // P-521
-        crvName = "P-521";
-        break;
-      default:
-        throw new Error(`Unsupported EC named curve '${crvName}'`);
-    }
-
-    const parsedKey = new pkijs.ECPublicKey({
-      namedCurve: algId === "1.3.132.0.10" ? "1.2.840.10045.3.1.7" : algId,
-      schema: spki.subjectPublicKey.valueBlock.valueHex,
-    });
+    const ecPublicKey = new core.asn1.EcPublicKey(keyInfo.publicKey);
+    const json = JsonSerializer.toJSON(ecPublicKey);
 
     return {
       kty: "EC",
-      crv: crvName,
-      x: Convert.ToBase64Url(parsedKey.x),
-      y: Convert.ToBase64Url(parsedKey.y),
+      crv: namedCurve,
+      ...json,
     };
   }
 
   protected static jwk2pkcs(jwk: JsonWebKey): ArrayBuffer {
-    const parsedKey = new pkijs.ECPrivateKey();
-    let coordinateLength = 0;
-
-    if ("crv" in jwk) {
-      switch (jwk.crv.toUpperCase()) {
-        case "K-256":
-          parsedKey.namedCurve = "1.3.132.0.10";
-          coordinateLength = 32;
-          break;
-        case "P-256":
-          parsedKey.namedCurve = "1.2.840.10045.3.1.7";
-          coordinateLength = 32;
-          break;
-        case "P-384":
-          parsedKey.namedCurve = "1.3.132.0.34";
-          coordinateLength = 48;
-          break;
-        case "P-521":
-          parsedKey.namedCurve = "1.3.132.0.35";
-          coordinateLength = 66;
-          break;
-        default:
-      }
-    } else {
+    if (!("crv" in jwk)) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }
+    const namedCurveId = EcCrypto.getNamedCurveId(jwk.crv);
 
-    ["d"].forEach((name) => {
-      if (name in jwk) {
-        parsedKey.privateKey = new Asn1Js.OctetString({ valueHex: this.getCoordinate((jwk as any)[name], coordinateLength) });
-      } else {
-        throw new Error(`Absent mandatory parameter '${name}'`);
-      }
-    });
+    const ecPrivateKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPrivateKey });
 
-    const pkcs8 = new pkijs.PrivateKeyInfo();
-    pkcs8.privateKeyAlgorithm = new pkijs.AlgorithmIdentifier({
-      algorithmId: "1.2.840.10045.2.1",
-      algorithmParams: new Asn1Js.ObjectIdentifier({ value: parsedKey.namedCurve }),
-    });
-    pkcs8.privateKey = new Asn1Js.OctetString({ valueHex: parsedKey.toSchema().toBER(false) });
+    const keyInfo = new core.asn1.PrivateKeyInfo();
+    keyInfo.privateKeyAlgorithm = new core.asn1.AlgorithmIdentifier();
+    keyInfo.privateKeyAlgorithm.algorithm = "1.2.840.10045.2.1";
+    keyInfo.privateKeyAlgorithm.parameters = AsnSerializer.serialize(namedCurveId);
+    keyInfo.privateKey = AsnSerializer.serialize(ecPrivateKey);
 
-    return pkcs8.toSchema().toBER(false);
+    return AsnSerializer.serialize(keyInfo);
+  }
+
+  private static getNamedCurveId(namedCurve: string) {
+    const namedCurveId = new core.asn1.ObjectIdentifier();
+    switch (namedCurve.toUpperCase()) {
+      case "K-256":
+        namedCurveId.value = "1.3.132.0.10";
+        break;
+      case "P-256":
+        namedCurveId.value = "1.2.840.10045.3.1.7";
+        break;
+      case "P-384":
+        namedCurveId.value = "1.3.132.0.34";
+        break;
+      case "P-521":
+        namedCurveId.value = "1.3.132.0.35";
+        break;
+      default:
+        throw new Error(`Unsupported EC named curve '${namedCurve}'`);
+    }
+    return namedCurveId;
   }
 
   protected static getCoordinate(b64: string, coordinateLength: number) {
@@ -350,91 +319,52 @@ export class EcCrypto {
   }
 
   protected static jwk2spki(jwk: JsonWebKey) {
-    const parsedKey = new pkijs.ECPublicKey();
-    let coordinateLength = 0;
-
-    if ("crv" in jwk) {
-      switch (jwk.crv.toUpperCase()) {
-        case "K-256":
-          parsedKey.namedCurve = "1.3.132.0.10";
-          coordinateLength = 32;
-          break;
-        case "P-256":
-          parsedKey.namedCurve = "1.2.840.10045.3.1.7";
-          coordinateLength = 32;
-          break;
-        case "P-384":
-          parsedKey.namedCurve = "1.3.132.0.34";
-          coordinateLength = 48;
-          break;
-        case "P-521":
-          parsedKey.namedCurve = "1.3.132.0.35";
-          coordinateLength = 66;
-          break;
-        default:
-      }
-    } else {
+    if (!("crv" in jwk)) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }
+    const namedCurveId = EcCrypto.getNamedCurveId(jwk.crv);
 
-    ["x", "y"].forEach((name) => {
-      if (name in jwk) {
-        parsedKey[name] = this.getCoordinate((jwk as any)[name], coordinateLength);
-      } else {
-        throw new Error(`Absent mandatory parameter '${name}'`);
-      }
-    });
+    const ecPublicKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
 
-    const spki = new pkijs.PublicKeyInfo();
-    spki.algorithm = new pkijs.AlgorithmIdentifier({
-      algorithmId: "1.2.840.10045.2.1",
-      algorithmParams: new Asn1Js.ObjectIdentifier({ value: parsedKey.namedCurve }),
-    });
-    spki.subjectPublicKey = new Asn1Js.BitString({ valueHex: parsedKey.toSchema().toBER(false) });
-
-    return spki.toSchema().toBER(false);
+    const keyInfo = new core.asn1.PublicKeyInfo();
+    keyInfo.publicKeyAlgorithm.algorithm = "1.2.840.10045.2.1";
+    keyInfo.publicKeyAlgorithm.parameters = AsnSerializer.serialize(namedCurveId);
+    keyInfo.publicKey = ecPublicKey.value;
+    return AsnSerializer.serialize(keyInfo);
   }
 
   protected static pkcs2jwk(raw: ArrayBuffer): JsonWebKey {
-    const asn1Pkcs8 = Asn1Js.fromBER(raw);
-    const pkcs8 = new pkijs.PrivateKeyInfo({ schema: asn1Pkcs8.result });
+    const keyInfo = AsnParser.parse(raw, core.asn1.PrivateKeyInfo);
 
-    if (pkcs8.privateKeyAlgorithm.algorithmId !== "1.2.840.10045.2.1") {
+    if (keyInfo.privateKeyAlgorithm.algorithm !== "1.2.840.10045.2.1") {
       throw new Error("PKCS8 is not EC private key");
     }
 
-    const algId = pkcs8.privateKeyAlgorithm.algorithmParams.valueBlock.toString();
-    let crvName = algId;
+    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.privateKeyAlgorithm.parameters, core.asn1.ObjectIdentifier));
 
-    switch (crvName) {
-      case "1.3.132.0.10": // K-256
-        crvName = "K-256";
-        break;
-      case "1.2.840.10045.3.1.7": // P-256
-        crvName = "P-256";
-        break;
-      case "1.3.132.0.34": // P-384
-        crvName = "P-384";
-        break;
-      case "1.3.132.0.35": // P-521
-        crvName = "P-521";
-        break;
-      default:
-        throw new Error(`Unsupported EC named curve '${crvName}'`);
-    }
-
-    const asn1PrvKey = Asn1Js.fromBER(pkcs8.privateKey.valueBlock.valueHex);
-
-    const parsedKey = new pkijs.ECPrivateKey({
-      namedCurve: algId === "1.3.132.0.10" ? "1.2.840.10045.3.1.7" : algId,
-      schema: asn1PrvKey.result,
-    });
+    const ecPrivateKey = AsnParser.parse(keyInfo.privateKey, core.asn1.EcPrivateKey);
+    const json = JsonSerializer.toJSON(ecPrivateKey);
 
     return {
       kty: "EC",
-      crv: crvName,
-      d: Convert.ToBase64Url(parsedKey.privateKey.valueBlock.valueHex),
+      crv: namedCurve,
+      ...json,
     };
+  }
+
+  private static getNamedCurveByOid(id: core.asn1.ObjectIdentifier) {
+    switch (id.value) {
+      case "1.3.132.0.10": // K-256
+        return "K-256";
+      case "1.2.840.10045.3.1.7": // P-256
+        return "P-256";
+      case "1.3.132.0.34": // P-384
+        return "P-384";
+      case "1.3.132.0.35": // P-521
+        return "P-521";
+      default:
+        throw new Error(`Unsupported EC named curve '${id.value}'`);
+    }
   }
 
 }
