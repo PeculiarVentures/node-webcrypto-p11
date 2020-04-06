@@ -19,7 +19,7 @@ jobs:
             git clone https://github.com/opendnssec/SoftHSMv2.git -b master
             cd SoftHSMv2
             sh ./autogen.sh
-            ./configure
+            ./configure --disable-gost
             make
             sudo -E make install
             cd ..
