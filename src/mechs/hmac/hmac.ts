@@ -14,13 +14,11 @@ export class HmacProvider extends core.HmacProvider {
 
   public async onGenerateKey(algorithm: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
-      algorithm = { ...algorithm, name: this.name };
-      algorithm.length = algorithm.length
-        ? algorithm.length
-        : this.getDefaultLength((algorithm.hash as Algorithm).name) >> 3;
+      const length = (algorithm.length || this.getDefaultLength((algorithm.hash as Algorithm).name)) >> 3 << 3;
+      algorithm = { ...algorithm, name: this.name, length };
 
       const template = this.createTemplate(algorithm, extractable, keyUsages);
-      template.valueLen = algorithm.length << 3;
+      template.valueLen = algorithm.length >> 3;
 
       // PKCS11 generation
       this.crypto.session.generateKey(graphene.KeyGenMechanism.GENERIC_SECRET, template, (err, aesKey) => {
