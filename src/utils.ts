@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { Session, Slot, SlotFlag } from "graphene-pk11";
+import { Session, Slot, SlotFlag, Mechanism } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
@@ -89,7 +89,16 @@ export function getProviderInfo(slot: Slot) {
 
   const algorithms = slot.getMechanisms();
   for (let i = 0; i < algorithms.length; i++) {
-    const algorithm = algorithms.items(i);
+    let algorithm: Mechanism;
+
+    try {
+      // Some providers throw CKR_MECHANISM_INVALID on `C_GetMechanismInfo` method
+      // https://github.com/PeculiarVentures/node-webcrypto-p11/issues/55
+      algorithm = algorithms.items(i);
+    } catch (e) {
+      continue;
+    }
+
     let algName = "";
     switch (algorithm.name) {
       case "SHA_1":
