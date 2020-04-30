@@ -119,8 +119,8 @@ export class RsaCrypto {
     const mechanisms = session.slot.getMechanisms();
     let RSA: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
-      const mechanism = mechanisms.items(i);
-      if (mechanism.name === p11AlgorithmName || mechanism.name === DEFAULT_RSA) {
+      const mechanism = mechanisms.tryGetItem(i);
+      if (mechanism && (mechanism.name === p11AlgorithmName || mechanism.name === DEFAULT_RSA)) {
         RSA = mechanism.name;
       }
     }

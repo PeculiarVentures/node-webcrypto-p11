@@ -110,8 +110,8 @@ export class EcCrypto {
     const mechanisms = session.slot.getMechanisms();
     let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
-      const mechanism = mechanisms.items(i);
-      if (mechanism.name === p11AlgorithmName || mechanism.name === "ECDSA") {
+      const mechanism = mechanisms.tryGetItem(i);
+      if (mechanism && (mechanism.name === p11AlgorithmName || mechanism.name === "ECDSA")) {
         EC = mechanism.name;
       }
     }
