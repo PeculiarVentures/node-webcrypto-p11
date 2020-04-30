@@ -16,9 +16,11 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async keys() {
+    Crypto.assertSession(this.crypto.session);
+
     const keys: string[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
         const item = obj.toType<any>();
         keys.push(CryptoKey.getID(item));
       });
@@ -34,9 +36,11 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async clear() {
+    Crypto.assertSession(this.crypto.session);
+
     const keys: SessionObject[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
         keys.push(obj);
       });
     });
@@ -83,7 +87,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
               alg.name = "ECDH";
             }
             const attributes = p11Key.getAttribute({ paramsECDSA: null });
-            const pointEC = NamedCurve.getByBuffer(attributes.paramsECDSA);
+            const pointEC = NamedCurve.getByBuffer(attributes.paramsECDSA!);
             let namedCurve: string;
             switch (pointEC.name) {
               case "secp192r1":
@@ -157,6 +161,8 @@ export class KeyStorage implements core.CryptoKeyStorage {
     if (!(data instanceof CryptoKey)) {
       throw new core.CryptoError("Parameter 1 is not P11CryptoKey");
     }
+    Crypto.assertSession(this.crypto.session);
+
     const p11Key = data as CryptoKey;
 
     // don't copy object from token
@@ -176,10 +182,12 @@ export class KeyStorage implements core.CryptoKeyStorage {
     return !!item;
   }
 
-  protected getItemById(id: string) {
-    let key: SessionObject = null;
+  protected getItemById(id: string): SessionObject | null {
+    Crypto.assertSession(this.crypto.session);
+
+    let key: SessionObject | null = null;
     OBJECT_TYPES.forEach((objectClass) => {
-      this.crypto.session.find({ class: objectClass, token: true }, (obj) => {
+      this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
         const item = obj.toType<any>();
         if (id === CryptoKey.getID(item)) {
           key = item;

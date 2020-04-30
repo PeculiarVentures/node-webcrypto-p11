@@ -117,7 +117,7 @@ export class RsaCrypto {
         : wcAlgorithmName === "RSA-OAEP" ? "RSA_PKCS_OAEP" : "RSA_PKCS";
 
     const mechanisms = session.slot.getMechanisms();
-    let RSA: string;
+    let RSA: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
       const mechanism = mechanisms.items(i);
       if (mechanism.name === p11AlgorithmName || mechanism.name === DEFAULT_RSA) {
@@ -167,8 +167,8 @@ export class RsaCrypto {
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent),
-      n: Convert.ToBase64Url(pkey.modulus),
+      e: Convert.ToBase64Url(pkey.publicExponent!),
+      n: Convert.ToBase64Url(pkey.modulus!),
     };
     return jwk;
   }

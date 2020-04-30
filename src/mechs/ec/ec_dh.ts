@@ -12,6 +12,8 @@ export class EcdhProvider extends core.EcdhProvider {
   }
 
   public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await EcCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
@@ -22,10 +24,14 @@ export class EcdhProvider extends core.EcdhProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
+
     return EcCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
@@ -39,6 +45,8 @@ export class EcdhProvider extends core.EcdhProvider {
 
   public async onDeriveBits(algorithm: EcdhKeyDeriveParams, baseKey: EcCryptoKey, length: number): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let valueLen = 256;
       switch (baseKey.algorithm.namedCurve) {
         case "P-256":

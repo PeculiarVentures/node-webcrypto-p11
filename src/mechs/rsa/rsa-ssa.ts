@@ -12,6 +12,8 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
   }
 
   public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
@@ -23,6 +25,8 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
 
   public async onSign(algorithm: Algorithm, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
@@ -41,6 +45,8 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
 
   public async onVerify(algorithm: Algorithm, key: RsaCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
@@ -58,10 +64,14 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
+
     return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }

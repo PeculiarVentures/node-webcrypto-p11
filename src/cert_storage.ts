@@ -4,6 +4,7 @@ import * as core from "webcrypto-core";
 import { PemConverter } from "webcrypto-core";
 import { CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
 import { Crypto } from "./crypto";
+import { Pkcs11Object } from "./p11_object";
 
 const TEMPLATES = [
   { class: ObjectClass.CERTIFICATE, certType: CertificateType.X_509, token: true },
@@ -21,16 +22,18 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
 
   public indexOf(item: core.CryptoCertificate): Promise<string | null>;
   public async indexOf(item: CryptoCertificate) {
-    if (item instanceof CryptoCertificate && item.p11Object.token) {
+    if (item instanceof CryptoCertificate && item.p11Object?.token) {
       return CryptoCertificate.getID(item.p11Object);
     }
     return null;
   }
 
   public async keys() {
+    Crypto.assertSession(this.crypto.session);
+
     const keys: string[] = [];
     TEMPLATES.forEach((template) => {
-      this.crypto.session.find(template, (obj) => {
+      this.crypto.session!.find(template, (obj) => {
         const item = obj.toType<any>();
         const id = CryptoCertificate.getID(item);
         keys.push(id);
@@ -40,9 +43,11 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
   }
 
   public async clear() {
+    Crypto.assertSession(this.crypto.session);
+
     const objects: SessionObject[] = [];
     TEMPLATES.forEach((template) => {
-      this.crypto.session.find(template, (obj) => {
+      this.crypto.session!.find(template, (obj) => {
         objects.push(obj);
       });
     });
@@ -58,21 +63,30 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
 
   public getItem(index: string): Promise<core.CryptoCertificate>;
   public getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public async getItem(index: string, algorithm?: Algorithm, usages?: KeyUsage[]) {
+  public async getItem(index: string, algorithm?: Algorithm, usages?: KeyUsage[]): Promise<core.CryptoCertificate> {
     const storageObject = this.getItemById(index);
     if (storageObject instanceof P11X509Certificate) {
       const x509Object = storageObject.toType<P11X509Certificate>();
       const x509 = new X509Certificate(this.crypto);
       x509.p11Object = x509Object;
-      await x509.exportKey(algorithm, usages);
+      if (algorithm && usages) {
+        await x509.exportKey(algorithm, usages);
+      } else {
+        await x509.exportKey();
+      }
       return x509;
     } else if (storageObject instanceof P11Data) {
       const x509Object = storageObject.toType<P11Data>();
       const x509request = new X509CertificateRequest(this.crypto);
       x509request.p11Object = x509Object;
-      await x509request.exportKey(algorithm, usages);
+      if (algorithm && usages) {
+        await x509request.exportKey(algorithm, usages);
+      } else {
+        await x509request.exportKey();
+      }
       return x509request;
     } else {
+      // @ts-ignore
       return null;
     }
   }
@@ -89,6 +103,9 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
     if (!(data instanceof CryptoCertificate)) {
       throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
     }
+    Pkcs11Object.assertStorage(data.p11Object);
+    Crypto.assertSession(this.crypto.session);
+
     // don't copy object from token
     if (!data.p11Object.token) {
       const obj = this.crypto.session.copy(data.p11Object, {
@@ -181,10 +198,12 @@ export class CertificateStorage implements core.CryptoCertificateStorage {
     }
   }
 
-  protected getItemById(id: string) {
-    let object: SessionObject = null;
+  protected getItemById(id: string): SessionObject | null {
+    Crypto.assertSession(this.crypto.session);
+
+    let object: SessionObject | null = null;
     TEMPLATES.forEach((template) => {
-      this.crypto.session.find(template, (obj) => {
+      this.crypto.session!.find(template, (obj) => {
         const item = obj.toType<any>();
         if (id === CryptoCertificate.getID(item)) {
           object = item;

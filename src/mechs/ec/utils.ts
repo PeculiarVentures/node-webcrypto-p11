@@ -50,10 +50,12 @@ export class EcUtils {
   }
 
   public static encodePoint(point: IEcPoint, curve: graphene.INamedCurve): Buffer {
+    if (!point.y) {
+      throw new TypeError("point.y: Cannot be empty")
+    }
+
     // get field size in bytes (rounding up)
     const n = Math.ceil(curve.size / 8);
-    // const xb = this.trimZeroes(point.x);
-    // const yb = this.trimZeroes(point.y);
     const xb = this.padZeroes(point.x, n);
     const yb = this.padZeroes(point.y, n);
     if ((xb.length > n) || (yb.length > n)) {

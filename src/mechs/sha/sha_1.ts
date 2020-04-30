@@ -11,6 +11,7 @@ export class Sha1Provider extends core.ProviderCrypto {
   }
 
   public async onDigest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
     return ShaCrypto.digest(this.crypto.session, algorithm, data);
   }
 

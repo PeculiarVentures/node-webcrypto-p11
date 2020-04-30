@@ -41,8 +41,8 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
   public id: string;
   public p11Object: Key | SecretKey | PublicKey | PrivateKey;
 
-  public type: KeyType;
-  public extractable: boolean;
+  public type: KeyType = "secret";
+  public extractable: boolean = false;
   public algorithm: T;
   public usages: KeyUsage[] = [];
 

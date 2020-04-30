@@ -12,6 +12,8 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
   }
 
   public async onGenerateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
@@ -23,6 +25,8 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
 
   public async onEncrypt(algorithm: RsaOaepParams, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       const buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       const context = Buffer.alloc((key.algorithm).modulusLength >> 3);
@@ -39,6 +43,8 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
 
   public async onDecrypt(algorithm: RsaOaepParams, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       const buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       const context = Buffer.alloc((key.algorithm).modulusLength >> 3);
@@ -54,10 +60,14 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
+
     return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }

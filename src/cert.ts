@@ -111,8 +111,8 @@ export function nameToString(name: any, splitter: string = ","): string {
 export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11CryptoCertificate {
 
   public static getID(p11Object: Storage) {
-    let type: string;
-    let id: Buffer;
+    let type: string | undefined;
+    let id: Buffer | undefined;
     if (p11Object instanceof P11Data) {
       type = "request";
       id = p11Object.objectId;
@@ -120,20 +120,24 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
       type = "x509";
       id = p11Object.id;
     }
-    if (!type) {
+    if (!type || !id) {
       throw new Error("Unsupported PKCS#11 object");
     }
     return `${type}-${p11Object.handle.toString("hex")}-${id.toString("hex")}`;
   }
 
   public get id() {
+    Pkcs11Object.assertStorage(this.p11Object);
+
     return CryptoCertificate.getID(this.p11Object);
   }
-  public type: core.CryptoCertificateType;
-  public publicKey: CryptoKey;
+
+  public type: core.CryptoCertificateType = "x509";
+  public publicKey!: CryptoKey;
 
   public get token() {
     try {
+      Pkcs11Object.assertStorage(this.p11Object);
       return this.p11Object.token;
     } catch { /* nothing */ }
     return false;
@@ -145,6 +149,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
 
   public get label() {
     try {
+      Pkcs11Object.assertStorage(this.p11Object);
       return this.p11Object.label;
     } catch { /* nothing */ }
     return "";
@@ -152,7 +157,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
 
   protected crypto: Crypto;
 
-  constructor(crypto: Crypto) {
+  public constructor(crypto: Crypto) {
     super();
     this.crypto = crypto;
   }
@@ -185,16 +190,17 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   }
   public type: "x509" = "x509";
 
-  public publicKey: CryptoKey;
-
   public get value(): ArrayBuffer {
-    return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
+    Pkcs11Object.assertStorage(this.p11Object);
+    return new Uint8Array(this.p11Object.value).buffer;
   }
 
-  public p11Object: P11X509Certificate;
+  public p11Object?: P11X509Certificate;
   protected schema: any;
 
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+    Crypto.assertSession(this.crypto.session);
+
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
@@ -240,7 +246,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   }
 
   public async exportKey(): Promise<CryptoKey>;
-  public async exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
+  public async exportKey(algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
   public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]) {
     if (!this.publicKey) {
       const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
@@ -248,22 +254,28 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       for (const keyIndex of keyIndexes) {
         const parts = keyIndex.split("-");
         if (parts[0] === "public" && parts[2] === publicKeyID) {
-          this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+          if (algorithm && usages) {
+            this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+          } else {
+            this.publicKey = await this.crypto.keyStorage.getItem(keyIndex);
+          }
           break;
         }
       }
       if (!this.publicKey) {
         let params: { algorithm: { algorithm: any, usages: string[] } };
-        if (algorithm) {
+        PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
+        if (algorithm && usages) {
           params = {
             algorithm: {
               algorithm: utils.prepareAlgorithm(algorithm),
               usages,
             },
           };
+          this.publicKey = await this.getData().getPublicKey(params);
+        } else {
+          this.publicKey = await this.getData().getPublicKey();
         }
-        PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
-        this.publicKey = await this.getData().getPublicKey(params);
       }
     }
     return this.publicKey;
@@ -307,14 +319,14 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     return nameToString(this.getData().subject);
   }
   public type: "request" = "request";
-
-  public publicKey: CryptoKey;
+  public p11Object?: P11Data;
 
   public get value(): ArrayBuffer {
+    Pkcs11Object.assertStorage(this.p11Object);
+
     return new Uint8Array(this.p11Object.value).buffer as ArrayBuffer;
   }
 
-  public p11Object: P11Data;
   protected schema: any;
 
   /**
@@ -324,6 +336,8 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param keyUsages
    */
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+    Crypto.assertSession(this.crypto.session);
+
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
 
@@ -368,22 +382,28 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
       for (const keyIndex of keyIndexes) {
         const parts = keyIndex.split("-");
         if (parts[0] === "public" && parts[2] === publicKeyID) {
-          this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+          if (algorithm && usages) {
+            this.publicKey = await this.crypto.keyStorage.getItem(keyIndex, algorithm, usages);
+          } else {
+            this.publicKey = await this.crypto.keyStorage.getItem(keyIndex);
+          }
           break;
         }
       }
       if (!this.publicKey) {
         let params: { algorithm: { algorithm: any, usages: string[] } };
-        if (algorithm) {
+        PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
+        if (algorithm && usages) {
           params = {
             algorithm: {
               algorithm: utils.prepareAlgorithm(algorithm),
               usages,
             },
           };
+          this.publicKey = await this.getData().getPublicKey(params);
+        } else {
+          this.publicKey = await this.getData().getPublicKey();
         }
-        PkiJs.setEngine("pkcs11", this.crypto, new PkiJs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
-        this.publicKey = await this.getData().getPublicKey(params);
       }
     }
     return this.publicKey;

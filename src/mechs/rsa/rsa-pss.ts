@@ -13,6 +13,8 @@ export class RsaPssProvider extends core.RsaPssProvider {
   }
 
   public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
@@ -24,6 +26,8 @@ export class RsaPssProvider extends core.RsaPssProvider {
 
   public async onSign(algorithm: RsaPssParams, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
@@ -42,6 +46,8 @@ export class RsaPssProvider extends core.RsaPssProvider {
 
   public async onVerify(algorithm: RsaPssParams, key: RsaCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
@@ -59,10 +65,14 @@ export class RsaPssProvider extends core.RsaPssProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
+
     return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
@@ -75,34 +85,34 @@ export class RsaPssProvider extends core.RsaPssProvider {
   }
 
   protected wc2pk11(alg: RsaPssParams, keyAlg: RsaHashedKeyAlgorithm): IAlgorithm {
-      let mech: string;
-      let param: graphene.RsaPssParams;
-      const saltLen = alg.saltLength;
-      switch (keyAlg.hash.name.toUpperCase()) {
-        case "SHA-1":
-          mech = "SHA1_RSA_PKCS_PSS";
-          param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA1, graphene.RsaMgf.MGF1_SHA1, saltLen);
-          break;
-        case "SHA-224":
-          mech = "SHA224_RSA_PKCS_PSS";
-          param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA224, graphene.RsaMgf.MGF1_SHA224, saltLen);
-          break;
-        case "SHA-256":
-          mech = "SHA256_RSA_PKCS_PSS";
-          param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA256, graphene.RsaMgf.MGF1_SHA256, saltLen);
-          break;
-        case "SHA-384":
-          mech = "SHA384_RSA_PKCS_PSS";
-          param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA384, graphene.RsaMgf.MGF1_SHA384, saltLen);
-          break;
-        case "SHA-512":
-          mech = "SHA512_RSA_PKCS_PSS";
-          param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA512, graphene.RsaMgf.MGF1_SHA512, saltLen);
-          break;
-        default:
+    let mech: string;
+    let param: graphene.RsaPssParams;
+    const saltLen = alg.saltLength;
+    switch (keyAlg.hash.name.toUpperCase()) {
+      case "SHA-1":
+        mech = "SHA1_RSA_PKCS_PSS";
+        param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA1, graphene.RsaMgf.MGF1_SHA1, saltLen);
+        break;
+      case "SHA-224":
+        mech = "SHA224_RSA_PKCS_PSS";
+        param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA224, graphene.RsaMgf.MGF1_SHA224, saltLen);
+        break;
+      case "SHA-256":
+        mech = "SHA256_RSA_PKCS_PSS";
+        param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA256, graphene.RsaMgf.MGF1_SHA256, saltLen);
+        break;
+      case "SHA-384":
+        mech = "SHA384_RSA_PKCS_PSS";
+        param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA384, graphene.RsaMgf.MGF1_SHA384, saltLen);
+        break;
+      case "SHA-512":
+        mech = "SHA512_RSA_PKCS_PSS";
+        param = new graphene.RsaPssParams(graphene.MechanismEnum.SHA512, graphene.RsaMgf.MGF1_SHA512, saltLen);
+        break;
+      default:
         throw new core.OperationError(`Cannot create PKCS11 mechanism from algorithm '${keyAlg.hash.name}'`);
-      }
-      return { name: mech, params: param };
     }
-
+    return { name: mech, params: param };
   }
+
+}

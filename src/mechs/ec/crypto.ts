@@ -59,7 +59,7 @@ export class EcCrypto {
         // export subjectPublicKey BIT_STRING value
         const jwk = await this.exportJwkPublicKey(key);
         if ((key.algorithm as EcKeyGenParams).namedCurve === "X25519") {
-          return Convert.FromBase64Url(jwk.x);
+          return Convert.FromBase64Url(jwk.x!);
         } else {
           const publicKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
           return publicKey.value;
@@ -108,7 +108,7 @@ export class EcCrypto {
 
   public static getAlgorithm(session: graphene.Session, p11AlgorithmName: string) {
     const mechanisms = session.slot.getMechanisms();
-    let EC: string;
+    let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
       const mechanism = mechanisms.items(i);
       if (mechanism.name === p11AlgorithmName || mechanism.name === "ECDSA") {
@@ -197,7 +197,7 @@ export class EcCrypto {
       x: Convert.ToBase64Url(ecPoint.x),
     };
     if (curve.name !== "curve25519") {
-      jwk.y = Convert.ToBase64Url(ecPoint.y);
+      jwk.y = Convert.ToBase64Url(ecPoint.y!);
     }
     return jwk;
   }
@@ -259,7 +259,7 @@ export class EcCrypto {
       throw new Error("SPKI is not EC public key");
     }
 
-    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.publicKeyAlgorithm.parameters, core.asn1.ObjectIdentifier));
+    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.publicKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier));
 
     const ecPublicKey = new core.asn1.EcPublicKey(keyInfo.publicKey);
     const json = JsonSerializer.toJSON(ecPublicKey);
@@ -272,7 +272,7 @@ export class EcCrypto {
   }
 
   protected static jwk2pkcs(jwk: JsonWebKey): ArrayBuffer {
-    if (!("crv" in jwk)) {
+    if (!jwk.crv) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }
     const namedCurveId = EcCrypto.getNamedCurveId(jwk.crv);
@@ -319,7 +319,7 @@ export class EcCrypto {
   }
 
   protected static jwk2spki(jwk: JsonWebKey) {
-    if (!("crv" in jwk)) {
+    if (!jwk.crv) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }
     const namedCurveId = EcCrypto.getNamedCurveId(jwk.crv);
@@ -340,7 +340,7 @@ export class EcCrypto {
       throw new Error("PKCS8 is not EC private key");
     }
 
-    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.privateKeyAlgorithm.parameters, core.asn1.ObjectIdentifier));
+    const namedCurve = this.getNamedCurveByOid(AsnParser.parse(keyInfo.privateKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier));
 
     const ecPrivateKey = AsnParser.parse(keyInfo.privateKey, core.asn1.EcPrivateKey);
     const json = JsonSerializer.toJSON(ecPrivateKey);

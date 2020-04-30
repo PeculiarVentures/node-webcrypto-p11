@@ -42,7 +42,7 @@ export class AesCrypto {
         };
         return jwk;
       case "raw":
-        return new Uint8Array(template.value).buffer;
+        return new Uint8Array(template.value!).buffer;
         break;
       default:
         throw new core.OperationError("format: Must be 'jwk' or 'raw'");
@@ -55,10 +55,11 @@ export class AesCrypto {
 
     switch (format.toLowerCase()) {
       case "jwk":
-        if (!("k" in keyData)) {
+        const jwk = keyData as JsonWebKey;
+        if (!jwk.k) {
           throw new core.OperationError("jwk.k: Cannot get required property");
         }
-        keyData = Convert.FromBase64Url(keyData.k);
+        keyData = Convert.FromBase64Url(jwk.k);
       case "raw":
         value = keyData as ArrayBuffer;
         switch (value.byteLength) {

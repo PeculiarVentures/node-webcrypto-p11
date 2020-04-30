@@ -19,7 +19,19 @@ import * as utils from "./utils";
  */
 export class Crypto implements core.Crypto, core.CryptoStorages {
 
-  public info: ProviderInfo;
+  public static assertSession(obj: graphene.Session | undefined): asserts obj is graphene.Session {
+    if (!obj) {
+      throw new Error("PKCS#11 session is not initialized");
+    }
+  }
+
+  public static assertModule(obj: graphene.Module | undefined): asserts obj is graphene.Module {
+    if (!obj) {
+      throw new Error("PKCS#11 module is not initialized");
+    }
+  }
+
+  public info?: ProviderInfo;
   public subtle: SubtleCrypto;
 
   public keyStorage: KeyStorage;
@@ -32,7 +44,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    * PKCS11 Module
    * @internal
    */
-  public module: graphene.Module;
+  public module?: graphene.Module;
   /**
    * PKCS11 Slot
    * @internal
@@ -47,7 +59,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    * PKCS11 token
    * @internal
    */
-  public session: graphene.Session;
+  public session?: graphene.Session;
 
   protected name?: string;
 
@@ -112,6 +124,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
   }
 
   public reset() {
+    Crypto.assertSession(this.session);
     if (this.isLoggedIn && this.isLoginRequired) {
       this.logout();
     }
@@ -124,6 +137,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (!this.isLoginRequired) {
       return;
     }
+    Crypto.assertSession(this.session);
 
     try {
       this.session.login(pin);
@@ -140,6 +154,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (!this.isLoginRequired) {
       return;
     }
+    Crypto.assertSession(this.session);
 
     try {
       this.session.logout();
@@ -158,6 +173,8 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    */
   // Based on: https://github.com/KenanY/get-random-values
   public getRandomValues<T extends ArrayBufferView>(array: T): T {
+    Crypto.assertSession(this.session);
+
     if (array.byteLength > 65536) {
       throw new core.CryptoError(`Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (${array.byteLength}) exceeds the number of bytes of entropy available via this API (65536).`);
     }
@@ -171,6 +188,9 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    */
   public close() {
     if (this.initialized) {
+      Crypto.assertSession(this.session);
+      Crypto.assertModule(this.module);
+
       this.session.logout();
       this.session.close();
       this.module.finalize();

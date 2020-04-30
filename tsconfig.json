@@ -10,7 +10,7 @@
         "removeComments": true,
         "declaration": false,
         "sourceMap": false,
-        "noImplicitAny": true,
+        "strict": true,
         "experimentalDecorators": true,
         "importHelpers": true
     },

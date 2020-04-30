@@ -14,6 +14,8 @@ export class EcdsaProvider extends core.EcdsaProvider {
   }
 
   public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await EcCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
@@ -25,6 +27,8 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public async onSign(algorithm: EcdsaParams, key: EcCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
       mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
@@ -43,6 +47,8 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public async onVerify(algorithm: EcdsaParams, key: EcCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      Crypto.assertSession(this.crypto.session);
+
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
       mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
@@ -60,10 +66,14 @@ export class EcdsaProvider extends core.EcdsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+    Crypto.assertSession(this.crypto.session);
+
     return EcCrypto.exportKey(this.crypto.session, format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+    Crypto.assertSession(this.crypto.session);
+
     const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }

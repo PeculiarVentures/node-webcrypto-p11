@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { config, crypto } from "./config";
+import { Crypto } from "../src";
 
 context("Crypto", () => {
 
@@ -17,6 +18,7 @@ context("Crypto", () => {
   });
 
   it("reset", () => {
+    Crypto.assertSession(crypto.session);
     const currentHandle = crypto.session.handle.toString("hex");
     crypto.reset();
 
