@@ -25,11 +25,11 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "@peculiar/asn1-schema": "^1.1.2",
+    "@peculiar/asn1-schema": "^2.0.1",
     "@peculiar/json-schema": "^1.1.10",
     "graphene-pk11": "^2.1.7",
-    "tslib": "^1.11.1",
-    "webcrypto-core": "^1.0.21"
+    "tslib": "^1.11.2",
+    "webcrypto-core": "^1.1.0"
   },
   "keywords": [
     "crypto",
@@ -54,13 +54,13 @@
     "@peculiar/webcrypto-test": "^1.0.6",
     "@types/asn1js": "0.0.1",
     "@types/mocha": "^7.0.2",
-    "@types/node": "^12.12.37",
+    "@types/node": "^12.12.38",
     "coveralls": "^3.1.0",
     "mocha": "^7.1.2",
     "nyc": "^15.0.1",
     "pkijs": "^2.1.88",
     "pvtsutils": "^1.0.10",
-    "ts-node": "^8.9.1",
+    "ts-node": "^8.10.1",
     "tslint": "^6.1.2",
     "typescript": "^3.8.3"
   },
