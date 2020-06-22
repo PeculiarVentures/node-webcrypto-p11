@@ -30,7 +30,7 @@
     "graphene-pk11": "^2.1.7",
     "pkijs": "^2.1.89",
     "tslib": "^1.11.2",
-    "webcrypto-core": "^1.1.0"
+    "webcrypto-core": "^1.1.2"
   },
   "keywords": [
     "crypto",

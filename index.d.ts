@@ -118,8 +118,17 @@ declare class KeyStorage implements core.CryptoKeyStorage {
 
 export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params
 
-export class CertificateStorage implements core.CryptoCertificateStorage {
+export interface IGetValue {
+  /**
+   * Returns item blob
+   * @param key Object identifier
+   */
+  getValue(key: string): Promise<ArrayBuffer | null>
+}
+
+export class CertificateStorage implements core.CryptoCertificateStorage, IGetValue {
   public constructor(crypto: Crypto)
+  public getValue(index: string): Promise<ArrayBuffer | null>;
   public getItem(index: string): Promise<CryptoCertificate>;
   public getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<CryptoCertificate>;
   public exportCert(format: core.CryptoCertificateFormat, item: core.CryptoCertificate): Promise<string | ArrayBuffer>;

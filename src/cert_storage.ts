@@ -11,13 +11,37 @@ const TEMPLATES = [
   { class: ObjectClass.DATA, token: true, label: "X509 Request" },
 ];
 
+export interface IGetValue {
+  /**
+   * Returns item blob
+   * @param key Object identifier
+   */
+  getValue(key: string): Promise<ArrayBuffer | null>
+}
+
 export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params;
-export class CertificateStorage implements core.CryptoCertificateStorage {
+export class CertificateStorage implements core.CryptoCertificateStorage, IGetValue {
 
   protected crypto: Crypto;
 
   constructor(crypto: Crypto) {
     this.crypto = crypto;
+  }
+
+  public async getValue(key: string): Promise<ArrayBuffer | null> {
+    const storageObject = this.getItemById(key);
+    if (storageObject instanceof P11X509Certificate) {
+      const x509Object = storageObject.toType<P11X509Certificate>();
+      const x509 = new X509Certificate(this.crypto);
+      x509.p11Object = x509Object;
+      return x509.exportCert();
+    } else if (storageObject instanceof P11Data) {
+      const x509Object = storageObject.toType<P11Data>();
+      const x509request = new X509CertificateRequest(this.crypto);
+      x509request.p11Object = x509Object;
+      return x509request.exportCert();
+    }
+    return null;
   }
 
   public indexOf(item: core.CryptoCertificate): Promise<string | null>;

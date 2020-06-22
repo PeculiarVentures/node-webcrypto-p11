@@ -9,7 +9,7 @@ const X509_REQUEST_RAW = Buffer.from("308202BC308201A402003078310B30090603550406
 const X509_PEM = PemConverter.fromBufferSource(X509_RAW, "CERTIFICATE");
 const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIFICATE REQUEST");
 
-(isNSS("KeyStorage. NSS is readonly")
+(isNSS("CertStorage. NSS is readonly")
   ? context.skip
   : context)
   ("Certificate storage", () => {
@@ -119,6 +119,35 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
         const index = await crypto.certStorage.setItem(request);
         const request2 = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
         assert.equal(!!request2, true);
+      });
+
+      it("null", async () => {
+        const item = await crypto.certStorage.getItem("not exist");
+        assert.equal(item, null);
+      });
+
+      it("set wrong object", async () => {
+        await assert.rejects(crypto.certStorage.setItem({} as any), Error);
+      });
+
+    });
+
+    context("get value", () => {
+
+      it("x509", async () => {
+        const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+        const index = await crypto.certStorage.setItem(x509);
+        const raw = await crypto.certStorage.getValue(index);
+        assert.equal(!!raw, true);
+        assert.equal(raw!.byteLength > 0, true);
+      });
+
+      it("request", async () => {
+        const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+        const index = await crypto.certStorage.setItem(request);
+        const raw = await crypto.certStorage.getValue(index);
+        assert.equal(!!raw, true);
+        assert.equal(raw!.byteLength > 0, true);
       });
 
       it("null", async () => {
