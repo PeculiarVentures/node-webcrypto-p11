@@ -1,6 +1,6 @@
 {
   "name": "node-webcrypto-p11",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A WebCrypto Polyfill built on PKCS11",
   "main": "build/index.js",
   "types": "index.d.ts",
