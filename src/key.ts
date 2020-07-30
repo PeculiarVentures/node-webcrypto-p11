@@ -77,7 +77,9 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
       this.algorithm.token = key.token;
     } catch { /*nothing*/ }
     try {
-      this.algorithm.sensitive = key.get("sensitive");
+      if (key instanceof PrivateKey || key instanceof SecretKey) {
+        this.algorithm.sensitive = key.get("sensitive");
+      }
     } catch { /*nothing*/ }
 
     this.onAssign();
