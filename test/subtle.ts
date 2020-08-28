@@ -34,10 +34,8 @@ context("Subtle", () => {
           assert.equal((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
           assert.equal((keys.publicKey as P11CryptoKey).id.includes(id), true);
           assert.equal((keys.publicKey as P11CryptoKey).p11Object.token, false);
-          assert.equal((keys.publicKey as P11CryptoKey).p11Object.label === alg.name, false);
           assert.equal((keys.privateKey as P11CryptoKey).p11Object.token, false);
           assert.equal(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
-          assert.equal((keys.privateKey as P11CryptoKey).p11Object.label === alg.name, false);
         });
       });
 

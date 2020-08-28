@@ -1,4 +1,4 @@
-import { KeyType, NamedCurve, ObjectClass, SecretKey, SessionObject } from "graphene-pk11";
+import { KeyType, ObjectClass, SecretKey, SessionObject } from "graphene-pk11";
 import * as core from "webcrypto-core";
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
@@ -86,26 +86,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             } else {
               alg.name = "ECDH";
             }
-            const attributes = p11Key.getAttribute({ paramsECDSA: null });
-            const pointEC = NamedCurve.getByBuffer(attributes.paramsECDSA!);
-            let namedCurve: string;
-            switch (pointEC.name) {
-              case "secp192r1":
-                namedCurve = "P-192";
-                break;
-              case "secp256r1":
-                namedCurve = "P-256";
-                break;
-              case "secp384r1":
-                namedCurve = "P-384";
-                break;
-              case "secp521r1":
-                namedCurve = "P-521";
-                break;
-              default:
-                throw new Error(`Unsupported named curve for EC key '${pointEC.name}'`);
-            }
-            (alg as any).namedCurve = namedCurve;
+            
             break;
           }
           case KeyType.GENERIC_SECRET:

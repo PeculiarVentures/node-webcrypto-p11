@@ -227,7 +227,7 @@ export class RsaCrypto {
 
   protected static createTemplate(session: graphene.Session, alg: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
     alg = { ...RsaCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const label = alg.label || `RSA-${alg.modulusLength}`;
+    const label = alg.label || alg.name;
     const idKey = utils.GUID(session);
     return {
       privateKey: {
