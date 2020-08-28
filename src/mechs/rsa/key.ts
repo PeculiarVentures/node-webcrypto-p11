@@ -3,8 +3,19 @@ import { CryptoKey } from "../../key";
 export class RsaCryptoKey extends CryptoKey<Pkcs11RsaHashedKeyAlgorithm> {
 
   protected onAssign() {
-    this.algorithm.modulusLength = this.key.get("modulus").length << 3;
-    this.algorithm.publicExponent = new Uint8Array(this.key.get("publicExponent"));
+    if (!this.algorithm.modulusLength) {
+      this.algorithm.modulusLength = 0;
+      try {
+        this.algorithm.modulusLength = this.key.get("modulus").length << 3;
+      } catch { }
+    }
+
+    if (!this.algorithm.publicExponent) {
+      this.algorithm.publicExponent = new Uint8Array(0);
+      try {
+        this.algorithm.publicExponent = new Uint8Array(this.key.get("publicExponent"));
+      } catch { }
+    }
   }
 
 }
