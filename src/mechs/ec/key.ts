@@ -29,7 +29,7 @@ export class EcCryptoKey extends CryptoKey<Pkcs11EcKeyAlgorithm> {
         } catch {
           this.algorithm.namedCurve = paramsECDSA.toString("hex");
         }
-      } catch { }
+      } catch { /*nothing*/ }
     }
   }
 

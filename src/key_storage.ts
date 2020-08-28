@@ -86,7 +86,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             } else {
               alg.name = "ECDH";
             }
-            
+
             break;
           }
           case KeyType.GENERIC_SECRET:

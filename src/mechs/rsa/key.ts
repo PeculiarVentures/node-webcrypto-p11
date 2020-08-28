@@ -7,14 +7,14 @@ export class RsaCryptoKey extends CryptoKey<Pkcs11RsaHashedKeyAlgorithm> {
       this.algorithm.modulusLength = 0;
       try {
         this.algorithm.modulusLength = this.key.get("modulus").length << 3;
-      } catch { }
+      } catch { /*nothing*/ }
     }
 
     if (!this.algorithm.publicExponent) {
       this.algorithm.publicExponent = new Uint8Array(0);
       try {
         this.algorithm.publicExponent = new Uint8Array(this.key.get("publicExponent"));
-      } catch { }
+      } catch { /*nothing*/ }
     }
   }
 
