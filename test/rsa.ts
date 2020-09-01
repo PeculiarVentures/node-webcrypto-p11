@@ -20,14 +20,14 @@ context("RSA", () => {
       const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
 
       const privateKey = keys.privateKey as RsaCryptoKey;
-      assert.equal(privateKey.algorithm.token, true);
-      assert.equal(privateKey.algorithm.label, alg.label);
-      assert.equal(privateKey.algorithm.sensitive, true);
+      assert.strictEqual(privateKey.algorithm.token, true);
+      assert.strictEqual(privateKey.algorithm.label, alg.label);
+      assert.strictEqual(privateKey.algorithm.sensitive, true);
 
       const publicKey = keys.publicKey as RsaCryptoKey;
-      assert.equal(publicKey.algorithm.token, true);
-      assert.equal(publicKey.algorithm.label, alg.label);
-      assert.equal(publicKey.algorithm.sensitive, false);
+      assert.strictEqual(publicKey.algorithm.token, true);
+      assert.strictEqual(publicKey.algorithm.label, alg.label);
+      assert.strictEqual(publicKey.algorithm.sensitive, false);
     });
 
     it("import", async () => {
@@ -49,9 +49,9 @@ context("RSA", () => {
 
       const publicKey = await crypto.subtle.importKey("jwk", jwk, alg, true, ["verify"]) as RsaCryptoKey;
 
-      assert.equal(publicKey.algorithm.token, true);
-      assert.equal(publicKey.algorithm.label, alg.label);
-      assert.equal(publicKey.algorithm.sensitive, false);
+      assert.strictEqual(publicKey.algorithm.token, true);
+      assert.strictEqual(publicKey.algorithm.label, alg.label);
+      assert.strictEqual(publicKey.algorithm.sensitive, false);
     });
 
   });

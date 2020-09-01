@@ -14,7 +14,7 @@ import { isNSS } from "./helper";
         await crypto.keyStorage.clear();
       }
       keys = await crypto.keyStorage.keys();
-      assert.equal(keys.length, 0);
+      assert.strictEqual(keys.length, 0);
     });
 
     context("indexOf", () => {
@@ -31,43 +31,43 @@ import { isNSS } from "./helper";
 
           const index = await crypto.keyStorage.setItem(key);
           const found = await crypto.keyStorage.indexOf(key);
-          assert.equal(found, null);
+          assert.strictEqual(found, null);
 
           const keyByIndex = await crypto.keyStorage.getItem(index);
-          assert.equal(keyByIndex.key.id.toString("hex"), key.key.id.toString("hex"));
+          assert.strictEqual(keyByIndex.key.id.toString("hex"), key.key.id.toString("hex"));
         });
       });
     });
 
     it("set/get item", async () => {
       let indexes = await crypto.keyStorage.keys();
-      assert.equal(indexes.length, 0);
+      assert.strictEqual(indexes.length, 0);
       const algorithm: AesKeyGenParams = {
         name: "AES-CBC",
         length: 256,
       };
       const key = await crypto.subtle.generateKey(algorithm, true, ["encrypt", "decrypt"]) as CryptoKey;
-      assert.equal(!!key, true, "Has no key value");
+      assert.strictEqual(!!key, true, "Has no key value");
 
-      assert.equal(key.algorithm.token, false);
-      assert.equal(key.algorithm.label, "AES-256");
-      assert.equal(key.algorithm.sensitive, false);
+      assert.strictEqual(key.algorithm.token, false);
+      assert.strictEqual(key.algorithm.label, "AES-256");
+      assert.strictEqual(key.algorithm.sensitive, false);
 
       // Set key
       const index = await crypto.keyStorage.setItem(key);
 
       // Check indexes amount
       indexes = await crypto.keyStorage.keys();
-      assert.equal(indexes.length, 1, "Wrong amount of indexes in storage");
-      assert.equal(indexes[0], index, "Wrong index of item in storage");
+      assert.strictEqual(indexes.length, 1, "Wrong amount of indexes in storage");
+      assert.strictEqual(indexes[0], index, "Wrong index of item in storage");
 
       // Get key
       const aesKey = await crypto.keyStorage.getItem(index);
-      assert.equal(!!aesKey, true);
-      assert.equal(aesKey.key.id.toString("hex"), key.key.id.toString("hex"));
-      assert.equal(aesKey.algorithm.token, true);
-      assert.equal(aesKey.algorithm.label, "AES-256");
-      assert.equal(aesKey.algorithm.sensitive, false);
+      assert.strictEqual(!!aesKey, true);
+      assert.strictEqual(aesKey.key.id.toString("hex"), key.key.id.toString("hex"));
+      assert.strictEqual(aesKey.algorithm.token, true);
+      assert.strictEqual(aesKey.algorithm.label, "AES-256");
+      assert.strictEqual(aesKey.algorithm.sensitive, false);
     });
 
     it("remove item", async () => {
@@ -85,21 +85,21 @@ import { isNSS } from "./helper";
 
       // Check indexes amount
       let indexes = await crypto.keyStorage.keys();
-      assert.equal(indexes.length, 2);
+      assert.strictEqual(indexes.length, 2);
 
       // Remove first item
       await crypto.keyStorage.removeItem(indexes[0]);
 
       // Check indexes amount
       indexes = await crypto.keyStorage.keys();
-      assert.equal(indexes.length, 1);
+      assert.strictEqual(indexes.length, 1);
     });
 
     context("getItem", () => {
 
       it("wrong key identity", async () => {
         const key = await crypto.keyStorage.getItem("key not exist");
-        assert.equal(key, null);
+        assert.strictEqual(key, null);
       });
 
       context("with algorithm", () => {
@@ -110,14 +110,20 @@ import { isNSS } from "./helper";
             publicExponent: new Uint8Array([1, 0, 1]),
             modulusLength: 2048,
           };
-          const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]) as CryptoKeyPair;
+          const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify", "encrypt", "decrypt"]) as CryptoKeyPair;
 
           // Set key to storage
           const index = await crypto.keyStorage.setItem(keys.publicKey);
 
           // Check indexes
           const indexes = await crypto.keyStorage.keys();
-          assert.equal(indexes.length, 1);
+          assert.strictEqual(indexes.length, 1);
+
+          // Get key from storage with default algorithm
+          const keyDefault = await crypto.keyStorage.getItem(index);
+          assert.strictEqual(keyDefault.algorithm.name, "RSASSA-PKCS1-v1_5");
+          assert.strictEqual((keyDefault.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+          assert.deepStrictEqual(keyDefault.usages, ["encrypt", "verify"]);
 
           // Get key from storage and set algorithm
           const key = await crypto.keyStorage.getItem(
@@ -125,9 +131,9 @@ import { isNSS } from "./helper";
             { name: "RSASSA-PKCS1-v1_5", hash: "SHA-512" } as RsaHashedImportParams,
             ["verify"],
           );
-          assert.equal(key.algorithm.name, "RSASSA-PKCS1-v1_5");
-          assert.equal((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-512");
-          assert.deepEqual(key.usages, ["verify"]);
+          assert.strictEqual(key.algorithm.name, "RSASSA-PKCS1-v1_5");
+          assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-512");
+          assert.deepStrictEqual(key.usages, ["verify"]);
         });
 
         context("with default algorithm", () => {
@@ -149,14 +155,14 @@ import { isNSS } from "./helper";
 
             // Check indexes
             const indexes = await crypto.keyStorage.keys();
-            assert.equal(indexes.length, 1);
+            assert.strictEqual(indexes.length, 1);
 
             // Get key from storage with default alg
             const key = await crypto.keyStorage.getItem(index);
 
-            assert.equal(key.algorithm.name, "RSASSA-PKCS1-v1_5");
-            assert.equal((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
-            assert.equal(key.usages.join(","), "verify");
+            assert.strictEqual(key.algorithm.name, "RSASSA-PKCS1-v1_5");
+            assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+            assert.strictEqual(key.usages.join(","), "verify");
           });
 
           it("ECDSA P-256", async () => {
@@ -174,13 +180,13 @@ import { isNSS } from "./helper";
 
             // Check indexes
             const indexes = await crypto.keyStorage.keys();
-            assert.equal(indexes.length, 1);
+            assert.strictEqual(indexes.length, 1);
 
             // Get key from storage with default alg
             const key = await crypto.keyStorage.getItem(index);
-            assert.equal(key.algorithm.name, "ECDSA");
-            assert.equal((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-256");
-            assert.equal(key.usages.join(","), "verify");
+            assert.strictEqual(key.algorithm.name, "ECDSA");
+            assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-256");
+            assert.strictEqual(key.usages.join(","), "verify");
           });
 
           it("ECDSA P-521", async () => {
@@ -197,13 +203,13 @@ import { isNSS } from "./helper";
 
             // Check indexes
             const indexes = await crypto.keyStorage.keys();
-            assert.equal(indexes.length, 1);
+            assert.strictEqual(indexes.length, 1);
 
             // Get key from storage with default alg
             const key = await crypto.keyStorage.getItem(index);
-            assert.equal(key.algorithm.name, "ECDSA");
-            assert.equal((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-521");
-            assert.equal(key.usages.join(","), "verify");
+            assert.strictEqual(key.algorithm.name, "ECDSA");
+            assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-521");
+            assert.strictEqual(key.usages.join(","), "verify");
           });
 
           it("RSA-OAEP", async () => {
@@ -222,13 +228,13 @@ import { isNSS } from "./helper";
 
             // Check indexes
             const indexes = await crypto.keyStorage.keys();
-            assert.equal(indexes.length, 1);
+            assert.strictEqual(indexes.length, 1);
 
             // Get key from storage we default alg
             const key = await crypto.keyStorage.getItem(index);
-            assert.equal(key.algorithm.name, "RSA-OAEP");
-            assert.equal((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
-            assert.equal(key.usages.join(","), "encrypt");
+            assert.strictEqual(key.algorithm.name, "RSA-OAEP");
+            assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+            assert.strictEqual(key.usages.join(","), "encrypt");
 
           });
 
@@ -246,12 +252,12 @@ import { isNSS } from "./helper";
 
             // Check indexes
             const indexes = await crypto.keyStorage.keys();
-            assert.equal(indexes.length, 1);
+            assert.strictEqual(indexes.length, 1);
 
             // Get key from storage we default alg
             const key = await crypto.keyStorage.getItem(index);
-            assert.equal(key.algorithm.name, "AES-CBC");
-            assert.equal(key.usages.join(","), "encrypt,decrypt");
+            assert.strictEqual(key.algorithm.name, "AES-CBC");
+            assert.strictEqual(key.usages.join(","), "encrypt,decrypt");
           });
         });
 
@@ -269,13 +275,13 @@ import { isNSS } from "./helper";
 
           // Check indexes
           const indexes = await crypto.keyStorage.keys();
-          assert.equal(indexes.length, 1);
+          assert.strictEqual(indexes.length, 1);
 
           // Get key from storage we default alg
           const key = await crypto.keyStorage.getItem(index);
-          assert.equal(key.algorithm.name, "ECDH");
-          assert.equal((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-384");
-          assert.equal(key.usages.join(","), "");
+          assert.strictEqual(key.algorithm.name, "ECDH");
+          assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-384");
+          assert.strictEqual(key.usages.join(","), "");
         });
 
       });

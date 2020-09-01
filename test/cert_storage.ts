@@ -21,7 +21,7 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       }
 
       keys = await crypto.certStorage.keys();
-      assert.equal(keys.length, 0);
+      assert.strictEqual(keys.length, 0);
     });
 
     context("indexOf", () => {
@@ -35,9 +35,9 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
           const cert = await crypto.certStorage.importCert(params.format as CryptoCertificateFormat, params.data, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
           const index = await crypto.certStorage.setItem(cert);
           const found = await crypto.certStorage.indexOf(cert);
-          assert.equal(found, null);
+          assert.strictEqual(found, null);
           const certByIndex = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-          assert.equal(!!certByIndex, true, "Cannot get cert item from storage");
+          assert.strictEqual(!!certByIndex, true, "Cannot get cert item from storage");
         });
       });
     });
@@ -47,18 +47,18 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       it("x509", async () => {
         const item = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]) as X509Certificate;
         const json = item.toJSON();
-        assert.equal(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
-        assert.equal((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
-        assert.equal(json.notBefore.toISOString(), "2007-06-29T15:13:05.000Z");
-        assert.equal(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
-        assert.equal(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
-        assert.equal(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
-        assert.equal(json.serialNumber, "00fedce3010fc948ff");
-        assert.equal(json.type, "x509");
+        assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
+        assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+        assert.strictEqual(json.notBefore.toISOString(), "2007-06-29T15:13:05.000Z");
+        assert.strictEqual(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
+        assert.strictEqual(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
+        assert.strictEqual(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
+        assert.strictEqual(json.serialNumber, "00fedce3010fc948ff");
+        assert.strictEqual(json.type, "x509");
 
-        assert.equal(item.label, "Certigna");
-        assert.equal(item.token, false);
-        assert.equal(item.sensitive, false);
+        assert.strictEqual(item.label, "Certigna");
+        assert.strictEqual(item.token, false);
+        assert.strictEqual(item.sensitive, false);
       });
 
       it("x509 to token", async () => {
@@ -73,30 +73,30 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
           } as RsaHashedImportParams,
           ["verify"]) as X509Certificate;
 
-        assert.equal(item.label, "custom");
-        assert.equal(item.token, true);
-        assert.equal(item.sensitive, false);
+        assert.strictEqual(item.label, "custom");
+        assert.strictEqual(item.token, true);
+        assert.strictEqual(item.sensitive, false);
       });
 
       it("request", async () => {
         const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
         const json = item.toJSON();
-        assert.equal(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
-        assert.equal((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-384");
-        assert.equal(json.subjectName, "C=US, CN=my-syte.net, L=Sun Antonio, O=My home organization, ST=Tesxas, OU=None");
-        assert.equal(json.type, "request");
+        assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
+        assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-384");
+        assert.strictEqual(json.subjectName, "C=US, CN=my-syte.net, L=Sun Antonio, O=My home organization, ST=Tesxas, OU=None");
+        assert.strictEqual(json.type, "request");
 
-        assert.equal(item.label, "X509 Request");
-        assert.equal(item.token, false);
-        assert.equal(item.sensitive, false);
+        assert.strictEqual(item.label, "X509 Request");
+        assert.strictEqual(item.token, false);
+        assert.strictEqual(item.sensitive, false);
       });
 
       it("request to token", async () => {
         const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384", token: true, label: "custom" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
 
-        assert.equal(item.label, "custom");
-        assert.equal(item.token, true);
-        assert.equal(item.sensitive, false);
+        assert.strictEqual(item.label, "custom");
+        assert.strictEqual(item.token, true);
+        assert.strictEqual(item.sensitive, false);
       });
 
       it("wrong type throws error", async () => {
@@ -111,19 +111,19 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
         const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
         const index = await crypto.certStorage.setItem(x509);
         const x5092 = await crypto.certStorage.getItem(index);
-        assert.equal(!!x5092, true);
+        assert.strictEqual(!!x5092, true);
       });
 
       it("request", async () => {
         const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
         const index = await crypto.certStorage.setItem(request);
         const request2 = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        assert.equal(!!request2, true);
+        assert.strictEqual(!!request2, true);
       });
 
       it("null", async () => {
         const item = await crypto.certStorage.getItem("not exist");
-        assert.equal(item, null);
+        assert.strictEqual(item, null);
       });
 
       it("set wrong object", async () => {
@@ -138,21 +138,21 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
         const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
         const index = await crypto.certStorage.setItem(x509);
         const raw = await crypto.certStorage.getValue(index);
-        assert.equal(!!raw, true);
-        assert.equal(raw!.byteLength > 0, true);
+        assert.strictEqual(!!raw, true);
+        assert.strictEqual(raw!.byteLength > 0, true);
       });
 
       it("request", async () => {
         const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
         const index = await crypto.certStorage.setItem(request);
         const raw = await crypto.certStorage.getValue(index);
-        assert.equal(!!raw, true);
-        assert.equal(raw!.byteLength > 0, true);
+        assert.strictEqual(!!raw, true);
+        assert.strictEqual(raw!.byteLength > 0, true);
       });
 
       it("null", async () => {
         const item = await crypto.certStorage.getItem("not exist");
-        assert.equal(item, null);
+        assert.strictEqual(item, null);
       });
 
       it("set wrong object", async () => {
@@ -163,7 +163,7 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
 
     it("removeItem", async () => {
       let indexes = await crypto.certStorage.keys();
-      assert.equal(indexes.length, 0);
+      assert.strictEqual(indexes.length, 0);
 
       const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
       await crypto.certStorage.setItem(request);
@@ -172,18 +172,18 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       const x509Index = await crypto.certStorage.setItem(x509);
 
       indexes = await crypto.certStorage.keys();
-      assert.equal(indexes.length, 2);
+      assert.strictEqual(indexes.length, 2);
 
       await crypto.certStorage.removeItem(x509Index);
 
       indexes = await crypto.certStorage.keys();
-      assert.equal(indexes.length, 1);
+      assert.strictEqual(indexes.length, 1);
     });
 
     it("exportCert", async () => {
       const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
       const raw = await crypto.certStorage.exportCert("raw", x509);
-      assert.equal(Buffer.from(raw).equals(X509_RAW), true);
+      assert.strictEqual(Buffer.from(raw).equals(X509_RAW), true);
     });
 
   });

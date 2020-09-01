@@ -26,7 +26,7 @@ context("Crypto", () => {
       crypto.login(config.pin);
     }
     const newHandle = crypto.session.handle.toString("hex");
-    assert.equal(currentHandle !== newHandle, true, "handle of session wasn't changed");
+    assert.strictEqual(currentHandle !== newHandle, true, "handle of session wasn't changed");
   });
 
 });

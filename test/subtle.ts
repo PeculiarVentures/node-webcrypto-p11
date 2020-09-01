@@ -31,11 +31,11 @@ context("Subtle", () => {
           const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
 
           const id = await getId(keys.publicKey);
-          assert.equal((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
-          assert.equal((keys.publicKey as P11CryptoKey).id.includes(id), true);
-          assert.equal((keys.publicKey as P11CryptoKey).p11Object.token, false);
-          assert.equal((keys.privateKey as P11CryptoKey).p11Object.token, false);
-          assert.equal(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
+          assert.strictEqual((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
+          assert.strictEqual((keys.publicKey as P11CryptoKey).id.includes(id), true);
+          assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, false);
+          assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, false);
+          assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
         });
       });
 
@@ -48,13 +48,13 @@ context("Subtle", () => {
             const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
 
             const id = await getId(keys.publicKey);
-            assert.equal((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
-            assert.equal((keys.publicKey as P11CryptoKey).id.includes(id), true);
-            assert.equal((keys.publicKey as P11CryptoKey).p11Object.token, true);
-            assert.equal((keys.publicKey as P11CryptoKey).p11Object.label, alg.name);
-            assert.equal((keys.privateKey as P11CryptoKey).p11Object.token, true);
-            assert.equal(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, true);
-            assert.equal((keys.privateKey as P11CryptoKey).p11Object.label, alg.name);
+            assert.strictEqual((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
+            assert.strictEqual((keys.publicKey as P11CryptoKey).id.includes(id), true);
+            assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, true);
+            assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.label, alg.name);
+            assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, true);
+            assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, true);
+            assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.label, alg.name);
           });
         });
       });
@@ -69,8 +69,8 @@ context("Subtle", () => {
         const key = await crypto.subtle.importKey("spki", spki, { name: "ECDSA", namedCurve: "P-256" } as EcKeyImportParams, true, ["verify"]);
 
         const id = await getId(key);
-        assert.equal((key as P11CryptoKey).key.id.toString("hex"), id);
-        assert.equal((key as P11CryptoKey).id.includes(id), true);
+        assert.strictEqual((key as P11CryptoKey).key.id.toString("hex"), id);
+        assert.strictEqual((key as P11CryptoKey).id.includes(id), true);
       });
 
       it("don't try to update id if key is not extractable", async () => {

@@ -17,9 +17,9 @@ context("AES", () => {
 
       const key = await crypto.subtle.generateKey(alg, false, ["encrypt", "decrypt"]) as AesCryptoKey;
 
-      assert.equal(key.algorithm.token, true);
-      assert.equal(key.algorithm.label, alg.label);
-      assert.equal(key.algorithm.sensitive, true);
+      assert.strictEqual(key.algorithm.token, true);
+      assert.strictEqual(key.algorithm.label, alg.label);
+      assert.strictEqual(key.algorithm.sensitive, true);
     });
 
     it("import", async () => {
@@ -33,9 +33,9 @@ context("AES", () => {
 
       const key = await crypto.subtle.importKey("raw", raw, alg, false, ["encrypt", "decrypt"]) as AesCryptoKey;
 
-      assert.equal(key.algorithm.token, true);
-      assert.equal(key.algorithm.label, alg.label);
-      assert.equal(key.algorithm.sensitive, true);
+      assert.strictEqual(key.algorithm.token, true);
+      assert.strictEqual(key.algorithm.label, alg.label);
+      assert.strictEqual(key.algorithm.sensitive, true);
     });
 
   });

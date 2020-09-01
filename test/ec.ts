@@ -19,14 +19,14 @@ context("EC", () => {
       const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
 
       const privateKey = keys.privateKey as EcCryptoKey;
-      assert.equal(privateKey.algorithm.token, true);
-      assert.equal(privateKey.algorithm.label, alg.label);
-      assert.equal(privateKey.algorithm.sensitive, true);
+      assert.strictEqual(privateKey.algorithm.token, true);
+      assert.strictEqual(privateKey.algorithm.label, alg.label);
+      assert.strictEqual(privateKey.algorithm.sensitive, true);
 
       const publicKey = keys.publicKey as EcCryptoKey;
-      assert.equal(publicKey.algorithm.token, true);
-      assert.equal(publicKey.algorithm.label, alg.label);
-      assert.equal(publicKey.algorithm.sensitive, false);
+      assert.strictEqual(publicKey.algorithm.token, true);
+      assert.strictEqual(publicKey.algorithm.label, alg.label);
+      assert.strictEqual(publicKey.algorithm.sensitive, false);
     });
 
     it("import", async () => {
@@ -41,9 +41,9 @@ context("EC", () => {
 
       const publicKey = await crypto.subtle.importKey("spki", spki, alg, false, ["verify"]) as EcCryptoKey;
 
-      assert.equal(publicKey.algorithm.token, true);
-      assert.equal(publicKey.algorithm.label, alg.label);
-      assert.equal(publicKey.algorithm.sensitive, false);
+      assert.strictEqual(publicKey.algorithm.token, true);
+      assert.strictEqual(publicKey.algorithm.label, alg.label);
+      assert.strictEqual(publicKey.algorithm.sensitive, false);
     });
 
   });
