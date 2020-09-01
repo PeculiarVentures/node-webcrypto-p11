@@ -84,24 +84,24 @@ export interface ProviderInfo {
 
 export class SubtleCrypto implements core.NativeSubtleCrypto {
   constructor(crypto: Crypto);
-  public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
-  public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): PromiseLike<ArrayBuffer>;
-  public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public digest(algorithm: string | Algorithm, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
-  public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
-  public exportKey(format: "jwk", key: CryptoKey): PromiseLike<JsonWebKey>;
-  public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): PromiseLike<ArrayBuffer>;
-  public exportKey(format: string, key: CryptoKey): PromiseLike<ArrayBuffer | JsonWebKey>;
-  public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey | CryptoKeyPair>;
-  public generateKey(algorithm: (RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKeyPair>;
-  public generateKey(algorithm: (Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public importKey(format: "raw" | "pkcs8" | "spki", keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public importKey(format: string, keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer | JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<ArrayBuffer>;
-  public unwrapKey(format: string, wrappedKey: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): PromiseLike<CryptoKey>;
-  public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, signature: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): PromiseLike<boolean>;
-  public wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): PromiseLike<ArrayBuffer>;
+  public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): Promise<ArrayBuffer>;
+  public deriveBits(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, length: number): Promise<ArrayBuffer>;
+  public deriveKey(algorithm: string | EcdhKeyDeriveParams | DhKeyDeriveParams | ConcatParams | HkdfCtrParams | Pbkdf2Params, baseKey: CryptoKey, derivedKeyType: string | ConcatParams | HkdfCtrParams | Pbkdf2Params | AesDerivedKeyParams | HmacImportParams, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public digest(algorithm: string | Algorithm, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): Promise<ArrayBuffer>;
+  public encrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | AesCmacParams | AesGcmParams | AesCfbParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): Promise<ArrayBuffer>;
+  public exportKey(format: "jwk", key: CryptoKey): Promise<JsonWebKey>;
+  public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): Promise<ArrayBuffer>;
+  public exportKey(format: string, key: CryptoKey): Promise<ArrayBuffer | JsonWebKey>;
+  public generateKey(algorithm: string, extractable: boolean, keyUsages: string[]): Promise<CryptoKey | CryptoKeyPair>;
+  public generateKey(algorithm: (RsaHashedKeyGenParams | EcKeyGenParams | DhKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): Promise<CryptoKeyPair>;
+  public generateKey(algorithm: (Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public importKey(format: "raw" | "pkcs8" | "spki", keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public importKey(format: string, keyData: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer | JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public sign(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): Promise<ArrayBuffer>;
+  public unwrapKey(format: string, wrappedKey: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, unwrappingKey: CryptoKey, unwrapAlgorithm: string | Algorithm, unwrappedKeyAlgorithm: string | Algorithm, extractable: boolean, keyUsages: string[]): Promise<CryptoKey>;
+  public verify(algorithm: string | AesCmacParams | RsaPssParams | EcdsaParams, key: CryptoKey, signature: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer, data: Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer): Promise<boolean>;
+  public wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: string | Algorithm): Promise<ArrayBuffer>;
 }
 
 declare class KeyStorage implements core.CryptoKeyStorage {
