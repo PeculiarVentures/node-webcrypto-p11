@@ -124,7 +124,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
         default:
           CryptoKeyClass = CryptoKey;
       }
-      return new CryptoKeyClass(p11Key, alg);
+      return new CryptoKeyClass(p11Key, alg, usages);
     } else {
       return null;
     }

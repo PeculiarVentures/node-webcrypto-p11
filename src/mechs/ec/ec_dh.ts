@@ -7,6 +7,11 @@ import { EcCryptoKey } from "./key";
 
 export class EcdhProvider extends core.EcdhProvider {
 
+  public usages: core.ProviderKeyPairUsage = {
+    privateKey: ["sign", "deriveKey", "deriveBits"],
+    publicKey: ["verify"],
+  };
+
   constructor(private crypto: Crypto) {
     super();
   }

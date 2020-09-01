@@ -50,7 +50,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     return this.p11Object.toType<Key>();
   }
 
-  constructor(key: Key, alg: T | KeyAlgorithm) {
+  constructor(key: Key, alg: T | KeyAlgorithm, usages?: KeyUsage[]) {
     super();
     this.p11Object = key;
     switch (key.class) {
@@ -69,6 +69,10 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     const { name, ...defaultAlg } = CryptoKey.defaultKeyAlgorithm();
     this.algorithm = { ...alg, ...defaultAlg } as any;
     this.id = CryptoKey.getID(key);
+
+    if (usages) {
+      this.usages = usages;
+    }
 
     try {
       this.algorithm.label = key.label;

@@ -9,6 +9,11 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public namedCurves = ["P-256", "P-384", "P-521", "K-256"];
 
+  public usages: core.ProviderKeyPairUsage = {
+    privateKey: ["sign", "deriveKey", "deriveBits"],
+    publicKey: ["verify"],
+  };
+
   constructor(private crypto: Crypto) {
     super();
   }

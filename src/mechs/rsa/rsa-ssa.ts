@@ -7,6 +7,11 @@ import { RsaCryptoKey } from "./key";
 
 export class RsaSsaProvider extends core.RsaSsaProvider {
 
+  public usages: core.ProviderKeyPairUsage = {
+    privateKey: ["sign", "decrypt", "unwrapKey"],
+    publicKey: ["verify", "encrypt", "wrapKey"],
+  };
+
   constructor(private crypto: Crypto) {
     super();
   }

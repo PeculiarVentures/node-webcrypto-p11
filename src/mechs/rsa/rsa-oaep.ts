@@ -7,6 +7,11 @@ import { RsaCryptoKey } from "./key";
 
 export class RsaOaepProvider extends core.RsaOaepProvider {
 
+  public usages: core.ProviderKeyPairUsage = {
+    privateKey: ["sign", "decrypt", "unwrapKey"],
+    publicKey: ["verify", "encrypt", "wrapKey"],
+  };
+
   constructor(private crypto: Crypto) {
     super();
   }
