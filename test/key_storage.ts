@@ -110,7 +110,7 @@ import { isNSS } from "./helper";
             publicExponent: new Uint8Array([1, 0, 1]),
             modulusLength: 2048,
           };
-          const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify", "encrypt", "decrypt"]) as CryptoKeyPair;
+          const keys = await crypto.subtle.generateKey(algorithm, true, ["sign", "verify", "encrypt", "decrypt"]) as CryptoKeyPair;
 
           // Set key to storage
           const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -129,10 +129,12 @@ import { isNSS } from "./helper";
           const key = await crypto.keyStorage.getItem(
             index,
             { name: "RSASSA-PKCS1-v1_5", hash: "SHA-512" } as RsaHashedImportParams,
+            false,
             ["verify"],
           );
           assert.strictEqual(key.algorithm.name, "RSASSA-PKCS1-v1_5");
           assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-512");
+          assert.strictEqual(key.extractable, false);
           assert.deepStrictEqual(key.usages, ["verify"]);
         });
 

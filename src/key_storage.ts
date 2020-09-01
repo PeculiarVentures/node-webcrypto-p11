@@ -50,12 +50,25 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async getItem(key: string): Promise<CryptoKey>;
+  /** @deprecated */
   public async getItem(key: string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
-  public async getItem(key: string, algorithm?: Algorithm, usages?: KeyUsage[]) {
+  public async getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>
+  public async getItem(key: string, ...args: any[]) {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
       const p11Key = subjectObject.toType<SecretKey>();
       let alg: Pkcs11KeyAlgorithm | undefined;
+      let extractable = false;
+      let algorithm: Algorithm | undefined;
+      let usages: KeyUsage[] | undefined;
+      if (typeof args[0] === "object" && typeof args[1] === "boolean" && Array.isArray(args[2])) {
+        algorithm = args[0];
+        extractable = args[1];
+        usages = args[2];
+      } else if (typeof args[0] === "object" && Array.isArray(args[1])) {
+        algorithm = args[0];
+        usages = args[1];
+      }
       if (algorithm) {
         alg = {
           ...utils.prepareAlgorithm(algorithm),
@@ -124,7 +137,13 @@ export class KeyStorage implements core.CryptoKeyStorage {
         default:
           CryptoKeyClass = CryptoKey;
       }
-      return new CryptoKeyClass(p11Key, alg, usages);
+      const key = new CryptoKeyClass(p11Key, alg, usages);
+
+      if (key.extractable) {
+        key.extractable = extractable;
+      }
+
+      return key;
     } else {
       return null;
     }
