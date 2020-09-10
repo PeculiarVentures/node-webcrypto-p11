@@ -37,41 +37,13 @@ interface ProviderInfo {
   isHardware: boolean;
 }
 
-interface Pkcs11Params {
-  token?: boolean;
-  sensitive?: boolean;
-  label?: string;
-}
-interface Pkcs11KeyGenParams extends Algorithm, Pkcs11Params { }
-
-interface Pkcs11AesKeyGenParams extends AesKeyGenParams, Pkcs11KeyGenParams { }
-
-interface Pkcs11HmacKeyGenParams extends HmacKeyGenParams, Pkcs11KeyGenParams { }
-
-interface Pkcs11EcKeyGenParams extends EcKeyGenParams, Pkcs11KeyGenParams { }
-
-interface Pkcs11RsaHashedKeyGenParams extends RsaHashedKeyGenParams, Pkcs11KeyGenParams { }
-
-interface Pkcs11KeyImportParams extends Algorithm, Pkcs11Params { }
-
-interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyImportParams { }
-
-interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyImportParams { }
-
-interface Pkcs11HmacKeyImportParams extends HmacImportParams, Pkcs11KeyImportParams { }
-
-interface Pkcs11AesKeyImportParams extends Algorithm, Pkcs11KeyImportParams { }
-
-interface Pkcs11KeyAlgorithm extends KeyAlgorithm {
-  token: boolean;
-  sensitive: boolean;
+interface Pkcs11KeyAttributes {
   label: string;
+  token: boolean;
+  sensitive?: boolean;
 }
 
-interface Pkcs11RsaHashedKeyAlgorithm extends RsaHashedKeyAlgorithm, Pkcs11KeyAlgorithm { }
-
-interface Pkcs11EcKeyAlgorithm extends EcKeyAlgorithm, Pkcs11KeyAlgorithm { }
-
-interface Pkcs11AesKeyAlgorithm extends AesKeyAlgorithm, Pkcs11KeyAlgorithm { }
-
-interface Pkcs11HmacKeyAlgorithm extends HmacKeyAlgorithm, Pkcs11KeyAlgorithm { }
+interface Pkcs11CertificateAttributes {
+  label: string;
+  token: boolean;
+}

@@ -57,7 +57,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
       const p11Key = subjectObject.toType<SecretKey>();
-      let alg: Pkcs11KeyAlgorithm | undefined;
+      let alg: KeyAlgorithm | undefined;
       let extractable = false;
       let algorithm: Algorithm | undefined;
       let usages: KeyUsage[] | undefined;
@@ -72,16 +72,10 @@ export class KeyStorage implements core.CryptoKeyStorage {
       if (algorithm) {
         alg = {
           ...utils.prepareAlgorithm(algorithm),
-          token: false,
-          sensitive: false,
-          label: "",
         };
       } else {
         alg = {
           name: "",
-          token: false,
-          sensitive: false,
-          label: "",
         };
         switch (p11Key.type) {
           case KeyType.RSA: {
@@ -156,10 +150,10 @@ export class KeyStorage implements core.CryptoKeyStorage {
     }
   }
 
-  public async setItem(data: core.NativeCryptoKey): Promise<string>;
-  public async setItem(data: CryptoKey) {
+  public async setItem(data: core.NativeCryptoKey, attrs?: Partial<Pkcs11KeyAttributes>): Promise<string>;
+  public async setItem(data: CryptoKey, attrs: Partial<Pkcs11KeyAttributes> = { token: true }) {
     if (!(data instanceof CryptoKey)) {
-      throw new core.CryptoError("Parameter 1 is not P11CryptoKey");
+      throw new core.CryptoError("Parameter 'data' is not PKCS#11 CryptoKey");
     }
     Crypto.assertSession(this.crypto.session);
 
@@ -167,9 +161,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
     // don't copy object from token
     if (!(this.hasItem(data) && p11Key.key.token)) {
-      const obj = this.crypto.session.copy(p11Key.key, {
-        token: true,
-      });
+      const obj = this.crypto.session.copy(p11Key.key, attrs);
       return CryptoKey.getID(obj.toType<any>());
     } else {
       return data.id;

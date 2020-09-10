@@ -1,5 +1,4 @@
 import * as graphene from "graphene-pk11";
-import { ITemplate, KeyGenMechanism, KeyType, ObjectClass, PrivateKey, PublicKey } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 import { CryptoKey, ITemplatePair } from "../../key";
@@ -21,11 +20,11 @@ export class RsaCrypto {
   public static publicKeyUsages = ["verify", "encrypt", "wrapKey"];
   public static privateKeyUsages = ["sign", "decrypt", "unwrapKey"];
 
-  public static async generateKey(session: graphene.Session, algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): Promise<CryptoKeyPair> {
+  public static async generateKey(session: graphene.Session, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], attrs: Partial<Pkcs11KeyAttributes>): Promise<CryptoKeyPair> {
     const size = algorithm.modulusLength;
     const exp = Buffer.from(algorithm.publicExponent);
 
-    const template = this.createTemplate(session, algorithm, extractable, keyUsages);
+    const template = this.createTemplate(session, algorithm, extractable, keyUsages, attrs);
 
     // RSA params
     template.publicKey.publicExponent = exp;
@@ -33,7 +32,7 @@ export class RsaCrypto {
 
     // PKCS11 generation
     return new Promise<CryptoKeyPair>((resolve, reject) => {
-      session.generateKeyPair(KeyGenMechanism.RSA, template.publicKey, template.privateKey, (err, keys) => {
+      session.generateKeyPair(graphene.KeyGenMechanism.RSA, template.publicKey, template.privateKey, (err, keys) => {
         try {
           if (err) {
             reject(new core.CryptoError(`Rsa: Can not generate new key\n${err.message}`));
@@ -83,28 +82,28 @@ export class RsaCrypto {
     }
   }
 
-  public static async importKey(session: graphene.Session, format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async importKey(session: graphene.Session, format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes>): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk":
         const jwk: any = keyData;
         if (jwk.d) {
-          return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+          return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages, attrs);
         } else {
-          return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+          return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages, attrs);
         }
       case "spki": {
         const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
         const asn1 = asn1js.fromBER(arBuf);
 
         const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
-        return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+        return this.importJwkPublicKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages, attrs);
       }
       case "pkcs8": {
         const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
         const asn1 = asn1js.fromBER(arBuf);
 
         const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();
-        return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
+        return this.importJwkPrivateKey(session!, jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages, attrs);
       }
       default:
         throw new core.OperationError("format: Must be 'jwk', 'pkcs8' or 'spki'");
@@ -157,7 +156,7 @@ export class RsaCrypto {
   }
 
   protected static async exportJwkPublicKey(key: RsaCryptoKey) {
-    const pkey: ITemplate = key.key.getAttribute({
+    const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
     });
@@ -174,7 +173,7 @@ export class RsaCrypto {
   }
 
   protected static async exportJwkPrivateKey(key: RsaCryptoKey) {
-    const pkey: ITemplate = key.key.getAttribute({
+    const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
       privateExponent: null,
@@ -202,9 +201,9 @@ export class RsaCrypto {
     return jwk;
   }
 
-  protected static importJwkPrivateKey(session: graphene.Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
+  protected static importJwkPrivateKey(session: graphene.Session, jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], attrs: Partial<Pkcs11KeyAttributes>) {
     // TODO: Fix key label. It ha s `RSA-undefined` for imported key
-    const template = this.createTemplate(session, algorithm, extractable, keyUsages).privateKey;
+    const template = this.createTemplate(session, algorithm, extractable, keyUsages, attrs).privateKey;
     template.publicExponent = utils.b64UrlDecode(jwk.e!);
     template.modulus = utils.b64UrlDecode(jwk.n!);
     template.privateExponent = utils.b64UrlDecode(jwk.d!);
@@ -213,31 +212,33 @@ export class RsaCrypto {
     template.exp1 = utils.b64UrlDecode(jwk.dp!);
     template.exp2 = utils.b64UrlDecode(jwk.dq!);
     template.coefficient = utils.b64UrlDecode(jwk.qi!);
-    const p11key = session.create(template).toType<PrivateKey>();
+    const p11key = session.create(template).toType<graphene.PrivateKey>();
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected static importJwkPublicKey(session: graphene.Session, jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: string[]) {
-    const template = this.createTemplate(session, algorithm as any, extractable, keyUsages).publicKey;
+  protected static importJwkPublicKey(session: graphene.Session, jwk: JsonWebKey, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: string[], attrs: Partial<Pkcs11KeyAttributes>) {
+    const template = this.createTemplate(session, algorithm as any, extractable, keyUsages, attrs).publicKey;
     template.publicExponent = utils.b64UrlDecode(jwk.e!);
     template.modulus = utils.b64UrlDecode(jwk.n!);
-    const p11key = session.create(template).toType<PublicKey>();
+    const p11key = session.create(template).toType<graphene.PublicKey>();
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected static createTemplate(session: graphene.Session, alg: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
+  protected static createTemplate(session: graphene.Session, alg: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[], attrs: Partial<Pkcs11KeyAttributes>): ITemplatePair {
     alg = { ...RsaCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const label = alg.label || alg.name;
-    const idKey = utils.GUID(session);
+    const label = attrs.label || alg.name;
+    const token = !!(attrs.token);
+    const sensitive = !!(attrs.sensitive);
+    const id = utils.GUID(session);
     return {
       privateKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-        class: ObjectClass.PRIVATE_KEY,
-        keyType: KeyType.RSA,
+        token,
+        sensitive,
+        class: graphene.ObjectClass.PRIVATE_KEY,
+        keyType: graphene.KeyType.RSA,
         private: true,
         label,
-        id: idKey,
+        id,
         extractable,
         derive: false,
         sign: keyUsages.indexOf("sign") > -1,
@@ -245,12 +246,12 @@ export class RsaCrypto {
         unwrap: keyUsages.indexOf("unwrapKey") > -1,
       },
       publicKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        class: ObjectClass.PUBLIC_KEY,
-        keyType: KeyType.RSA,
+        token,
+        class: graphene.ObjectClass.PUBLIC_KEY,
+        keyType: graphene.KeyType.RSA,
         private: false,
         label,
-        id: idKey,
+        id,
         verify: keyUsages.indexOf("verify") > -1,
         encrypt: keyUsages.indexOf("encrypt") > -1,
         wrap: keyUsages.indexOf("wrapKey") > -1,

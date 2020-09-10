@@ -16,14 +16,15 @@ export class EcdhProvider extends core.EcdhProvider {
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKeyPair> {
     Crypto.assertSession(this.crypto.session);
 
     const key = await EcCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
       extractable,
-      keyUsages);
+      keyUsages,
+      attrs);
 
     return key;
   }
@@ -34,10 +35,10 @@ export class EcdhProvider extends core.EcdhProvider {
     return EcCrypto.exportKey(this.crypto.session, format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     Crypto.assertSession(this.crypto.session);
 
-    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages, attrs);
     return key;
   }
 

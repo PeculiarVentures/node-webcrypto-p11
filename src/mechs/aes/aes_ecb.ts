@@ -13,14 +13,15 @@ export class AesEcbProvider extends core.ProviderCrypto {
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     Crypto.assertSession(this.crypto.session);
 
     const key = await AesCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
       extractable,
-      keyUsages);
+      keyUsages,
+      attrs);
 
     return key;
   }
@@ -43,10 +44,10 @@ export class AesEcbProvider extends core.ProviderCrypto {
     return AesCrypto.exportKey(this.crypto.session, format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Algorithm, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     Crypto.assertSession(this.crypto.session);
 
-    return AesCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    return AesCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages, attrs);
   }
 
   public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {

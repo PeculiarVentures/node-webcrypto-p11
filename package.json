@@ -1,6 +1,6 @@
 {
   "name": "node-webcrypto-p11",
-  "version": "2.2.4",
+  "version": "3.0.0",
   "description": "A WebCrypto Polyfill built on PKCS11",
   "main": "build/cjs/index.js",
   "module": "build/es2015/index.js",
@@ -32,8 +32,9 @@
     "@peculiar/json-schema": "^1.1.12",
     "graphene-pk11": "^2.1.11",
     "pkijs": "^2.1.90",
+    "pvtsutils": "^1.0.12",
     "tslib": "^2.0.1",
-    "webcrypto-core": "^1.1.6"
+    "webcrypto-core": "^1.1.8"
   },
   "keywords": [
     "crypto",
@@ -58,11 +59,10 @@
     "@peculiar/webcrypto-test": "^1.0.6",
     "@types/asn1js": "0.0.2",
     "@types/mocha": "^8.0.3",
-    "@types/node": "^12.12.54",
+    "@types/node": "^12.12.57",
     "coveralls": "^3.1.0",
     "mocha": "^8.1.3",
     "nyc": "^15.1.0",
-    "pvtsutils": "^1.0.11",
     "ts-node": "^9.0.0",
     "tslint": "^6.1.3",
     "typescript": "^4.0.2"

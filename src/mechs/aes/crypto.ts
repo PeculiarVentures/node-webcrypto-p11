@@ -1,4 +1,3 @@
-import { ITemplate, KeyGenMechanism, KeyType, ObjectClass, SecretKey } from "graphene-pk11";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
@@ -8,13 +7,13 @@ import { AesCryptoKey } from "./key";
 
 export class AesCrypto {
 
-  public static async generateKey(session: graphene.Session, algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async generateKey(session: graphene.Session, algorithm: AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes>): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
-      const template = this.createTemplate(session!, algorithm, extractable, keyUsages);
+      const template = this.createTemplate(session!, algorithm, extractable, keyUsages, attrs);
       template.valueLen = algorithm.length >> 3;
 
       // PKCS11 generation
-      session.generateKey(KeyGenMechanism.AES, template, (err, aesKey) => {
+      session.generateKey(graphene.KeyGenMechanism.AES, template, (err, aesKey) => {
         try {
           if (err) {
             reject(new core.CryptoError(`Aes: Can not generate new key\n${err.message}`));
@@ -49,7 +48,7 @@ export class AesCrypto {
     }
   }
 
-  public static async importKey(session: graphene.Session, format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public static async importKey(session: graphene.Session, format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Algorithm, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes>): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -76,17 +75,17 @@ export class AesCrypto {
     }
 
     // prepare key algorithm
-    const aesAlg: Pkcs11AesKeyAlgorithm = {
+    const aesAlg: AesKeyAlgorithm = {
       ...AesCryptoKey.defaultKeyAlgorithm(),
       ...algorithm,
       length: value.byteLength * 8,
     };
-    const template: ITemplate = this.createTemplate(session, aesAlg, extractable, keyUsages);
+    const template: graphene.ITemplate = this.createTemplate(session, aesAlg, extractable, keyUsages, attrs);
     template.value = Buffer.from(value);
 
     // create session object
     const sessionObject = session.create(template);
-    const key = new AesCryptoKey(sessionObject.toType<SecretKey>(), aesAlg);
+    const key = new AesCryptoKey(sessionObject.toType<graphene.SecretKey>(), aesAlg);
     return key;
   }
 
@@ -138,17 +137,20 @@ export class AesCrypto {
     }
   }
 
-  protected static createTemplate(session: graphene.Session, alg: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplate {
+  protected static createTemplate(session: graphene.Session, alg: AesKeyGenParams, extractable: boolean, keyUsages: string[], attrs: Partial<Pkcs11KeyAttributes>): graphene.ITemplate {
     alg = { ...AesCryptoKey.defaultKeyAlgorithm(), ...alg };
+    const label = attrs.label || `AES-${alg.length}`;
+    const token = !!(attrs.token);
+    const sensitive = !!(attrs.sensitive);
     const id = utils.GUID(session);
     return {
-      token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-      sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-      class: ObjectClass.SECRET_KEY,
-      keyType: KeyType.AES,
-      label: alg.label || `AES-${alg.length}`,
       id,
+      token,
+      sensitive,
+      label,
       extractable,
+      class: graphene.ObjectClass.SECRET_KEY,
+      keyType: graphene.KeyType.AES,
       derive: false,
       sign: keyUsages.indexOf("sign") !== -1,
       verify: keyUsages.indexOf("verify") !== -1,
@@ -199,7 +201,7 @@ export class AesCrypto {
    * `false` - decryption operation
    * @param dataSize size of incoming data
    */
-  protected static getOutputBufferSize(keyAlg: Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
+  protected static getOutputBufferSize(keyAlg: AesKeyAlgorithm, enc: boolean, dataSize: number): number {
     const len = keyAlg.length >> 3;
     if (enc) {
       return (Math.ceil(dataSize / len) * len) + len;

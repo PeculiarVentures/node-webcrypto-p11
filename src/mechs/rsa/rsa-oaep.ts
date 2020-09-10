@@ -16,14 +16,15 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKeyPair> {
     Crypto.assertSession(this.crypto.session);
 
     const key = await RsaCrypto.generateKey(
       this.crypto.session,
       { ...algorithm, name: this.name },
       extractable,
-      keyUsages);
+      keyUsages,
+      attrs);
 
     return key;
   }
@@ -70,10 +71,10 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
     return RsaCrypto.exportKey(this.crypto.session, format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     Crypto.assertSession(this.crypto.session);
 
-    const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages, attrs);
     return key;
   }
 
@@ -84,7 +85,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider {
     }
   }
 
-  protected wc2pk11(alg: RsaOaepParams, keyAlg: Pkcs11RsaHashedKeyAlgorithm): graphene.IAlgorithm {
+  protected wc2pk11(alg: RsaOaepParams, keyAlg: RsaHashedKeyAlgorithm): graphene.IAlgorithm {
     let params: graphene.RsaOaepParams;
     const sourceData = alg.label ? Buffer.from((alg as RsaOaepParams).label as Uint8Array) : undefined;
     switch (keyAlg.hash.name.toUpperCase()) {

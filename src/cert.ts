@@ -1,23 +1,18 @@
 import * as Asn1Js from "asn1js";
-import { CertificateType, Data as P11Data, ObjectClass, Storage, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
 
 import { Convert } from "pvtsutils";
-import { Pkcs11ImportAlgorithms } from "./cert_storage";
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
 import { Pkcs11Object } from "./p11_object";
 import * as utils from "./utils";
+import { Pkcs11CertificateAttributes } from '..';
 
 const PkiJs = require("pkijs");
 
 PkiJs.CertificationRequest.prototype.getPublicKey = PkiJs.Certificate.prototype.getPublicKey;
 
-export interface Pkcs11CryptoCertificate extends CryptoCertificate {
-  token: boolean;
-  sensitive: boolean;
-  label: string;
-}
 
 /**
  * List of OIDs
@@ -91,7 +86,7 @@ const OID: { [key: string]: { short?: string, long?: string } } = {
  * Converts X500Name to string
  * @param  {RDN} name X500Name
  * @param  {string} splitter Splitter char. Default ','
- * @returns string Formated string
+ * @returns string Formatted string
  * Example:
  * > C=Some name, O=Some organization name, C=RU
  */
@@ -108,15 +103,15 @@ export function nameToString(name: any, splitter: string = ","): string {
 
 // CryptoX509Certificate
 
-export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11CryptoCertificate {
+export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11CertificateAttributes {
 
-  public static getID(p11Object: Storage) {
+  public static getID(p11Object: graphene.Storage) {
     let type: string | undefined;
     let id: Buffer | undefined;
-    if (p11Object instanceof P11Data) {
+    if (p11Object instanceof graphene.Data) {
       type = "request";
       id = p11Object.objectId;
-    } else if (p11Object instanceof P11X509Certificate) {
+    } else if (p11Object instanceof graphene.X509Certificate) {
       type = "x509";
       id = p11Object.id;
     }
@@ -143,10 +138,6 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
     return false;
   }
 
-  public get sensitive() {
-    return false;
-  }
-
   public get label() {
     try {
       Pkcs11Object.assertStorage(this.p11Object);
@@ -162,7 +153,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
     this.crypto = crypto;
   }
 
-  public abstract importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: string[]): Promise<void>;
+  public abstract importCert(data: Buffer, algorithm: core.ImportAlgorithms, keyUsages: string[], attrs?: Partial<Pkcs11CertificateAttributes>): Promise<void>;
   public abstract exportCert(): Promise<ArrayBuffer>;
   public abstract exportKey(): Promise<CryptoKey>;
   public abstract exportKey(algorithm: Algorithm, usages: string[]): Promise<CryptoKey>;
@@ -195,10 +186,10 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     return new Uint8Array(this.p11Object.value).buffer;
   }
 
-  public p11Object?: P11X509Certificate;
+  public p11Object?: graphene.X509Certificate;
   protected schema: any;
 
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[], attrs: Partial<Pkcs11CertificateAttributes>) {
     Crypto.assertSession(this.crypto.session);
 
     const array = new Uint8Array(data);
@@ -207,25 +198,25 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
     const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-    const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, keyAlg, true, keyUsages) as CryptoKey;
+    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
-    const certLabel = this.getName();
+    const label = attrs.label || this.getName();
+    const token = !!attrs.token;
 
     this.p11Object = this.crypto.session.create({
       id: hashSPKI,
-      label: algorithm.label || certLabel,
-      class: ObjectClass.CERTIFICATE,
-      certType: CertificateType.X_509,
+      token,
+      label,
+      class: graphene.ObjectClass.CERTIFICATE,
+      certType: graphene.CertificateType.X_509,
       serial: Buffer.from(this.schema.serialNumber.toBER(false)),
       subject: Buffer.from(this.schema.subject.toSchema(true).toBER(false)),
       issuer: Buffer.from(this.schema.issuer.toSchema(true).toBER(false)),
-      token: !!(algorithm.token),
       private: false,
       value: Buffer.from(data),
-    }).toType<P11X509Certificate>();
+    }).toType<graphene.X509Certificate>();
   }
 
   public async exportCert() {
@@ -319,7 +310,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     return nameToString(this.getData().subject);
   }
   public type: "request" = "request";
-  public p11Object?: P11Data;
+  public p11Object?: graphene.Data;
 
   public get value(): ArrayBuffer {
     Pkcs11Object.assertStorage(this.p11Object);
@@ -335,7 +326,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param algorithm
    * @param keyUsages
    */
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[], attrs: Partial<Pkcs11CertificateAttributes>) {
     Crypto.assertSession(this.crypto.session);
 
     const array = new Uint8Array(data).buffer as ArrayBuffer;
@@ -344,20 +335,21 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
     const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
 
-    const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, keyAlg, true, keyUsages) as CryptoKey;
+    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, algorithm, true, keyUsages) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
+    const label = attrs.label || "X509 Request";
+    const token = !!attrs.token;
 
     this.p11Object = this.crypto.session.create({
       objectId: hashSPKI,
+      label,
+      token,
       application: "webcrypto-p11",
-      class: ObjectClass.DATA,
-      label: algorithm.label || "X509 Request",
-      token: !!(algorithm.token),
+      class: graphene.ObjectClass.DATA,
       private: false,
       value: Buffer.from(data),
-    }).toType<P11Data>();
+    }).toType<graphene.Data>();
   }
 
   public async exportCert() {

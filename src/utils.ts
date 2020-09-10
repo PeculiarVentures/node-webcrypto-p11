@@ -3,6 +3,7 @@ import { Session, Slot, SlotFlag } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
+import { CryptoKey } from "./key";
 
 export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;
@@ -32,6 +33,12 @@ export function isHashedAlgorithm(data: any): data is HashedAlgorithm {
 
 export function isCryptoKeyPair(data: any): data is CryptoKeyPair {
   return data && data.privateKey && data.publicKey;
+}
+
+export function assertPkcs11CryptoKey(data: any) : asserts data is CryptoKey {
+  if (!(data instanceof CryptoKey)) {
+    throw new TypeError("'data' is not a PKCS11 CryptoKey");
+  }
 }
 
 export function prepareAlgorithm(algorithm: AlgorithmIdentifier): Algorithm {

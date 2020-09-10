@@ -7,36 +7,40 @@ context("HMAC", () => {
   context("token", () => {
 
     it("generate", async () => {
-      const alg: Pkcs11HmacKeyGenParams = {
+      const alg: HmacKeyGenParams = {
         name: "HMAC",
         hash: "SHA-256",
-        label: "custom",
-        token: true,
-        sensitive: true,
       };
 
-      const key = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as HmacCryptoKey;
+      const key = await crypto.subtle.generateKey(alg, false, ["sign", "verify"],
+        {
+          label: "custom",
+          token: true,
+          sensitive: true,
+        }) as HmacCryptoKey;
 
-      assert.strictEqual(key.algorithm.token, true);
-      assert.strictEqual(key.algorithm.label, alg.label);
-      assert.strictEqual(key.algorithm.sensitive, true);
+      assert.strictEqual(key.token, true);
+      assert.strictEqual(key.label, "custom");
+      assert.strictEqual(key.sensitive, true);
     });
 
     it("import", async () => {
-      const alg: Pkcs11HmacKeyImportParams = {
+      const alg: HmacImportParams = {
         name: "HMAC",
         hash: "SHA-256",
-        label: "custom",
-        token: true,
-        sensitive: true,
       };
       const raw = Buffer.from("1234567890abcdef1234567809abcdef");
 
-      const key = await crypto.subtle.importKey("raw", raw, alg, false, ["sign", "verify"]) as HmacCryptoKey;
+      const key = await crypto.subtle.importKey("raw", raw, alg, false, ["sign", "verify"],
+        {
+          label: "custom",
+          token: true,
+          sensitive: true,
+        }) as HmacCryptoKey;
 
-      assert.strictEqual(key.algorithm.token, true);
-      assert.strictEqual(key.algorithm.label, alg.label);
-      assert.strictEqual(key.algorithm.sensitive, true);
+      assert.strictEqual(key.token, true);
+      assert.strictEqual(key.label, "custom");
+      assert.strictEqual(key.sensitive, true);
     });
 
   });

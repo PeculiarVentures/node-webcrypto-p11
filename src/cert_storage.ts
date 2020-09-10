@@ -1,14 +1,14 @@
-import { CertificateType, Data as P11Data, ObjectClass, SessionObject, X509Certificate as P11X509Certificate } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
 
-import { PemConverter } from "webcrypto-core";
+import { ImportAlgorithms, PemConverter } from "webcrypto-core";
 import { CryptoCertificate, X509Certificate, X509CertificateRequest } from "./cert";
 import { Crypto } from "./crypto";
 import { Pkcs11Object } from "./p11_object";
 
 const TEMPLATES = [
-  { class: ObjectClass.CERTIFICATE, certType: CertificateType.X_509, token: true },
-  { class: ObjectClass.DATA, token: true, label: "X509 Request" },
+  { class: graphene.ObjectClass.CERTIFICATE, certType: graphene.CertificateType.X_509, token: true },
+  { class: graphene.ObjectClass.DATA, token: true },
 ];
 
 export interface IGetValue {
@@ -19,7 +19,6 @@ export interface IGetValue {
   getValue(key: string): Promise<ArrayBuffer | null>
 }
 
-export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params;
 export class CertificateStorage implements core.CryptoCertificateStorage, IGetValue {
 
   protected crypto: Crypto;
@@ -30,13 +29,13 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
 
   public async getValue(key: string): Promise<ArrayBuffer | null> {
     const storageObject = this.getItemById(key);
-    if (storageObject instanceof P11X509Certificate) {
-      const x509Object = storageObject.toType<P11X509Certificate>();
+    if (storageObject instanceof graphene.X509Certificate) {
+      const x509Object = storageObject.toType<graphene.X509Certificate>();
       const x509 = new X509Certificate(this.crypto);
       x509.p11Object = x509Object;
       return x509.exportCert();
-    } else if (storageObject instanceof P11Data) {
-      const x509Object = storageObject.toType<P11Data>();
+    } else if (storageObject instanceof graphene.Data) {
+      const x509Object = storageObject.toType<graphene.Data>();
       const x509request = new X509CertificateRequest(this.crypto);
       x509request.p11Object = x509Object;
       return x509request.exportCert();
@@ -58,7 +57,13 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     const keys: string[] = [];
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
-        const item = obj.toType<any>();
+        const item = obj.toType<graphene.Storage>();
+        if (item.class === graphene.ObjectClass.DATA) {
+          if (!(item.get("application")?.toString() === "webcrypto-p11" ||
+            item.get("label")?.toString() === "X509 Request")) {
+              return;
+          }
+        }
         const id = CryptoCertificate.getID(item);
         keys.push(id);
       });
@@ -69,7 +74,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   public async clear() {
     Crypto.assertSession(this.crypto.session);
 
-    const objects: SessionObject[] = [];
+    const objects: graphene.SessionObject[] = [];
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
         objects.push(obj);
@@ -89,8 +94,8 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   public getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
   public async getItem(index: string, algorithm?: Algorithm, usages?: KeyUsage[]): Promise<core.CryptoCertificate> {
     const storageObject = this.getItemById(index);
-    if (storageObject instanceof P11X509Certificate) {
-      const x509Object = storageObject.toType<P11X509Certificate>();
+    if (storageObject instanceof graphene.X509Certificate) {
+      const x509Object = storageObject.toType<graphene.X509Certificate>();
       const x509 = new X509Certificate(this.crypto);
       x509.p11Object = x509Object;
       if (algorithm && usages) {
@@ -99,8 +104,8 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
         await x509.exportKey();
       }
       return x509;
-    } else if (storageObject instanceof P11Data) {
-      const x509Object = storageObject.toType<P11Data>();
+    } else if (storageObject instanceof graphene.Data) {
+      const x509Object = storageObject.toType<graphene.Data>();
       const x509request = new X509CertificateRequest(this.crypto);
       x509request.p11Object = x509Object;
       if (algorithm && usages) {
@@ -122,19 +127,17 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  public setItem(data: core.CryptoCertificate): Promise<string>;
-  public async setItem(data: CryptoCertificate) {
+  public setItem(data: core.CryptoCertificate, attrs?: Partial<Pkcs11CertificateAttributes>): Promise<string>;
+  public async setItem(data: CryptoCertificate, attrs: Partial<Pkcs11CertificateAttributes> = { token: true }) {
     if (!(data instanceof CryptoCertificate)) {
-      throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
+      throw new Error("Parameter 'data' is not PKCS#11 CryptoCertificate");
     }
     Pkcs11Object.assertStorage(data.p11Object);
     Crypto.assertSession(this.crypto.session);
 
     // don't copy object from token
     if (!data.p11Object.token) {
-      const obj = this.crypto.session.copy(data.p11Object, {
-        token: true,
-      });
+      const obj = this.crypto.session.copy(data.p11Object, attrs);
       return CryptoCertificate.getID(obj.toType<any>());
     } else {
       return data.id;
@@ -145,27 +148,28 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   public exportCert(format: "raw", item: core.CryptoCertificate): Promise<ArrayBuffer>;
   public exportCert(format: "pem", item: core.CryptoCertificate): Promise<string>;
   public async exportCert(format: core.CryptoCertificateFormat, cert: CryptoCertificate): Promise<ArrayBuffer | string> {
-    switch (format) {
+    const raw = await cert.exportCert();
+    switch (format?.toLowerCase()) {
       case "pem": {
-        throw Error("PEM format is not implemented");
+        return PemConverter.fromBufferSource(raw, cert.type === "x509" ? "CERTIFICATE" : "CERTIFICATE REQUEST");
       }
       case "raw": {
-        return cert.exportCert();
+        return raw;
       }
       default:
-        throw new Error(`Unsupported format in use ${format}`);
+        throw new Error(`Unsupported format in use '${format}'`);
     }
   }
 
-  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "raw", data: BufferSource, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "pem", data: string, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: Pkcs11ImportAlgorithms, usages: KeyUsage[]): Promise<CryptoCertificate> {
+  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: ImportAlgorithms, keyUsages: KeyUsage[], attrs?: Partial<Pkcs11CertificateAttributes>): Promise<core.CryptoCertificate>;
+  public importCert(format: "raw", data: BufferSource, algorithm: ImportAlgorithms, keyUsages: KeyUsage[], attrs?: Partial<Pkcs11CertificateAttributes>): Promise<core.CryptoCertificate>;
+  public importCert(format: "pem", data: string, algorithm: ImportAlgorithms, keyUsages: KeyUsage[], attrs?: Partial<Pkcs11CertificateAttributes>): Promise<core.CryptoCertificate>;
+  public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: ImportAlgorithms, usages: KeyUsage[], attrs: Partial<Pkcs11CertificateAttributes> = {}): Promise<CryptoCertificate> {
     let rawData: ArrayBuffer;
     let rawType: core.CryptoCertificateType | null = null;
 
     //#region Check
-    switch (format) {
+    switch (format?.toLowerCase()) {
       case "pem":
         if (typeof data !== "string") {
           throw new TypeError("data: Is not type string");
@@ -192,18 +196,18 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     switch (rawType) {
       case "x509": {
         const x509 = new X509Certificate(this.crypto);
-        await x509.importCert(Buffer.from(rawData), algorithm, usages);
+        await x509.importCert(Buffer.from(rawData), algorithm, usages, attrs);
         return x509;
       }
       case "request": {
         const request = new X509CertificateRequest(this.crypto);
-        await request.importCert(Buffer.from(rawData), algorithm, usages);
+        await request.importCert(Buffer.from(rawData), algorithm, usages, attrs);
         return request;
       }
       default: {
         try {
           const x509 = new X509Certificate(this.crypto);
-          await x509.importCert(Buffer.from(rawData), algorithm, usages);
+          await x509.importCert(Buffer.from(rawData), algorithm, usages, attrs);
           return x509;
         } catch {
           // nothing
@@ -211,7 +215,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
 
         try {
           const request = new X509CertificateRequest(this.crypto);
-          await request.importCert(Buffer.from(rawData), algorithm, usages);
+          await request.importCert(Buffer.from(rawData), algorithm, usages, attrs);
           return request;
         } catch {
           // nothing
@@ -222,10 +226,10 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  protected getItemById(id: string): SessionObject | null {
+  protected getItemById(id: string): graphene.SessionObject | null {
     Crypto.assertSession(this.crypto.session);
 
-    let object: SessionObject | null = null;
+    let object: graphene.SessionObject | null = null;
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
         const item = obj.toType<any>();

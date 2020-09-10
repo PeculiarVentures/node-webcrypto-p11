@@ -41,11 +41,17 @@ context("Subtle", () => {
 
       context("pkcs11 attributes", () => {
         [
-          { name: "RSA-PSS", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024, token: true, sensitive: true, label: "RSA-PSS" },
-          { name: "ECDSA", namedCurve: "P-256", token: true, sensitive: true, label: "ECDSA" },
-        ].map((alg) => {
+          {
+            alg: { name: "RSA-PSS", hash: "SHA-256", publicExponent: new Uint8Array([1, 0, 1]), modulusLength: 1024 },
+            attrs: { token: true, sensitive: true, label: "RSA-PSS" }
+          },
+          {
+            alg: { name: "ECDSA", namedCurve: "P-256" },
+            attrs: { token: true, sensitive: true, label: "ECDSA" }
+          },
+        ].map(({ alg, attrs }) => {
           it(alg.name, async () => {
-            const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
+            const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"], attrs) as CryptoKeyPair;
 
             const id = await getId(keys.publicKey);
             assert.strictEqual((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);

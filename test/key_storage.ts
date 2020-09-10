@@ -49,9 +49,9 @@ import { isNSS } from "./helper";
       const key = await crypto.subtle.generateKey(algorithm, true, ["encrypt", "decrypt"]) as CryptoKey;
       assert.strictEqual(!!key, true, "Has no key value");
 
-      assert.strictEqual(key.algorithm.token, false);
-      assert.strictEqual(key.algorithm.label, "AES-256");
-      assert.strictEqual(key.algorithm.sensitive, false);
+      assert.strictEqual(key.token, false);
+      assert.strictEqual(key.label, "AES-256");
+      assert.strictEqual(key.sensitive, false);
 
       // Set key
       const index = await crypto.keyStorage.setItem(key);
@@ -65,9 +65,9 @@ import { isNSS } from "./helper";
       const aesKey = await crypto.keyStorage.getItem(index);
       assert.strictEqual(!!aesKey, true);
       assert.strictEqual(aesKey.key.id.toString("hex"), key.key.id.toString("hex"));
-      assert.strictEqual(aesKey.algorithm.token, true);
-      assert.strictEqual(aesKey.algorithm.label, "AES-256");
-      assert.strictEqual(aesKey.algorithm.sensitive, false);
+      assert.strictEqual(aesKey.token, true);
+      assert.strictEqual(aesKey.label, "AES-256");
+      assert.strictEqual(aesKey.sensitive, false);
     });
 
     it("remove item", async () => {
@@ -122,7 +122,7 @@ import { isNSS } from "./helper";
           // Get key from storage with default algorithm
           const keyDefault = await crypto.keyStorage.getItem(index);
           assert.strictEqual(keyDefault.algorithm.name, "RSASSA-PKCS1-v1_5");
-          assert.strictEqual((keyDefault.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+          assert.strictEqual((keyDefault.algorithm as RsaHashedKeyAlgorithm).hash.name, "SHA-256");
           assert.deepStrictEqual(keyDefault.usages, ["encrypt", "verify"]);
 
           // Get key from storage and set algorithm
@@ -133,7 +133,7 @@ import { isNSS } from "./helper";
             ["verify"],
           );
           assert.strictEqual(key.algorithm.name, "RSASSA-PKCS1-v1_5");
-          assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-512");
+          assert.strictEqual((key.algorithm as RsaHashedKeyAlgorithm).hash.name, "SHA-512");
           assert.strictEqual(key.extractable, false);
           assert.deepStrictEqual(key.usages, ["verify"]);
         });
@@ -163,7 +163,7 @@ import { isNSS } from "./helper";
             const key = await crypto.keyStorage.getItem(index);
 
             assert.strictEqual(key.algorithm.name, "RSASSA-PKCS1-v1_5");
-            assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+            assert.strictEqual((key.algorithm as RsaHashedKeyAlgorithm).hash.name, "SHA-256");
             assert.strictEqual(key.usages.join(","), "verify");
           });
 
@@ -187,7 +187,7 @@ import { isNSS } from "./helper";
             // Get key from storage with default alg
             const key = await crypto.keyStorage.getItem(index);
             assert.strictEqual(key.algorithm.name, "ECDSA");
-            assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-256");
+            assert.strictEqual((key.algorithm as EcKeyAlgorithm).namedCurve, "P-256");
             assert.strictEqual(key.usages.join(","), "verify");
           });
 
@@ -210,7 +210,7 @@ import { isNSS } from "./helper";
             // Get key from storage with default alg
             const key = await crypto.keyStorage.getItem(index);
             assert.strictEqual(key.algorithm.name, "ECDSA");
-            assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-521");
+            assert.strictEqual((key.algorithm as EcKeyAlgorithm).namedCurve, "P-521");
             assert.strictEqual(key.usages.join(","), "verify");
           });
 
@@ -235,7 +235,7 @@ import { isNSS } from "./helper";
             // Get key from storage we default alg
             const key = await crypto.keyStorage.getItem(index);
             assert.strictEqual(key.algorithm.name, "RSA-OAEP");
-            assert.strictEqual((key.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+            assert.strictEqual((key.algorithm as RsaHashedKeyAlgorithm).hash.name, "SHA-256");
             assert.strictEqual(key.usages.join(","), "encrypt");
 
           });
@@ -282,7 +282,7 @@ import { isNSS } from "./helper";
           // Get key from storage we default alg
           const key = await crypto.keyStorage.getItem(index);
           assert.strictEqual(key.algorithm.name, "ECDH");
-          assert.strictEqual((key.algorithm as Pkcs11EcKeyAlgorithm).namedCurve, "P-384");
+          assert.strictEqual((key.algorithm as EcKeyAlgorithm).namedCurve, "P-384");
           assert.strictEqual(key.usages.join(","), "");
         });
 

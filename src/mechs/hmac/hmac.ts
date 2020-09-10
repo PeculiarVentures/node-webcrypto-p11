@@ -2,7 +2,6 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 import { Crypto } from "../../crypto";
-import { CryptoKey } from "../../key";
 import * as utils from "../../utils";
 import { HmacCryptoKey } from "./key";
 
@@ -12,14 +11,14 @@ export class HmacProvider extends core.HmacProvider {
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       Crypto.assertSession(this.crypto.session);
 
       const length = (algorithm.length || this.getDefaultLength((algorithm.hash as Algorithm).name)) >> 3 << 3;
       algorithm = { ...algorithm, name: this.name, length };
 
-      const template = this.createTemplate(algorithm, extractable, keyUsages);
+      const template = this.createTemplate(this.crypto.session, algorithm, extractable, keyUsages, attrs);
       template.valueLen = length >> 3;
 
       // PKCS11 generation
@@ -67,7 +66,7 @@ export class HmacProvider extends core.HmacProvider {
     });
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11HmacKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: HmacImportParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes> = {}): Promise<CryptoKey> {
     Crypto.assertSession(this.crypto.session);
 
     // get key value
@@ -87,12 +86,13 @@ export class HmacProvider extends core.HmacProvider {
         throw new core.OperationError("format: Must be 'jwk' or 'raw'");
     }
     // prepare key algorithm
+    const preparedAlg = utils.prepareAlgorithm(algorithm);
     const hmacAlg = {
-      ...algorithm,
+      ...preparedAlg,
       name: this.name,
       length: value.byteLength * 8 || this.getDefaultLength((algorithm as any).hash.name),
-    } as Pkcs11HmacKeyAlgorithm;
-    const template: graphene.ITemplate = this.createTemplate(hmacAlg, extractable, keyUsages);
+    } as HmacKeyAlgorithm;
+    const template: graphene.ITemplate = this.createTemplate(this.crypto.session, hmacAlg, extractable, keyUsages, attrs);
     template.value = Buffer.from(value);
 
     // create session object
@@ -128,19 +128,22 @@ export class HmacProvider extends core.HmacProvider {
     }
   }
 
-  protected createTemplate(alg: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): graphene.ITemplate {
+  protected createTemplate(session: graphene.Session, alg: HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[], attrs: Partial<Pkcs11KeyAttributes>): graphene.ITemplate {
     Crypto.assertSession(this.crypto.session);
 
     alg = { ...HmacCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const id = utils.GUID(this.crypto.session);
+    const label = attrs.label || `HMAC-${alg.length}`;
+    const token = !!(attrs.token);
+    const sensitive = !!(attrs.sensitive);
+    const id = utils.GUID(session);
     return {
-      token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-      sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
+      id,
+      label,
+      token,
+      sensitive,
+      extractable,
       class: graphene.ObjectClass.SECRET_KEY,
       keyType: graphene.KeyType.GENERIC_SECRET,
-      label: alg.label || `HMAC-${alg.length}`,
-      id,
-      extractable,
       derive: false,
       sign: keyUsages.indexOf("sign") !== -1,
       verify: keyUsages.indexOf("verify") !== -1,
