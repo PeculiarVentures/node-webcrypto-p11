@@ -1,5 +1,6 @@
 import * as crypto from "crypto";
-import { Session, Slot, SlotFlag } from "graphene-pk11";
+import type { Version } from "pkcs11js";
+import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
@@ -9,7 +10,7 @@ export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;
 }
 
-export function GUID(session: Session): Buffer {
+export function GUID(session: graphene.Session): Buffer {
   return crypto.randomBytes(20);
 }
 
@@ -35,7 +36,7 @@ export function isCryptoKeyPair(data: any): data is CryptoKeyPair {
   return data && data.privateKey && data.publicKey;
 }
 
-export function assertPkcs11CryptoKey(data: any) : asserts data is CryptoKey {
+export function assertPkcs11CryptoKey(data: any): asserts data is CryptoKey {
   if (!(data instanceof CryptoKey)) {
     throw new TypeError("'data' is not a PKCS11 CryptoKey");
   }
@@ -66,12 +67,12 @@ export function digest(algorithm: string, data: BufferSource): Buffer {
   return hash.digest();
 }
 
-function calculateProviderID(slot: Slot) {
+function calculateProviderID(slot: graphene.Slot) {
   const str = slot.manufacturerID + slot.slotDescription + slot.getToken().serialNumber + slot.handle.toString("hex");
   return digest(ID_DIGEST, Buffer.from(str)).toString("hex");
 }
 
-export function getProviderInfo(slot: Slot) {
+export function getProviderInfo(slot: graphene.Slot) {
   // get index of slot
   const slots = slot.module.getSlots(true);
   let index = -1;
@@ -90,8 +91,8 @@ export function getProviderInfo(slot: Slot) {
     reader: slot.slotDescription,
     serialNumber: slot.getToken().serialNumber,
     algorithms: [],
-    isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE),
-    isHardware: !!(slot.flags & SlotFlag.HW_SLOT),
+    isRemovable: !!(slot.flags & graphene.SlotFlag.REMOVABLE_DEVICE),
+    isHardware: !!(slot.flags & graphene.SlotFlag.HW_SLOT),
   };
 
   const algorithms = slot.getMechanisms();
@@ -169,4 +170,8 @@ export function getProviderInfo(slot: Slot) {
   }
 
   return provider;
+}
+
+export function getVersion(version: Version) {
+  return `${version.major}.${version.minor}`;
 }

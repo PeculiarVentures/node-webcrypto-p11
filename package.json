@@ -30,7 +30,8 @@
   "dependencies": {
     "@peculiar/asn1-schema": "^2.0.17",
     "@peculiar/json-schema": "^1.1.12",
-    "graphene-pk11": "^2.1.11",
+    "graphene-pk11": "^2.1.12",
+    "pkcs11js": "^1.0.22",
     "pkijs": "^2.1.90",
     "pvtsutils": "^1.0.12",
     "tslib": "^2.0.1",
