@@ -58,12 +58,10 @@ export class KeyStorage implements core.CryptoKeyStorage {
     if (subjectObject) {
       const p11Key = subjectObject.toType<SecretKey>();
       let alg: Pkcs11KeyAlgorithm | undefined;
-      let extractable = false;
       let algorithm: Algorithm | undefined;
       let usages: KeyUsage[] | undefined;
       if (typeof args[0] === "object" && typeof args[1] === "boolean" && Array.isArray(args[2])) {
         algorithm = args[0];
-        extractable = args[1];
         usages = args[2];
       } else if (typeof args[0] === "object" && Array.isArray(args[1])) {
         algorithm = args[0];
@@ -139,8 +137,8 @@ export class KeyStorage implements core.CryptoKeyStorage {
       }
       const key = new CryptoKeyClass(p11Key, alg, usages);
 
-      if (key.extractable) {
-        key.extractable = extractable;
+      if (typeof args[1] === "boolean") {
+        key.extractable = args[1];
       }
 
       return key;

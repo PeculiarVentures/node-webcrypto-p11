@@ -39,35 +39,68 @@ import { isNSS } from "./helper";
       });
     });
 
-    it("set/get item", async () => {
-      let indexes = await crypto.keyStorage.keys();
-      assert.strictEqual(indexes.length, 0);
-      const algorithm: AesKeyGenParams = {
-        name: "AES-CBC",
-        length: 256,
-      };
-      const key = await crypto.subtle.generateKey(algorithm, true, ["encrypt", "decrypt"]) as CryptoKey;
-      assert.strictEqual(!!key, true, "Has no key value");
+    context("set/get item", () => {
 
-      assert.strictEqual(key.algorithm.token, false);
-      assert.strictEqual(key.algorithm.label, "AES-256");
-      assert.strictEqual(key.algorithm.sensitive, false);
+      it("secret key", async () => {
+        let indexes = await crypto.keyStorage.keys();
+        assert.strictEqual(indexes.length, 0);
+        const algorithm: AesKeyGenParams = {
+          name: "AES-CBC",
+          length: 256,
+        };
+        const key = await crypto.subtle.generateKey(algorithm, true, ["encrypt", "decrypt"]) as CryptoKey;
+        assert.strictEqual(!!key, true, "Has no key value");
 
-      // Set key
-      const index = await crypto.keyStorage.setItem(key);
+        assert.strictEqual(key.algorithm.token, false);
+        assert.strictEqual(key.algorithm.label, "AES-256");
+        assert.strictEqual(key.algorithm.sensitive, false);
 
-      // Check indexes amount
-      indexes = await crypto.keyStorage.keys();
-      assert.strictEqual(indexes.length, 1, "Wrong amount of indexes in storage");
-      assert.strictEqual(indexes[0], index, "Wrong index of item in storage");
+        // Set key
+        const index = await crypto.keyStorage.setItem(key);
 
-      // Get key
-      const aesKey = await crypto.keyStorage.getItem(index);
-      assert.strictEqual(!!aesKey, true);
-      assert.strictEqual(aesKey.key.id.toString("hex"), key.key.id.toString("hex"));
-      assert.strictEqual(aesKey.algorithm.token, true);
-      assert.strictEqual(aesKey.algorithm.label, "AES-256");
-      assert.strictEqual(aesKey.algorithm.sensitive, false);
+        // Check indexes amount
+        indexes = await crypto.keyStorage.keys();
+        assert.strictEqual(indexes.length, 1, "Wrong amount of indexes in storage");
+        assert.strictEqual(indexes[0], index, "Wrong index of item in storage");
+
+        // Get key
+        const aesKey = await crypto.keyStorage.getItem(index);
+        assert.strictEqual(!!aesKey, true);
+        assert.strictEqual(aesKey.key.id.toString("hex"), key.key.id.toString("hex"));
+        assert.strictEqual(aesKey.algorithm.token, true);
+        assert.strictEqual(aesKey.algorithm.label, "AES-256");
+        assert.strictEqual(aesKey.algorithm.sensitive, false);
+      });
+
+      it("public/private keys", async () => {
+        const indexes = await crypto.keyStorage.keys();
+        assert.strictEqual(indexes.length, 0);
+        const algorithm: RsaHashedKeyGenParams = {
+          name: "RSASSA-PKCS1-v1_5",
+          hash: "SHA-256",
+          publicExponent: new Uint8Array([1,0,1]),
+          modulusLength: 2048,
+        };
+        const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]) as CryptoKeyPair;
+        assert(keys, "Has no keys");
+        assert(keys.privateKey, "Has no private key");
+        assert(keys.publicKey, "Has no public key");
+        assert.strictEqual(keys.privateKey.extractable, false);
+        assert.strictEqual(keys.publicKey.extractable, true);
+
+        // Set keys
+        const privateKeyIndex = await crypto.keyStorage.setItem(keys.privateKey);
+        const publicKeyIndex = await crypto.keyStorage.setItem(keys.publicKey);
+
+        // Get keys
+        const privateKey = await crypto.keyStorage.getItem(privateKeyIndex);
+        assert(privateKey);
+        assert.strictEqual(privateKey.extractable, false);
+
+        const publicKey = await crypto.keyStorage.getItem(publicKeyIndex);
+        assert(publicKey);
+        assert.strictEqual(publicKey.extractable, true);
+      });
     });
 
     it("remove item", async () => {
