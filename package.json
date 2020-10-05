@@ -30,10 +30,10 @@
   "dependencies": {
     "@peculiar/asn1-schema": "^2.0.17",
     "@peculiar/json-schema": "^1.1.12",
-    "graphene-pk11": "^2.1.11",
+    "graphene-pk11": "^2.1.13",
     "pkijs": "^2.1.90",
     "tslib": "^2.0.1",
-    "webcrypto-core": "^1.1.6"
+    "webcrypto-core": "^1.1.8"
   },
   "keywords": [
     "crypto",
@@ -48,24 +48,24 @@
     "nss",
     "x25519"
   ],
-  "author": "",
+  "author": "Peculiar Ventures, LLC",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11/issues"
   },
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
-    "@peculiar/webcrypto-test": "^1.0.6",
+    "@peculiar/webcrypto-test": "^1.0.7",
     "@types/asn1js": "0.0.2",
     "@types/mocha": "^8.0.3",
-    "@types/node": "^12.12.54",
+    "@types/node": "^12.12.62",
     "coveralls": "^3.1.0",
     "mocha": "^8.1.3",
     "nyc": "^15.1.0",
-    "pvtsutils": "^1.0.11",
+    "pvtsutils": "^1.0.14",
     "ts-node": "^9.0.0",
     "tslint": "^6.1.3",
-    "typescript": "^4.0.2"
+    "typescript": "^4.0.3"
   },
   "nyc": {
     "extension": [
