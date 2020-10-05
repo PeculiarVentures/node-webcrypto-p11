@@ -5,6 +5,12 @@
   "main": "build/cjs/index.js",
   "module": "build/es2015/index.js",
   "types": "index.d.ts",
+  "files": [
+    "build/**/*.{ts,js}",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "prepare": "npm run build",
     "test": "mocha",
