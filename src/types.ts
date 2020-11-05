@@ -17,6 +17,8 @@ export interface Pkcs11Attributes {
   usages?: KeyUsage[];
 }
 
+export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "request"
+
 /**
  * Interface of PKCS#11 template builder
  */
@@ -26,7 +28,7 @@ export interface ITemplateBuilder {
    * @param type Type of key (private, public, secret)
    * @param attributes PKCS#11 attributes
    */
-  build(type: KeyType, attributes: Pkcs11Attributes): KeyTemplate
+  build(type: TemplateBuilderType, attributes: Pkcs11Attributes): KeyTemplate
 }
 
 export interface ISessionContainer {

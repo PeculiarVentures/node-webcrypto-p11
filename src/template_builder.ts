@@ -4,7 +4,7 @@ import * as types from "./types";
 
 export class TemplateBuilder implements types.ITemplateBuilder {
 
-  public build(type: string, attributes: types.Pkcs11Attributes): types.KeyTemplate {
+  public build(type: types.TemplateBuilderType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
     const template: types.KeyTemplate = {
       token: !!attributes.token,
     };
@@ -60,6 +60,24 @@ export class TemplateBuilder implements types.ITemplateBuilder {
           encrypt,
           unwrap,
           wrap,
+        });
+        break;
+      case "request":
+        if (template.id) {
+          template.objectId = template.id;
+          delete template.id;
+        }
+        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+          class: graphene.ObjectClass.DATA,
+          application: "webcrypto-p11",
+          private: false,
+        });
+        break;
+      case "x509":
+        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+          class: graphene.ObjectClass.CERTIFICATE,
+          certType: graphene.CertificateType.X_509,
+          private: false,
         });
         break;
     }
