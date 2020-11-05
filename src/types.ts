@@ -3,11 +3,6 @@ import { BufferSource } from "pvtsutils";
 
 export type KeyTemplate = graphene.ITemplate;
 
-export interface KeyPairTemplate {
-  private: KeyTemplate;
-  public: KeyTemplate;
-}
-
 export interface Pkcs11Attributes {
   id?: BufferSource
   token?: boolean;
@@ -17,7 +12,7 @@ export interface Pkcs11Attributes {
   usages?: KeyUsage[];
 }
 
-export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "request"
+export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "request";
 
 /**
  * Interface of PKCS#11 template builder
@@ -33,7 +28,7 @@ export interface ITemplateBuilder {
 
 export interface ISessionContainer {
   readonly session: graphene.Session;
-  readonly templateBuilder: ITemplateBuilder
+  templateBuilder: ITemplateBuilder
 }
 
 export interface IContainer {

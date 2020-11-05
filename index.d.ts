@@ -3,6 +3,7 @@
 // Definitions by: Stepan Miroshin <https://github.com/microshine>
 
 import * as core from "webcrypto-core";
+import * as graphene from "graphene-pk11";
 
 export interface Pkcs11Params {
   token?: boolean;
@@ -145,7 +146,38 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   public removeItem(index: string): Promise<void>;
 }
 
+export interface Pkcs11Attributes {
+  id?: BufferSource
+  token?: boolean;
+  sensitive?: boolean;
+  label?: string;
+  extractable?: boolean;
+  usages?: KeyUsage[];
+}
+
+export type KeyTemplate = graphene.ITemplate;
+export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "request";
+
+/**
+ * Interface of PKCS#11 template builder
+ */
+export interface ITemplateBuilder {
+  /**
+   * Returns a PKCS#11 template
+   * @param type Type of key (private, public, secret)
+   * @param attributes PKCS#11 attributes
+   */
+  build(type: TemplateBuilderType, attributes: Pkcs11Attributes): KeyTemplate
+}
+
+export class TemplateBuilder implements ITemplateBuilder {
+  public build(type: TemplateBuilderType, attributes: Pkcs11Attributes): graphene.ITemplate;
+}
+
 export class Crypto implements core.NativeCrypto, core.CryptoStorages {
+  public templateBuilder: ITemplateBuilder;
+  public readonly session: graphene.Session;
+
   public keyStorage: KeyStorage;
   public certStorage: CertificateStorage;
   public subtle: SubtleCrypto;
