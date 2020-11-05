@@ -9,13 +9,14 @@ import { Assert } from "./assert";
 import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
-import { IGlobalOptions, ISessionContainer } from "./types";
+import * as types from "./types";
 import * as utils from "./utils";
+import { TemplateBuilder } from "./template_builder";
 
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class Crypto implements core.Crypto, core.CryptoStorages, ISessionContainer {
+export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionContainer {
   public info?: ProviderInfo;
   public subtle: SubtleCrypto;
 
@@ -51,20 +52,17 @@ export class Crypto implements core.Crypto, core.CryptoStorages, ISessionContain
     return this.#session;
   }
 
-  public options: IGlobalOptions;
-
   protected name?: string;
 
   private initialized: boolean;
 
-  public templates: ITemplateBuilder[] = [];
+  public templateBuilder: types.ITemplateBuilder = new TemplateBuilder();
 
   /**
    * Creates an instance of WebCrypto.
    * @param props PKCS11 module init parameters
    */
   constructor(props: CryptoParams) {
-    this.options = {...props};
     const mod = graphene.Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {

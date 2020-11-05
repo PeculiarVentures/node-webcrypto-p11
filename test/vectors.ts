@@ -32,7 +32,7 @@ vectors.ECDH.actions.deriveKey?.forEach((item) => {
 });
 
 // WebcryptoTest.check(config.crypto as Crypto, [
-//   vectors.ECDH,
+//   vectors.AES128CBC,
 // ]);
 WebcryptoTest.check(config.crypto as Crypto, {
   AES128KW: true,

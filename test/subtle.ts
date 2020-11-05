@@ -35,7 +35,7 @@ context("Subtle", () => {
           assert.strictEqual((keys.publicKey as P11CryptoKey).id.includes(id), true);
           assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, false);
           assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, false);
-          assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
+          assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as graphene.PrivateKey).sensitive, false);
         });
       });
 
@@ -53,7 +53,7 @@ context("Subtle", () => {
             assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, true);
             assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.label, alg.name);
             assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, true);
-            assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, true);
+            assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as graphene.PrivateKey).sensitive, true);
             assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.label, alg.name);
           });
         });

@@ -124,23 +124,18 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
 
   protected createTemplate(alg: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): graphene.ITemplate {
     alg = { ...HmacCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const id = utils.GUID(this.container.session);
-    return {
-      token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-      sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-      class: graphene.ObjectClass.SECRET_KEY,
-      keyType: graphene.KeyType.GENERIC_SECRET,
+    const template =  this.container.templateBuilder.build("secret", {
+      id: utils.GUID(),
       label: alg.label || `HMAC-${alg.length}`,
-      id,
+      token: alg.token,
+      sensitive: alg.sensitive,
       extractable,
-      derive: false,
-      sign: keyUsages.indexOf("sign") !== -1,
-      verify: keyUsages.indexOf("verify") !== -1,
-      encrypt: keyUsages.indexOf("encrypt") !== -1 || keyUsages.indexOf("wrapKey") !== -1,
-      decrypt: keyUsages.indexOf("decrypt") !== -1 || keyUsages.indexOf("unwrapKey") !== -1,
-      wrap: keyUsages.indexOf("wrapKey") !== -1,
-      unwrap: keyUsages.indexOf("unwrapKey") !== -1,
-    };
+      usages: keyUsages,
+    });
+
+    template.keyType = graphene.KeyType.GENERIC_SECRET;
+
+    return template;
   }
 
   protected wc2pk11(alg: Algorithm, keyAlg: HmacKeyAlgorithm): graphene.IAlgorithm {

@@ -1,8 +1,8 @@
-import * as graphenePk11 from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 
-import { CryptoKey, ITemplatePair } from "../../key";
+import { CryptoKey } from "../../key";
 import * as types from "../../types";
 import * as utils from "../../utils";
 
@@ -26,19 +26,29 @@ export class RsaCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) { }
 
-  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): Promise<CryptoKeyPair> {
+  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const size = algorithm.modulusLength;
     const exp = Buffer.from(algorithm.publicExponent);
 
-    const template = this.createTemplate(algorithm, extractable, keyUsages);
+    // Create PKCS#11 templates
+    const attrs: types.Pkcs11Attributes = {
+      id: utils.GUID(),
+      label: algorithm.label,
+      token: algorithm.token,
+      sensitive: algorithm.sensitive,
+      extractable,
+      usages: keyUsages,
+    }
+    const privateTemplate = this.createTemplate("private", attrs);
+    const publicTemplate = this.createTemplate("public", attrs);
 
-    // RSA params
-    template.publicKey.publicExponent = exp;
-    template.publicKey.modulusBits = size;
+    // Set RSA params
+    publicTemplate.publicExponent = exp;
+    publicTemplate.modulusBits = size;
 
     // PKCS11 generation
     return new Promise<CryptoKeyPair>((resolve, reject) => {
-      this.container.session.generateKeyPair(graphenePk11.KeyGenMechanism.RSA, template.publicKey, template.privateKey, (err, keys) => {
+      this.container.session.generateKeyPair(graphene.KeyGenMechanism.RSA, publicTemplate, privateTemplate, (err, keys) => {
         try {
           if (err) {
             reject(new core.CryptoError(`Rsa: Can not generate new key\n${err.message}`));
@@ -162,7 +172,7 @@ export class RsaCrypto implements types.IContainer {
   }
 
   protected async exportJwkPublicKey(key: RsaCryptoKey) {
-    const pkey: graphenePk11.ITemplate = key.key.getAttribute({
+    const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
     });
@@ -179,7 +189,7 @@ export class RsaCrypto implements types.IContainer {
   }
 
   protected async exportJwkPrivateKey(key: RsaCryptoKey) {
-    const pkey: graphenePk11.ITemplate = key.key.getAttribute({
+    const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
       privateExponent: null,
@@ -207,9 +217,17 @@ export class RsaCrypto implements types.IContainer {
     return jwk;
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]) {
-    // TODO: Fix key label. It has `RSA-undefined` for imported key
-    const template = this.createTemplate(algorithm, extractable, keyUsages).privateKey;
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]) {
+    const template = this.createTemplate("private", {
+      id: utils.GUID(),
+      token: algorithm.token,
+      sensitive: algorithm.sensitive,
+      label: algorithm.label,
+      extractable,
+      usages: keyUsages
+    });
+
+    // Set RSA private key attributes
     template.publicExponent = utils.b64UrlDecode(jwk.e!);
     template.modulus = utils.b64UrlDecode(jwk.n!);
     template.privateExponent = utils.b64UrlDecode(jwk.d!);
@@ -218,49 +236,44 @@ export class RsaCrypto implements types.IContainer {
     template.exp1 = utils.b64UrlDecode(jwk.dp!);
     template.exp2 = utils.b64UrlDecode(jwk.dq!);
     template.coefficient = utils.b64UrlDecode(jwk.qi!);
-    const p11key = this.container.session.create(template).toType<graphenePk11.PrivateKey>();
+
+    const p11key = this.container.session.create(template).toType<graphene.PrivateKey>();
+
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: string[]) {
-    const template = this.createTemplate(algorithm as any, extractable, keyUsages).publicKey;
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+    const template = this.createTemplate("public", {
+      id: utils.GUID(),
+      token: algorithm.token,
+      label: algorithm.label,
+      extractable,
+      usages: keyUsages
+    });
+
+    // Set RSA public key attributes
     template.publicExponent = utils.b64UrlDecode(jwk.e!);
     template.modulus = utils.b64UrlDecode(jwk.n!);
-    const p11key = this.container.session.create(template).toType<graphenePk11.PublicKey>();
+
+    const p11key = this.container.session.create(template).toType<graphene.PublicKey>();
+
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected createTemplate(alg: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
-    alg = { ...RsaCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const label = alg.label || alg.name;
-    const idKey = utils.GUID(this.container.session);
-    return {
-      privateKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-        class: graphenePk11.ObjectClass.PRIVATE_KEY,
-        keyType: graphenePk11.KeyType.RSA,
-        private: true,
-        label,
-        id: idKey,
-        extractable,
-        derive: false,
-        sign: keyUsages.indexOf("sign") > -1,
-        decrypt: keyUsages.indexOf("decrypt") > -1,
-        unwrap: keyUsages.indexOf("unwrapKey") > -1,
-      },
-      publicKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        class: graphenePk11.ObjectClass.PUBLIC_KEY,
-        keyType: graphenePk11.KeyType.RSA,
-        private: false,
-        label,
-        id: idKey,
-        verify: keyUsages.indexOf("verify") > -1,
-        encrypt: keyUsages.indexOf("encrypt") > -1,
-        wrap: keyUsages.indexOf("wrapKey") > -1,
-      },
-    };
+  /**
+   * Creates PKCS11 template
+   * @param type Key type
+   * @param attributes PKCS11 attributes
+   */
+  protected createTemplate(type: KeyType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
+    const template = this.container.templateBuilder.build(type, {
+      ...attributes,
+      label: attributes.label || "RSA",
+    });
+
+    template.keyType = graphene.KeyType.RSA;
+
+    return template;
   }
 
 }

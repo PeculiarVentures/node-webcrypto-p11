@@ -15,7 +15,15 @@ export class AesCrypto implements types.IContainer {
 
   public async generateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
-      const template = this.createTemplate(algorithm, extractable, keyUsages);
+      const template = this.container.templateBuilder.build("secret", {
+        id: utils.GUID(),
+        label: algorithm.label || `AES-${algorithm.length}`,
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        extractable,
+        usages: keyUsages,
+      });
+      template.keyType = graphene.KeyType.AES;
       template.valueLen = algorithm.length >> 3;
 
       // PKCS11 generation
@@ -86,7 +94,15 @@ export class AesCrypto implements types.IContainer {
       ...algorithm,
       length: value.byteLength * 8,
     };
-    const template: graphene.ITemplate = this.createTemplate(aesAlg, extractable, keyUsages);
+    const template: graphene.ITemplate = this.container.templateBuilder.build("secret", {
+      id: utils.GUID(),
+      label: algorithm.label || `AES-${aesAlg.length}`,
+      token: algorithm.token,
+      sensitive: algorithm.sensitive,
+      extractable,
+      usages: keyUsages,
+    });
+    template.keyType = graphene.KeyType.AES;
     template.value = Buffer.from(value);
 
     // create session object
@@ -141,27 +157,6 @@ export class AesCrypto implements types.IContainer {
     } else {
       return new Uint8Array(dec).buffer;
     }
-  }
-
-  protected createTemplate(alg: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: string[]): graphene.ITemplate {
-    alg = { ...AesCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const id = utils.GUID(this.container.session);
-    return {
-      token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-      sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-      class: graphene.ObjectClass.SECRET_KEY,
-      keyType: graphene.KeyType.AES,
-      label: alg.label || `AES-${alg.length}`,
-      id,
-      extractable,
-      derive: false,
-      sign: keyUsages.indexOf("sign") !== -1,
-      verify: keyUsages.indexOf("verify") !== -1,
-      encrypt: keyUsages.indexOf("encrypt") !== -1 || keyUsages.indexOf("wrapKey") !== -1,
-      decrypt: keyUsages.indexOf("decrypt") !== -1 || keyUsages.indexOf("unwrapKey") !== -1,
-      wrap: keyUsages.indexOf("wrapKey") !== -1,
-      unwrap: keyUsages.indexOf("unwrapKey") !== -1,
-    };
   }
 
   protected isAesGCM(algorithm: Algorithm): algorithm is AesGcmParams {

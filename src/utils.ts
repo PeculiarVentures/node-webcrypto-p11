@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { Session, Slot, SlotFlag } from "graphene-pk11";
+import { Slot, SlotFlag } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
@@ -8,7 +8,7 @@ export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;
 }
 
-export function GUID(session: Session): Buffer {
+export function GUID(): Buffer {
   return crypto.randomBytes(20);
 }
 

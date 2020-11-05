@@ -1,4 +1,6 @@
 import * as assert from "assert";
+import * as graphene from "graphene-pk11";
+import { ITemplateBuilder, Pkcs11Attributes } from "../src/types";
 import { config, crypto } from "./config";
 
 context("Crypto", () => {
@@ -26,5 +28,42 @@ context("Crypto", () => {
     const newHandle = crypto.session.handle.toString("hex");
     assert.strictEqual(currentHandle !== newHandle, true, "handle of session wasn't changed");
   });
+
+  context("custom template builder", () => {
+    class CustomTemplateBuilder implements ITemplateBuilder {
+
+      build(type: KeyType, attributes: Pkcs11Attributes): graphene.ITemplate {
+        return {
+          label: "CustomTemplate",
+          token: false,
+          sensitive: false,
+          class: graphene.ObjectClass.SECRET_KEY,
+          encrypt: true,
+          decrypt: false,
+          sign: false,
+          verify: false,
+          wrap: false,
+          unwrap: false,
+          derive: false,
+        }
+      }
+
+    }
+
+    const templateBuilder = crypto.templateBuilder;
+    before(() => {
+      crypto.templateBuilder = new CustomTemplateBuilder();
+    });
+
+    after(() => {
+      crypto.templateBuilder = templateBuilder;
+    });
+
+    it("create AES-CBC", async () => {
+      const key = await crypto.subtle.generateKey({ name: "AES-CBC", length: 128 } as AesKeyGenParams, true, ["encrypt", "decrypt"]) as CryptoKey;
+      assert.strictEqual((key.algorithm as Pkcs11AesKeyAlgorithm).label, "CustomTemplate");
+      assert.deepStrictEqual(key.usages, ["encrypt"]);
+    });
+  })
 
 });

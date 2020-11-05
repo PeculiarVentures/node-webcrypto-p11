@@ -4,14 +4,14 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 
-import { CryptoKey, ITemplatePair } from "../../key";
+import { CryptoKey } from "../../key";
 import * as types from "../../types";
 import * as utils from "../../utils";
 
 import { EcCryptoKey } from "./key";
 import { EcUtils } from "./utils";
 
-export class EcCrypto  implements types.IContainer {
+export class EcCrypto implements types.IContainer {
 
   public publicKeyUsages = ["verify"];
   public privateKeyUsages = ["sign", "deriveKey", "deriveBits"];
@@ -21,12 +21,23 @@ export class EcCrypto  implements types.IContainer {
 
   public async generateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     return new Promise<CryptoKeyPair>((resolve, reject) => {
-      const template = this.createTemplate(algorithm, extractable, keyUsages);
+      // Create PKCS#11 templates
+      const attrs: types.Pkcs11Attributes = {
+        id: utils.GUID(),
+        label: algorithm.label,
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        extractable,
+        usages: keyUsages,
+      }
+      const privateTemplate = this.createTemplate("private", attrs);
+      const publicTemplate = this.createTemplate("public", attrs);
 
       // EC params
-      template.publicKey.paramsEC = this.getJsonNamedCurve(algorithm.namedCurve).value;
+      publicTemplate.paramsEC = this.getJsonNamedCurve(algorithm.namedCurve).value;
+
       // PKCS11 generation
-      this.container.session.generateKeyPair(graphene.KeyGenMechanism.EC, template.publicKey, template.privateKey, (err, keys) => {
+      this.container.session.generateKeyPair(graphene.KeyGenMechanism.EC, publicTemplate, privateTemplate, (err, keys) => {
         try {
           if (err) {
             reject(err);
@@ -164,18 +175,37 @@ export class EcCrypto  implements types.IContainer {
     return graphene.NamedCurve.getByName(namedCurve);
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
     const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
-    const template = this.createTemplate(algorithm, extractable, keyUsages).privateKey;
+    const template = this.createTemplate("private", {
+      id: utils.GUID(),
+      token: algorithm.token,
+      sensitive: algorithm.sensitive,
+      label: algorithm.label,
+      extractable,
+      usages: keyUsages
+    });
+
+    // Set EC private key attributes
     template.paramsEC = namedCurve.value;
     template.value = utils.b64UrlDecode(jwk.d!);
+
     const p11key = this.container.session.create(template).toType<graphene.Key>();
+
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: string[]) {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
     const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
-    const template = this.createTemplate(algorithm, extractable, keyUsages).publicKey;
+    const template = this.createTemplate("public", {
+      id: utils.GUID(),
+      token: algorithm.token,
+      label: algorithm.label,
+      extractable,
+      usages: keyUsages
+    });
+
+    // Set EC public key attributes
     template.paramsEC = namedCurve.value;
     let pointEc: Buffer;
     if (namedCurve.name === "curve25519") {
@@ -184,7 +214,9 @@ export class EcCrypto  implements types.IContainer {
       pointEc = EcUtils.encodePoint({ x: utils.b64UrlDecode(jwk.x!), y: utils.b64UrlDecode(jwk.y!) }, namedCurve);
     }
     template.pointEC = pointEc;
+
     const p11key = this.container.session.create(template).toType<graphene.Key>();
+
     return new EcCryptoKey(p11key, algorithm);
   }
 
@@ -222,40 +254,20 @@ export class EcCrypto  implements types.IContainer {
     return jwk;
   }
 
-  protected createTemplate(alg: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplatePair {
-    alg = { ...EcCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const label = alg.label || `EC-${alg.namedCurve}`;
-    const idKey = utils.GUID(this.container.session);
-    const keyType = graphene.KeyType.ECDSA;
+  /**
+   * Creates PKCS11 template
+   * @param type Key type
+   * @param attributes PKCS11 attributes
+   */
+  protected createTemplate(type: KeyType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
+    const template = this.container.templateBuilder.build(type, {
+      ...attributes,
+      label: attributes.label || "EC",
+    });
 
-    return {
-      privateKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-        class: graphene.ObjectClass.PRIVATE_KEY,
-        keyType,
-        private: true,
-        label,
-        id: idKey,
-        extractable,
-        derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
-        sign: keyUsages.indexOf("sign") !== -1,
-        decrypt: keyUsages.indexOf("decrypt") !== -1,
-        unwrap: keyUsages.indexOf("unwrapKey") !== -1,
-      },
-      publicKey: {
-        token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
-        class: graphene.ObjectClass.PUBLIC_KEY,
-        keyType,
-        private: false,
-        label,
-        id: idKey,
-        derive: keyUsages.indexOf("deriveKey") !== -1 || keyUsages.indexOf("deriveBits") !== -1,
-        verify: keyUsages.indexOf("verify") !== -1,
-        encrypt: keyUsages.indexOf("encrypt") !== -1,
-        wrap: keyUsages.indexOf("wrapKey") !== -1,
-      },
-    };
+    template.keyType = graphene.KeyType.EC;
+
+    return template;
   }
 
   protected spki2jwk(raw: ArrayBuffer): JsonWebKey {
