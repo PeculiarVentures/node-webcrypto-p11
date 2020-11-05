@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as graphene from "graphene-pk11";
 import { ID_DIGEST } from "../src/const";
 import { CryptoKey as P11CryptoKey } from "../src/key";
 import { crypto } from "./config";
