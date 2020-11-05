@@ -1,15 +1,19 @@
-import { IAlgorithm, Session } from "graphene-pk11";
+import type { IAlgorithm } from "graphene-pk11";
 
-export class ShaCrypto {
+import * as types from "../../types";
 
-  public static async digest(session: Session, algorithm: Algorithm, data: ArrayBuffer) {
+export class ShaCrypto implements types.IContainer {
+
+  public constructor(public container: types.ISessionContainer) { }
+
+  public async digest(algorithm: Algorithm, data: ArrayBuffer) {
     const p11Mech: IAlgorithm = {
       name: algorithm.name.toUpperCase().replace("-", ""),
       params: null,
     };
 
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      session.createDigest(p11Mech).once(Buffer.from(data), (err, data) => {
+      this.container.session.createDigest(p11Mech).once(Buffer.from(data), (err, data) => {
         if (err) {
           reject(err);
         } else {

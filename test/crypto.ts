@@ -1,13 +1,12 @@
 import * as assert from "assert";
 import { config, crypto } from "./config";
-import { Crypto } from "../src";
 
 context("Crypto", () => {
 
   it("get random values", () => {
     const buf = new Uint8Array(16);
     const check = Buffer.from(buf).toString("base64");
-    assert.notEqual(Buffer.from(crypto.getRandomValues(buf)).toString("base64"), check, "Has no random values");
+    assert.notStrictEqual(Buffer.from(crypto.getRandomValues(buf)).toString("base64"), check, "Has no random values");
   });
 
   it("get random values with large buffer", () => {
@@ -18,7 +17,6 @@ context("Crypto", () => {
   });
 
   it("reset", () => {
-    Crypto.assertSession(crypto.session);
     const currentHandle = crypto.session.handle.toString("hex");
     crypto.reset();
 

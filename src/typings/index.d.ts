@@ -75,3 +75,7 @@ interface Pkcs11EcKeyAlgorithm extends EcKeyAlgorithm, Pkcs11KeyAlgorithm { }
 interface Pkcs11AesKeyAlgorithm extends AesKeyAlgorithm, Pkcs11KeyAlgorithm { }
 
 interface Pkcs11HmacKeyAlgorithm extends HmacKeyAlgorithm, Pkcs11KeyAlgorithm { }
+
+interface ITemplateBuilder {
+  build(action: keyof SubtleCrypto, algorithm: Algorithm): GraphenePkcs11.ITemplate;
+}

@@ -1,53 +1,43 @@
-// Core
 import * as core from "webcrypto-core";
+
 import { ID_DIGEST } from "./const";
-import { Crypto } from "./crypto";
-import { CryptoKey as P11CryptoKey } from "./key";
-import {
-  AesCbcProvider, AesEcbProvider, AesGcmProvider,
-  EcdhProvider, EcdsaProvider,
-  HmacProvider,
-  RsaOaepProvider, RsaPssProvider, RsaSsaProvider,
-  Sha1Provider, Sha256Provider, Sha384Provider, Sha512Provider,
-} from "./mechs";
+import { CryptoKey, CryptoKey as P11CryptoKey } from "./key";
+import * as mechs from "./mechs";
+import * as types from "./types";
 import * as utils from "./utils";
 
-export class SubtleCrypto extends core.SubtleCrypto {
+export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer {
 
-  constructor(private crypto: Crypto) {
+  public constructor(public container: types.ISessionContainer) {
     super();
 
     //#region AES
-    this.providers.set(new AesCbcProvider(this.crypto));
-    this.providers.set(new AesEcbProvider(this.crypto));
-    this.providers.set(new AesGcmProvider(this.crypto));
+    this.providers.set(new mechs.AesCbcProvider(this.container));
+    this.providers.set(new mechs.AesEcbProvider(this.container));
+    this.providers.set(new mechs.AesGcmProvider(this.container));
     //#endregion
-
-    // //#region RSA
-    this.providers.set(new RsaSsaProvider(this.crypto));
-    this.providers.set(new RsaPssProvider(this.crypto));
-    this.providers.set(new RsaOaepProvider(this.crypto));
-    // //#endregion
-
-    // //#region EC
-    this.providers.set(new EcdsaProvider(this.crypto));
-    this.providers.set(new EcdhProvider(this.crypto));
-    // //#endregion
-
+    // #region RSA
+    this.providers.set(new mechs.RsaSsaProvider(this.container));
+    this.providers.set(new mechs.RsaPssProvider(this.container));
+    this.providers.set(new mechs.RsaOaepProvider(this.container));
+    // #endregion
+    // #region EC
+    this.providers.set(new mechs.EcdsaProvider(this.container));
+    this.providers.set(new mechs.EcdhProvider(this.container));
+    // #endregion
     //#region SHA
-    this.providers.set(new Sha1Provider(this.crypto));
-    this.providers.set(new Sha256Provider(this.crypto));
-    this.providers.set(new Sha384Provider(this.crypto));
-    this.providers.set(new Sha512Provider(this.crypto));
+    this.providers.set(new mechs.Sha1Provider(this.container));
+    this.providers.set(new mechs.Sha256Provider(this.container));
+    this.providers.set(new mechs.Sha384Provider(this.container));
+    this.providers.set(new mechs.Sha512Provider(this.container));
     //#endregion
-
-    // //#region HMAC
-    this.providers.set(new HmacProvider(this.crypto));
-    // //#endregion
+    // #region HMAC
+    this.providers.set(new mechs.HmacProvider(this.container));
+    // #endregion
   }
 
   public async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
-    const keys = await super.generateKey(algorithm, extractable, keyUsages);
+    const keys = await super.generateKey(algorithm, extractable, keyUsages) as CryptoKey;
 
     // Fix ID for generated key pair. It must be hash of public key raw
     if (utils.isCryptoKeyPair(keys)) {
@@ -78,7 +68,7 @@ export class SubtleCrypto extends core.SubtleCrypto {
       publicKey.id = P11CryptoKey.getID(publicKey.key);
     }
 
-    return key;
+    return key as CryptoKey;
   }
 
 }

@@ -1,20 +1,25 @@
-import { ITemplate, KeyGenMechanism, KeyType, ObjectClass, SecretKey } from "graphene-pk11";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
+
 import { CryptoKey } from "../../key";
 import * as utils from "../../utils";
+import * as types from "../../types";
+
 import { AesCryptoKey } from "./key";
 
-export class AesCrypto {
+export class AesCrypto implements types.IContainer {
 
-  public static async generateKey(session: graphene.Session, algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  constructor(public container: types.ISessionContainer) {
+  }
+
+  public async generateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
-      const template = this.createTemplate(session!, algorithm, extractable, keyUsages);
+      const template = this.createTemplate(algorithm, extractable, keyUsages);
       template.valueLen = algorithm.length >> 3;
 
       // PKCS11 generation
-      session.generateKey(KeyGenMechanism.AES, template, (err, aesKey) => {
+      this.container.session.generateKey(graphene.KeyGenMechanism.AES, template, (err, aesKey) => {
         try {
           if (err) {
             reject(new core.CryptoError(`Aes: Can not generate new key\n${err.message}`));
@@ -28,7 +33,7 @@ export class AesCrypto {
     });
   }
 
-  public static async exportKey(session: graphene.Session, format: string, key: AesCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+  public async exportKey(format: string, key: AesCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     const template = key.key.getAttribute({ value: null, valueLen: null });
     switch (format.toLowerCase()) {
       case "jwk":
@@ -49,7 +54,7 @@ export class AesCrypto {
     }
   }
 
-  public static async importKey(session: graphene.Session, format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -81,16 +86,16 @@ export class AesCrypto {
       ...algorithm,
       length: value.byteLength * 8,
     };
-    const template: ITemplate = this.createTemplate(session, aesAlg, extractable, keyUsages);
+    const template: graphene.ITemplate = this.createTemplate(aesAlg, extractable, keyUsages);
     template.value = Buffer.from(value);
 
     // create session object
-    const sessionObject = session.create(template);
-    const key = new AesCryptoKey(sessionObject.toType<SecretKey>(), aesAlg);
+    const sessionObject = this.container.session.create(template);
+    const key = new AesCryptoKey(sessionObject.toType<graphene.SecretKey>(), aesAlg);
     return key;
   }
 
-  public static async encrypt(session: graphene.Session, padding: boolean, algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public async encrypt(padding: boolean, algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     // add padding if needed
     if (padding) {
       const blockLength = 16;
@@ -102,8 +107,8 @@ export class AesCrypto {
 
     return new Promise<ArrayBuffer>((resolve, reject) => {
       const enc = Buffer.alloc(this.getOutputBufferSize(key.algorithm, true, data.byteLength));
-      const mechanism = this.wc2pk11(session, algorithm);
-      session.createCipher(mechanism, key.key)
+      const mechanism = this.wc2pk11(algorithm);
+      this.container.session.createCipher(mechanism, key.key)
         .once(Buffer.from(data), enc, (err, data2) => {
           if (err) {
             reject(err);
@@ -114,11 +119,11 @@ export class AesCrypto {
     });
   }
 
-  public static async decrypt(session: graphene.Session, padding: boolean, algorithm: Algorithm, key: AesCryptoKey, data: Uint8Array): Promise<ArrayBuffer> {
+  public async decrypt(padding: boolean, algorithm: Algorithm, key: AesCryptoKey, data: Uint8Array): Promise<ArrayBuffer> {
     const dec = await new Promise<Buffer>((resolve, reject) => {
       const buf = Buffer.alloc(this.getOutputBufferSize(key.algorithm, false, data.length));
-      const mechanism = this.wc2pk11(session, algorithm);
-      session.createDecipher(mechanism, key.key)
+      const mechanism = this.wc2pk11(algorithm);
+      this.container.session.createDecipher(mechanism, key.key)
         .once(Buffer.from(data), buf, (err, data2) => {
           if (err) {
             reject(err);
@@ -138,14 +143,14 @@ export class AesCrypto {
     }
   }
 
-  protected static createTemplate(session: graphene.Session, alg: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: string[]): ITemplate {
+  protected createTemplate(alg: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: string[]): graphene.ITemplate {
     alg = { ...AesCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const id = utils.GUID(session);
+    const id = utils.GUID(this.container.session);
     return {
       token: !!(alg.token ?? process.env.WEBCRYPTO_PKCS11_TOKEN),
       sensitive: !!(alg.sensitive ?? process.env.WEBCRYPTO_PKCS11_SENSITIVE),
-      class: ObjectClass.SECRET_KEY,
-      keyType: KeyType.AES,
+      class: graphene.ObjectClass.SECRET_KEY,
+      keyType: graphene.KeyType.AES,
       label: alg.label || `AES-${alg.length}`,
       id,
       extractable,
@@ -159,24 +164,24 @@ export class AesCrypto {
     };
   }
 
-  protected static isAesGCM(algorithm: Algorithm): algorithm is AesGcmParams {
+  protected isAesGCM(algorithm: Algorithm): algorithm is AesGcmParams {
     return algorithm.name.toUpperCase() === "AES-GCM";
   }
 
-  protected static isAesCBC(algorithm: Algorithm): algorithm is AesCbcParams {
+  protected isAesCBC(algorithm: Algorithm): algorithm is AesCbcParams {
     return algorithm.name.toUpperCase() === "AES-CBC";
   }
 
-  protected static isAesECB(algorithm: Algorithm): algorithm is Algorithm {
+  protected isAesECB(algorithm: Algorithm): algorithm is Algorithm {
     return algorithm.name.toUpperCase() === "AES-ECB";
   }
 
-  protected static wc2pk11(session: graphene.Session, algorithm: Algorithm) {
+  protected wc2pk11(algorithm: Algorithm) {
+    const session = this.container.session;
     if (this.isAesGCM(algorithm)) {
       const aad = algorithm.additionalData ? utils.prepareData(algorithm.additionalData) : undefined;
       let AesGcmParamsClass = graphene.AesGcmParams;
-      if (session &&
-        session.slot.module.cryptokiVersion.major >= 2 &&
+      if (session.slot.module.cryptokiVersion.major >= 2 &&
         session.slot.module.cryptokiVersion.minor >= 40) {
         AesGcmParamsClass = graphene.AesGcm240Params;
       }
@@ -199,7 +204,7 @@ export class AesCrypto {
    * `false` - decryption operation
    * @param dataSize size of incoming data
    */
-  protected static getOutputBufferSize(keyAlg: Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
+  protected getOutputBufferSize(keyAlg: Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
     const len = keyAlg.length >> 3;
     if (enc) {
       return (Math.ceil(dataSize / len) * len) + len;

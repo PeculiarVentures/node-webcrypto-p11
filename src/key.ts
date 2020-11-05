@@ -1,11 +1,11 @@
 // Core
 import * as core from "webcrypto-core";
 
-import { ITemplate, Key, ObjectClass, PrivateKey, PublicKey, SecretKey } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 
 export interface ITemplatePair {
-  privateKey: ITemplate;
-  publicKey: ITemplate;
+  privateKey: graphene.ITemplate;
+  publicKey: graphene.ITemplate;
 }
 
 export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extends core.CryptoKey {
@@ -20,51 +20,51 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     return alg;
   }
 
-  public static getID(p11Key: Key) {
+  public static getID(p11Key: graphene.Key) {
     let name: string;
     switch (p11Key.class) {
-      case ObjectClass.PRIVATE_KEY:
+      case graphene.ObjectClass.PRIVATE_KEY:
         name = "private";
         break;
-      case ObjectClass.PUBLIC_KEY:
+      case graphene.ObjectClass.PUBLIC_KEY:
         name = "public";
         break;
-      case ObjectClass.SECRET_KEY:
+      case graphene.ObjectClass.SECRET_KEY:
         name = "secret";
         break;
       default:
-        throw new Error(`Unsupported Object type '${ObjectClass[p11Key.class]}'`);
+        throw new Error(`Unsupported Object type '${graphene.ObjectClass[p11Key.class]}'`);
     }
     return `${name}-${p11Key.handle.toString("hex")}-${p11Key.id.toString("hex")}`;
   }
 
   public id: string;
-  public p11Object: Key | SecretKey | PublicKey | PrivateKey;
+  public p11Object: graphene.Key | graphene.SecretKey | graphene.PublicKey | graphene.PrivateKey;
 
   public type: KeyType = "secret";
   public extractable: boolean = false;
   public algorithm: T;
   public usages: KeyUsage[] = [];
 
-  public get key(): Key {
-    return this.p11Object.toType<Key>();
+  public get key(): graphene.Key {
+    return this.p11Object.toType<graphene.Key>();
   }
 
-  constructor(key: Key, alg: T | KeyAlgorithm, usages?: KeyUsage[]) {
+  constructor(key: graphene.Key, alg: T | KeyAlgorithm, usages?: KeyUsage[]) {
     super();
     this.p11Object = key;
     switch (key.class) {
-      case ObjectClass.PUBLIC_KEY:
-        this.initPublicKey(key.toType<PublicKey>());
+      case graphene.ObjectClass.PUBLIC_KEY:
+        this.initPublicKey(key.toType<graphene.PublicKey>());
         break;
-      case ObjectClass.PRIVATE_KEY:
-        this.initPrivateKey(key.toType<PrivateKey>());
+      case graphene.ObjectClass.PRIVATE_KEY:
+        this.initPrivateKey(key.toType<graphene.PrivateKey>());
         break;
-      case ObjectClass.SECRET_KEY:
-        this.initSecretKey(key.toType<SecretKey>());
+      case graphene.ObjectClass.SECRET_KEY:
+        this.initSecretKey(key.toType<graphene.SecretKey>());
         break;
       default:
-        throw new core.CryptoError(`Wrong incoming session object '${ObjectClass[key.class]}'`);
+        throw new core.CryptoError(`Wrong incoming session object '${graphene.ObjectClass[key.class]}'`);
     }
     const { name, ...defaultAlg } = CryptoKey.defaultKeyAlgorithm();
     this.algorithm = { ...alg, ...defaultAlg } as any;
@@ -81,7 +81,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
       this.algorithm.token = key.token;
     } catch { /*nothing*/ }
     try {
-      if (key instanceof PrivateKey || key instanceof SecretKey) {
+      if (key instanceof graphene.PrivateKey || key instanceof graphene.SecretKey) {
         this.algorithm.sensitive = key.get("sensitive");
       }
     } catch { /*nothing*/ }
@@ -98,7 +98,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     };
   }
 
-  protected initPrivateKey(key: PrivateKey) {
+  protected initPrivateKey(key: graphene.PrivateKey) {
     this.p11Object = key;
     this.type = "private";
     try {
@@ -123,7 +123,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     }
   }
 
-  protected initPublicKey(key: PublicKey) {
+  protected initPublicKey(key: graphene.PublicKey) {
     this.p11Object = key;
     this.type = "public";
     this.extractable = true;
@@ -138,7 +138,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     }
   }
 
-  protected initSecretKey(key: SecretKey) {
+  protected initSecretKey(key: graphene.SecretKey) {
     this.p11Object = key;
     this.type = "secret";
     try {

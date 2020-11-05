@@ -1,11 +1,13 @@
 import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
-import { Crypto } from "../../crypto";
+
 import { CryptoKey } from "../../key";
+import * as types from "../../types";
+
 import { EcCrypto } from "./crypto";
 import { EcCryptoKey } from "./key";
 
-export class EcdsaProvider extends core.EcdsaProvider {
+export class EcdsaProvider extends core.EcdsaProvider implements types.IContainer {
 
   public namedCurves = ["P-256", "P-384", "P-521", "K-256"];
 
@@ -14,15 +16,16 @@ export class EcdsaProvider extends core.EcdsaProvider {
     publicKey: ["verify"],
   };
 
-  constructor(private crypto: Crypto) {
+  public crypto: EcCrypto;
+
+  constructor(public container: types.ISessionContainer) {
     super();
+
+    this.crypto = new EcCrypto(container);
   }
 
   public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await EcCrypto.generateKey(
-      this.crypto.session,
+    const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
       keyUsages);
@@ -32,15 +35,13 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public async onSign(algorithm: EcdsaParams, key: EcCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      Crypto.assertSession(this.crypto.session);
-
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
-      mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
+      mechanism.name = this.crypto.getAlgorithm(mechanism.name);
       if (mechanism.name === "ECDSA") {
-        buf = EcCrypto.prepareData((algorithm.hash as Algorithm).name, buf);
+        buf = this.crypto.prepareData((algorithm.hash as Algorithm).name, buf);
       }
-      this.crypto.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      this.container.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -52,15 +53,13 @@ export class EcdsaProvider extends core.EcdsaProvider {
 
   public async onVerify(algorithm: EcdsaParams, key: EcCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      Crypto.assertSession(this.crypto.session);
-
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, algorithm);
-      mechanism.name = EcCrypto.getAlgorithm(this.crypto.session, mechanism.name);
+      mechanism.name = this.crypto.getAlgorithm(mechanism.name);
       if (mechanism.name === "ECDSA") {
-        buf = EcCrypto.prepareData((algorithm.hash as Algorithm).name, buf);
+        buf = this.crypto.prepareData((algorithm.hash as Algorithm).name, buf);
       }
-      this.crypto.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
+      this.container.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -71,15 +70,11 @@ export class EcdsaProvider extends core.EcdsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    Crypto.assertSession(this.crypto.session);
-
-    return EcCrypto.exportKey(this.crypto.session, format, key);
+    return this.crypto.exportKey(format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 

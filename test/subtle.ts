@@ -76,7 +76,7 @@ context("Subtle", () => {
       it("don't try to update id if key is not extractable", async () => {
         const key = await crypto.subtle.importKey("spki", spki, { name: "ECDSA", namedCurve: "P-256" } as EcKeyImportParams, false, ["verify"]);
 
-        assert.notEqual((key as P11CryptoKey).key.id.toString("hex"), "69e4556056c8d300eff3d4523fc6515d9f833fe6");
+        assert.notStrictEqual((key as P11CryptoKey).key.id.toString("hex"), "69e4556056c8d300eff3d4523fc6515d9f833fe6");
       });
 
     });

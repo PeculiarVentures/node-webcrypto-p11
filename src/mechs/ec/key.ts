@@ -1,5 +1,6 @@
+import { NamedCurve } from "graphene-pk11";
+
 import { CryptoKey } from "../../key";
-import { NamedCurve } from 'graphene-pk11';
 
 export class EcCryptoKey extends CryptoKey<Pkcs11EcKeyAlgorithm> {
 

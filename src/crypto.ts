@@ -3,34 +3,19 @@
 // Core
 import * as core from "webcrypto-core";
 const WebCryptoError = core.CryptoError;
-
 import * as graphene from "graphene-pk11";
+
+import { Assert } from "./assert";
 import { CertificateStorage } from "./cert_storage";
 import { KeyStorage } from "./key_storage";
 import { SubtleCrypto } from "./subtle";
+import { IGlobalOptions, ISessionContainer } from "./types";
 import * as utils from "./utils";
-
-// Fix btoa and atob for NodeJS
-(global as any).btoa = (data: string) => Buffer.from(data, "binary").toString("base64");
-(global as any).atob = (data: string) => Buffer.from(data, "base64").toString("binary");
 
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class Crypto implements core.Crypto, core.CryptoStorages {
-
-  public static assertSession(obj: graphene.Session | undefined): asserts obj is graphene.Session {
-    if (!obj) {
-      throw new Error("PKCS#11 session is not initialized");
-    }
-  }
-
-  public static assertModule(obj: graphene.Module | undefined): asserts obj is graphene.Module {
-    if (!obj) {
-      throw new Error("PKCS#11 module is not initialized");
-    }
-  }
-
+export class Crypto implements core.Crypto, core.CryptoStorages, ISessionContainer {
   public info?: ProviderInfo;
   public subtle: SubtleCrypto;
 
@@ -55,21 +40,31 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    * @internal
    */
   public token: graphene.Token;
+
+  #session?: graphene.Session;
   /**
    * PKCS11 token
    * @internal
    */
-  public session?: graphene.Session;
+  public get session() {
+    Assert.isSession(this.#session);
+    return this.#session;
+  }
+
+  public options: IGlobalOptions;
 
   protected name?: string;
 
   private initialized: boolean;
+
+  public templates: ITemplateBuilder[] = [];
 
   /**
    * Creates an instance of WebCrypto.
    * @param props PKCS11 module init parameters
    */
   constructor(props: CryptoParams) {
+    this.options = {...props};
     const mod = graphene.Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {
@@ -116,7 +111,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (rw) {
       flags |= graphene.SessionFlag.RW_SESSION;
     }
-    this.session = this.slot.open(flags);
+    this.#session = this.slot.open(flags);
     this.info = utils.getProviderInfo(this.slot);
     if (this.name) {
       this.info.name = this.name;
@@ -124,7 +119,6 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
   }
 
   public reset() {
-    Crypto.assertSession(this.session);
     if (this.isLoggedIn && this.isLoginRequired) {
       this.logout();
     }
@@ -137,7 +131,6 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (!this.isLoginRequired) {
       return;
     }
-    Crypto.assertSession(this.session);
 
     try {
       this.session.login(pin);
@@ -154,7 +147,6 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
     if (!this.isLoginRequired) {
       return;
     }
-    Crypto.assertSession(this.session);
 
     try {
       this.session.logout();
@@ -173,8 +165,6 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    */
   // Based on: https://github.com/KenanY/get-random-values
   public getRandomValues<T extends ArrayBufferView>(array: T): T {
-    Crypto.assertSession(this.session);
-
     if (array.byteLength > 65536) {
       throw new core.CryptoError(`Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (${array.byteLength}) exceeds the number of bytes of entropy available via this API (65536).`);
     }
@@ -188,8 +178,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages {
    */
   public close() {
     if (this.initialized) {
-      Crypto.assertSession(this.session);
-      Crypto.assertModule(this.module);
+      Assert.isModule(this.module);
 
       this.session.logout();
       this.session.close();
