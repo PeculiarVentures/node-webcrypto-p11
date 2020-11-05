@@ -5,10 +5,6 @@ import { Crypto } from "../crypto";
 import { CryptoKey } from "../key";
 import { Pkcs11Object } from "../p11_object";
 
-// TODO Remove pkijs
-const PkiJs = require("pkijs");
-PkiJs.CertificationRequest.prototype.getPublicKey = PkiJs.Certificate.prototype.getPublicKey;
-
 export interface Pkcs11CryptoCertificate extends CryptoCertificate {
   token: boolean;
   sensitive: boolean;

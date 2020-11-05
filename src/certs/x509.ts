@@ -1,34 +1,31 @@
+import { AsnConvert } from "@peculiar/asn1-schema";
+import * as asnX509 from "@peculiar/asn1-x509";
+import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
-import { CryptoKey } from "../key";
 
+import { CryptoKey } from "../key";
 import { Pkcs11Object } from "../p11_object";
-import * as utils from "../utils";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
-import { nameToString } from "./utils";
-
-// TODO Remove pkijs, asn1js
-const asn1js = require("asn1js");
-const pkijs = require("pkijs");
 
 export class X509Certificate extends CryptoCertificate implements core.CryptoX509Certificate {
 
   public get serialNumber() {
-    return Buffer.from(this.getData().serialNumber.valueBlock._valueHex).toString("hex");
+    return this.getData().serialNumber;
   }
   public get notBefore() {
-    return this.getData().notBefore.value;
+    return this.getData().notBefore;
   }
   public get notAfter() {
-    return this.getData().notAfter.value;
+    return this.getData().notAfter;
   }
   public get issuerName() {
-    return nameToString(this.getData().issuer);
+    return this.getData().issuer;
   }
   public get subjectName() {
-    return nameToString(this.getData().subject);
+    return this.getData().subject;
   }
   public type: "x509" = "x509";
 
@@ -38,34 +35,32 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   }
 
   public p11Object?: graphene.X509Certificate;
-  protected schema: any;
+  protected x509?: x509.X509Certificate;
 
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
-    const publicKeyInfoSchema = this.schema.subjectPublicKeyInfo.toSchema();
-    const publicKeyInfoBuffer = publicKeyInfoSchema.toBER(false);
-
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
-    this.publicKey = await this.crypto.subtle.importKey("spki", publicKeyInfoBuffer, keyAlg, true, keyUsages);
+    this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
     const certLabel = this.getName();
 
-    this.p11Object = this.crypto.session.create({
+    const template = this.crypto.templateBuilder.build("x509", {
       id: hashSPKI,
       label: algorithm.label || certLabel,
-      class: graphene.ObjectClass.CERTIFICATE,
-      certType: graphene.CertificateType.X_509,
-      serial: Buffer.from(this.schema.serialNumber.toBER(false)),
-      subject: Buffer.from(this.schema.subject.toSchema(true).toBER(false)),
-      issuer: Buffer.from(this.schema.issuer.toSchema(true).toBER(false)),
       token: !!(algorithm.token),
-      private: false,
-      value: Buffer.from(data),
-    }).toType<graphene.X509Certificate>();
+    });
+
+    // set X509 attributes
+    template.value = Buffer.from(data);
+    const asn = AsnConvert.parse(data, asnX509.Certificate);
+    template.subject = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.subject));
+    template.issuer = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.issuer));
+
+    this.p11Object = this.crypto.session.create(template).toType<graphene.X509Certificate>();
   }
 
   public async exportCert() {
@@ -103,18 +98,10 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
         }
       }
       if (!this.publicKey) {
-        let params: { algorithm: { algorithm: any, usages: string[] } };
-        pkijs.setEngine("pkcs11", this.crypto, new pkijs.CryptoEngine({ name: "pkcs11", crypto: this.crypto, subtle: this.crypto.subtle }));
         if (algorithm && usages) {
-          params = {
-            algorithm: {
-              algorithm: utils.prepareAlgorithm(algorithm),
-              usages,
-            },
-          };
-          this.publicKey = await this.getData().getPublicKey(params);
+          this.publicKey = await this.getData().publicKey.export(algorithm, usages, this.crypto as globalThis.Crypto) as CryptoKey;
         } else {
-          this.publicKey = await this.getData().getPublicKey();
+          this.publicKey = await this.getData().publicKey.export(this.crypto as globalThis.Crypto) as CryptoKey;
         }
       }
     }
@@ -122,28 +109,28 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   }
 
   protected parse(data: ArrayBuffer) {
-    const asn1 = asn1js.fromBER(data);
-    this.schema = new pkijs.Certificate({ schema: asn1.result });
+    this.x509 = new x509.X509Certificate(data);
   }
 
   /**
    * returns parsed ASN1 value
    */
   protected getData() {
-    if (!this.schema) {
+    if (!this.x509) {
       this.parse(this.value);
     }
-    return this.schema;
+    return this.x509!;
   }
 
   /**
    * Returns name from subject of the certificate
    */
   protected getName() {
-    const cert = this.getData();
-    for (const typeAndValue of cert.subject.typesAndValues) {
-      if (typeAndValue.type === "2.5.4.3") { // CN
-        return typeAndValue.value.valueBlock.value;
+    const name = new x509.Name(this.subjectName).toJSON();
+    for (const item of name) {
+      const commonName = item.CN;
+      if (commonName && commonName.length > 0) { // CN
+        return commonName[0];
       }
     }
     return this.subjectName;

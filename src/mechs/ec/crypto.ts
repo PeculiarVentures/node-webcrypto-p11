@@ -4,6 +4,7 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 
+import { Assert } from "../../assert";
 import { CryptoKey } from "../../key";
 import * as types from "../../types";
 import * as utils from "../../utils";
@@ -290,9 +291,7 @@ export class EcCrypto implements types.IContainer {
   }
 
   protected jwk2pkcs(jwk: JsonWebKey): ArrayBuffer {
-    if (!jwk.crv) {
-      throw new Error("Absent mandatory parameter \"crv\"");
-    }
+    Assert.requiredParameter(jwk.crv, "crv");
     const namedCurveId = this.getNamedCurveId(jwk.crv);
 
     const ecPrivateKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPrivateKey });

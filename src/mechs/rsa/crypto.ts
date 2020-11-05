@@ -1,3 +1,5 @@
+import * as asnSchema from "@peculiar/asn1-schema";
+import * as jsonSchema from "@peculiar/json-schema";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
@@ -7,10 +9,6 @@ import * as types from "../../types";
 import * as utils from "../../utils";
 
 import { RsaCryptoKey } from "./key";
-
-// TODO Remove asn1js and pkijs
-const asn1js = require("asn1js");
-const { PrivateKeyInfo, PublicKeyInfo } = require("pkijs");
 
 const HASH_PREFIXES: { [alg: string]: Buffer } = {
   "sha-1": Buffer.from([0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14]),
@@ -76,25 +74,20 @@ export class RsaCrypto implements types.IContainer {
         }
       case "pkcs8": {
         const jwk = await this.exportJwkPrivateKey(key);
-        const privateKey = new PrivateKeyInfo();
-        privateKey.fromJSON(jwk);
-        return privateKey.toSchema(true).toBER(false);
+        return this.jwk2pkcs(jwk);
       }
       case "spki": {
         const jwk = await this.exportJwkPublicKey(key);
-        const publicKey = new PublicKeyInfo();
-        publicKey.fromJSON(jwk);
-        return publicKey.toSchema(true).toBER(false);
+        return this.jwk2spki(jwk);
       }
       case "raw": {
-        // export subjectPublicKey BIT_STRING value
         const jwk = await this.exportJwkPublicKey(key);
-        const publicKey = new PublicKeyInfo();
-        publicKey.fromJSON(jwk);
-        return publicKey.toSchema(true).valueBlock.value[1].valueBlock.valueHex;
+        const spki = this.jwk2spki(jwk);
+        const asn = asnSchema.AsnConvert.parse(spki, core.asn1.PublicKeyInfo);
+        return asn.publicKey
       }
       default:
-        throw new core.OperationError("format: Must be 'jwk', 'pkcs8' or 'spki'");
+        throw new core.OperationError("format: Must be 'raw', 'jwk', 'pkcs8' or 'spki'");
     }
   }
 
@@ -108,17 +101,13 @@ export class RsaCrypto implements types.IContainer {
           return this.importJwkPublicKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
         }
       case "spki": {
-        const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
-        const asn1 = asn1js.fromBER(arBuf);
-
-        const jwk = new PublicKeyInfo({ schema: asn1.result }).toJSON();
+        const raw = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
+        const jwk = this.spki2jwk(raw);
         return this.importJwkPublicKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
       }
       case "pkcs8": {
-        const arBuf = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
-        const asn1 = asn1js.fromBER(arBuf);
-
-        const jwk = new PrivateKeyInfo({ schema: asn1.result }).toJSON();
+        const raw = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
+        const jwk = this.pkcs2jwk(raw);
         return this.importJwkPrivateKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
       }
       default:
@@ -274,6 +263,62 @@ export class RsaCrypto implements types.IContainer {
     template.keyType = graphene.KeyType.RSA;
 
     return template;
+  }
+
+  protected jwk2spki(jwk: JsonWebKey) {
+    const key = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.RsaPublicKey });
+
+    const keyInfo = new core.asn1.PublicKeyInfo();
+    keyInfo.publicKeyAlgorithm.algorithm = "1.2.840.113549.1.1.1";
+    keyInfo.publicKeyAlgorithm.parameters = null;
+
+    keyInfo.publicKey = asnSchema.AsnSerializer.serialize(key);
+
+    return asnSchema.AsnSerializer.serialize(keyInfo);
+  }
+
+  protected jwk2pkcs(jwk: JsonWebKey) {
+    const key = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.RsaPrivateKey });
+
+    const keyInfo = new core.asn1.PrivateKeyInfo();
+    keyInfo.privateKeyAlgorithm.algorithm = "1.2.840.113549.1.1.1";
+    keyInfo.privateKeyAlgorithm.parameters = null;
+
+    keyInfo.privateKey = asnSchema.AsnSerializer.serialize(key);
+
+    return asnSchema.AsnSerializer.serialize(keyInfo);
+  }
+
+  protected pkcs2jwk(raw: ArrayBuffer): JsonWebKey {
+    const keyInfo = asnSchema.AsnParser.parse(raw, core.asn1.PrivateKeyInfo);
+
+    if (keyInfo.privateKeyAlgorithm.algorithm !== "1.2.840.113549.1.1.1") {
+      throw new Error("PKCS8 is not RSA private key");
+    }
+
+    const key = asnSchema.AsnParser.parse(keyInfo.privateKey, core.asn1.RsaPrivateKey);
+    const json = jsonSchema.JsonSerializer.toJSON(key);
+
+    return {
+      kty: "RSA",
+      ...json,
+    };
+  }
+
+  protected spki2jwk(raw: ArrayBuffer): JsonWebKey {
+    const keyInfo = asnSchema.AsnParser.parse(raw, core.asn1.PublicKeyInfo);
+
+    if (keyInfo.publicKeyAlgorithm.algorithm !== "1.2.840.113549.1.1.1") {
+      throw new Error("PKCS8 is not RSA private key");
+    }
+
+    const key = asnSchema.AsnParser.parse(keyInfo.publicKey, core.asn1.RsaPublicKey);
+    const json = jsonSchema.JsonSerializer.toJSON(key);
+
+    return {
+      kty: "RSA",
+      ...json,
+    };
   }
 
 }

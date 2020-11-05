@@ -46,7 +46,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async getItem(key: string): Promise<CryptoKey>;
-  /** @deprecated */
+  /** @deprecated Use getItem(index, algorithm, extractable, keyUsages) */
   public async getItem(key: string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
   public async getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>
   public async getItem(key: string, ...args: any[]) {

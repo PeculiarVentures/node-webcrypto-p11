@@ -35,4 +35,10 @@ export class Assert {
     }
   }
 
+  public static requiredParameter(parameter: any, parameterName: string): asserts parameter {
+    if (!parameter) {
+      throw new Error(`Absent mandatory parameter \"${parameterName}\"`);
+    }
+  }
+
 }
