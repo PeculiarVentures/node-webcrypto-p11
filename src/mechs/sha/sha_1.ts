@@ -1,18 +1,22 @@
 import * as core from "webcrypto-core";
-import { Crypto } from "../../crypto";
+
+import * as types from "../../types";
+
 import { ShaCrypto } from "./crypto";
 
-export class Sha1Provider extends core.ProviderCrypto {
+export class Sha1Provider extends core.ProviderCrypto implements types.IContainer {
   public name = "SHA-1";
   public usages: KeyUsage[] = [];
+  public crypto: ShaCrypto;
 
-  constructor(public crypto: Crypto) {
+  constructor(public container: types.ISessionContainer) {
     super();
+
+    this.crypto = new ShaCrypto(container);
   }
 
   public async onDigest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
-    Crypto.assertSession(this.crypto.session);
-    return ShaCrypto.digest(this.crypto.session, algorithm, data);
+    return this.crypto.digest(algorithm, data);
   }
 
 }

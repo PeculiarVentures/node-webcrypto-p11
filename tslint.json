@@ -13,6 +13,8 @@
         "max-line-length": false,
         "max-classes-per-file": false,
         "no-console": false,
-        "no-reference": false
+        "no-reference": false,
+        "eofline": true,
+        "quotemark": [true, "double"]
     }
 }

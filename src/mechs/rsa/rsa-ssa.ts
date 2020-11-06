@@ -1,26 +1,28 @@
 import { IAlgorithm } from "graphene-pk11";
 import * as core from "webcrypto-core";
-import { Crypto } from "../../crypto";
+
 import { CryptoKey } from "../../key";
+import * as types from "../../types";
+
 import { RsaCrypto } from "./crypto";
 import { RsaCryptoKey } from "./key";
 
-export class RsaSsaProvider extends core.RsaSsaProvider {
+export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContainer {
 
   public usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "decrypt", "unwrapKey"],
     publicKey: ["verify", "encrypt", "wrapKey"],
   };
+  public crypto: RsaCrypto;
 
-  constructor(private crypto: Crypto) {
+  constructor(public container: types.ISessionContainer) {
     super();
+
+    this.crypto = new RsaCrypto(container);
   }
 
   public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await RsaCrypto.generateKey(
-      this.crypto.session,
+    const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
       keyUsages);
@@ -30,15 +32,13 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
 
   public async onSign(algorithm: Algorithm, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      Crypto.assertSession(this.crypto.session);
-
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
-      mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
+      mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
       if (mechanism.name === "RSA_PKCS") {
-        buf = RsaCrypto.prepareData((key as any).algorithm.hash.name, buf);
+        buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
       }
-      this.crypto.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      this.container.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -50,15 +50,13 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
 
   public async onVerify(algorithm: Algorithm, key: RsaCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      Crypto.assertSession(this.crypto.session);
-
       let buf = Buffer.from(data);
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
-      mechanism.name = RsaCrypto.getAlgorithm(this.crypto.session, this.name, mechanism.name);
+      mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
       if (mechanism.name === "RSA_PKCS") {
-        buf = RsaCrypto.prepareData((key as any).algorithm.hash.name, buf);
+        buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
       }
-      this.crypto.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
+      this.container.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -69,15 +67,11 @@ export class RsaSsaProvider extends core.RsaSsaProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: RsaCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    Crypto.assertSession(this.crypto.session);
-
-    return RsaCrypto.exportKey(this.crypto.session, format, key);
+    return this.crypto.exportKey(format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await RsaCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 

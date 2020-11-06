@@ -1,26 +1,29 @@
 import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
-import { Crypto } from "../../crypto";
+
 import { CryptoKey } from "../../key";
+import * as types from "../../types";
+
 import { EcCrypto } from "./crypto";
 import { EcCryptoKey } from "./key";
 
-export class EcdhProvider extends core.EcdhProvider {
+export class EcdhProvider extends core.EcdhProvider implements types.IContainer {
 
   public usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "deriveKey", "deriveBits"],
     publicKey: ["verify"],
   };
 
-  constructor(private crypto: Crypto) {
+  public crypto: EcCrypto;
+
+  constructor(public container: types.ISessionContainer) {
     super();
+
+    this.crypto = new EcCrypto(container);
   }
 
   public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await EcCrypto.generateKey(
-      this.crypto.session,
+    const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
       keyUsages);
@@ -29,15 +32,11 @@ export class EcdhProvider extends core.EcdhProvider {
   }
 
   public async onExportKey(format: KeyFormat, key: EcCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
-    Crypto.assertSession(this.crypto.session);
-
-    return EcCrypto.exportKey(this.crypto.session, format, key);
+    return this.crypto.exportKey(format, key);
   }
 
   public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
-    Crypto.assertSession(this.crypto.session);
-
-    const key = await EcCrypto.importKey(this.crypto.session, format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
+    const key = await this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 
@@ -50,8 +49,6 @@ export class EcdhProvider extends core.EcdhProvider {
 
   public async onDeriveBits(algorithm: EcdhKeyDeriveParams, baseKey: EcCryptoKey, length: number): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      Crypto.assertSession(this.crypto.session);
-
       let valueLen = 256;
       switch (baseKey.algorithm.namedCurve) {
         case "P-256":
@@ -65,7 +62,8 @@ export class EcdhProvider extends core.EcdhProvider {
           valueLen = 534;
           break;
       }
-      // const curve = EcCrypto.getNamedCurve(baseKey.algorithm.namedCurve);
+
+      // TODO Use template provider
       const template: graphene.ITemplate = {
         token: false,
         sensitive: false,
@@ -76,9 +74,10 @@ export class EcdhProvider extends core.EcdhProvider {
         decrypt: true,
         valueLen: valueLen >> 3,
       };
+
       // derive key
       const ecPoint = (algorithm.public as EcCryptoKey).key.getAttribute({ pointEC: null }).pointEC!;
-      this.crypto.session.deriveKey(
+      this.container.session.deriveKey(
         {
           name: "ECDH1_DERIVE",
           params: new graphene.EcdhParams(

@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as graphene from "graphene-pk11";
 import { ID_DIGEST } from "../src/const";
 import { CryptoKey as P11CryptoKey } from "../src/key";
 import { crypto } from "./config";
@@ -35,7 +36,7 @@ context("Subtle", () => {
           assert.strictEqual((keys.publicKey as P11CryptoKey).id.includes(id), true);
           assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, false);
           assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, false);
-          assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, false);
+          assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as graphene.PrivateKey).sensitive, false);
         });
       });
 
@@ -53,7 +54,7 @@ context("Subtle", () => {
             assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.token, true);
             assert.strictEqual((keys.publicKey as P11CryptoKey).p11Object.label, alg.name);
             assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.token, true);
-            assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as GraphenePkcs11.PrivateKey).sensitive, true);
+            assert.strictEqual(((keys.privateKey as P11CryptoKey).p11Object as graphene.PrivateKey).sensitive, true);
             assert.strictEqual((keys.privateKey as P11CryptoKey).p11Object.label, alg.name);
           });
         });
@@ -76,7 +77,7 @@ context("Subtle", () => {
       it("don't try to update id if key is not extractable", async () => {
         const key = await crypto.subtle.importKey("spki", spki, { name: "ECDSA", namedCurve: "P-256" } as EcKeyImportParams, false, ["verify"]);
 
-        assert.notEqual((key as P11CryptoKey).key.id.toString("hex"), "69e4556056c8d300eff3d4523fc6515d9f833fe6");
+        assert.notStrictEqual((key as P11CryptoKey).key.id.toString("hex"), "69e4556056c8d300eff3d4523fc6515d9f833fe6");
       });
 
     });

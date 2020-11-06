@@ -16,8 +16,6 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async keys() {
-    Crypto.assertSession(this.crypto.session);
-
     const keys: string[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
@@ -36,8 +34,6 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async clear() {
-    Crypto.assertSession(this.crypto.session);
-
     const keys: SessionObject[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
@@ -50,7 +46,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async getItem(key: string): Promise<CryptoKey>;
-  /** @deprecated */
+  /** @deprecated Use getItem(index, algorithm, extractable, keyUsages) */
   public async getItem(key: string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
   public async getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>
   public async getItem(key: string, ...args: any[]) {
@@ -159,7 +155,6 @@ export class KeyStorage implements core.CryptoKeyStorage {
     if (!(data instanceof CryptoKey)) {
       throw new core.CryptoError("Parameter 1 is not P11CryptoKey");
     }
-    Crypto.assertSession(this.crypto.session);
 
     const p11Key = data as CryptoKey;
 
@@ -181,7 +176,6 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   protected getItemById(id: string): SessionObject | null {
-    Crypto.assertSession(this.crypto.session);
 
     let key: SessionObject | null = null;
     OBJECT_TYPES.forEach((objectClass) => {
