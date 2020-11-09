@@ -15,13 +15,17 @@ export class AesCrypto implements types.IContainer {
 
   public async generateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
-      const template = this.container.templateBuilder.build("secret", {
-        id: utils.GUID(),
-        label: algorithm.label || `AES-${algorithm.length}`,
-        token: algorithm.token,
-        sensitive: algorithm.sensitive,
-        extractable,
-        usages: keyUsages,
+      const template = this.container.templateBuilder.build({
+        action: "generate",
+        type: "secret",
+        attributes: {
+          id: utils.GUID(),
+          label: algorithm.label || `AES-${algorithm.length}`,
+          token: algorithm.token,
+          sensitive: algorithm.sensitive,
+          extractable,
+          usages: keyUsages,
+        },
       });
       template.keyType = graphene.KeyType.AES;
       template.valueLen = algorithm.length >> 3;
@@ -94,13 +98,17 @@ export class AesCrypto implements types.IContainer {
       ...algorithm,
       length: value.byteLength * 8,
     };
-    const template: graphene.ITemplate = this.container.templateBuilder.build("secret", {
-      id: utils.GUID(),
-      label: algorithm.label || `AES-${aesAlg.length}`,
-      token: algorithm.token,
-      sensitive: algorithm.sensitive,
-      extractable,
-      usages: keyUsages,
+    const template: graphene.ITemplate = this.container.templateBuilder.build({
+      action: "import",
+      type: "secret",
+      attributes: {
+        id: utils.GUID(),
+        label: algorithm.label || `AES-${aesAlg.length}`,
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        extractable,
+        usages: keyUsages,
+      },
     });
     template.keyType = graphene.KeyType.AES;
     template.value = Buffer.from(value);

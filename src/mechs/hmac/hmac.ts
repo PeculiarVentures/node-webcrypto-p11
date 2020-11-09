@@ -19,7 +19,17 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       const length = (algorithm.length || this.getDefaultLength((algorithm.hash as Algorithm).name)) >> 3 << 3;
       algorithm = { ...algorithm, name: this.name, length };
 
-      const template = this.createTemplate(algorithm, extractable, keyUsages);
+      const template = this.createTemplate({
+        action: "generate",
+        type: "secret",
+        attributes: {
+          token: algorithm.token,
+          sensitive: algorithm.sensitive,
+          label: algorithm.label,
+          extractable,
+          usages: keyUsages
+        },
+      });
       template.valueLen = length >> 3;
 
       // PKCS11 generation
@@ -86,7 +96,17 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       name: this.name,
       length: value.byteLength * 8 || this.getDefaultLength((algorithm as any).hash.name),
     } as Pkcs11HmacKeyAlgorithm;
-    const template: graphene.ITemplate = this.createTemplate(hmacAlg, extractable, keyUsages);
+    const template: graphene.ITemplate = this.createTemplate({
+      action: "import",
+      type: "secret",
+      attributes: {
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        label: algorithm.label,
+        extractable,
+        usages: keyUsages
+      },
+    });
     template.value = Buffer.from(value);
 
     // create session object
@@ -122,15 +142,14 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     }
   }
 
-  protected createTemplate(alg: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): graphene.ITemplate {
-    alg = { ...HmacCryptoKey.defaultKeyAlgorithm(), ...alg };
-    const template =  this.container.templateBuilder.build("secret", {
-      id: utils.GUID(),
-      label: alg.label || `HMAC-${alg.length}`,
-      token: alg.token,
-      sensitive: alg.sensitive,
-      extractable,
-      usages: keyUsages,
+  protected createTemplate(params: types.ITemplateBuildParameters): types.ITemplate {
+    const template = this.container.templateBuilder.build({
+      ...params,
+      attributes: {
+        ...params.attributes,
+        id: utils.GUID(),
+        label: params.attributes.label || "HMAC",
+      },
     });
 
     template.keyType = graphene.KeyType.GENERIC_SECRET;

@@ -37,8 +37,16 @@ export class RsaCrypto implements types.IContainer {
       extractable,
       usages: keyUsages,
     }
-    const privateTemplate = this.createTemplate("private", attrs);
-    const publicTemplate = this.createTemplate("public", attrs);
+    const privateTemplate = this.createTemplate({
+      action: "generate",
+      type: "private",
+      attributes: attrs,
+    });
+    const publicTemplate = this.createTemplate({
+      action: "generate",
+      type: "public",
+      attributes: attrs,
+    });
 
     // Set RSA params
     publicTemplate.publicExponent = exp;
@@ -207,13 +215,17 @@ export class RsaCrypto implements types.IContainer {
   }
 
   protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]) {
-    const template = this.createTemplate("private", {
-      id: utils.GUID(),
-      token: algorithm.token,
-      sensitive: algorithm.sensitive,
-      label: algorithm.label,
-      extractable,
-      usages: keyUsages
+    const template = this.createTemplate({
+      action: "import",
+      type: "private",
+      attributes: {
+        id: utils.GUID(),
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        label: algorithm.label,
+        extractable,
+        usages: keyUsages
+      },
     });
 
     // Set RSA private key attributes
@@ -232,12 +244,16 @@ export class RsaCrypto implements types.IContainer {
   }
 
   protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
-    const template = this.createTemplate("public", {
-      id: utils.GUID(),
-      token: algorithm.token,
-      label: algorithm.label,
-      extractable,
-      usages: keyUsages
+    const template = this.createTemplate({
+      action: "import",
+      type: "public",
+      attributes: {
+        id: utils.GUID(),
+        token: algorithm.token,
+        label: algorithm.label,
+        extractable,
+        usages: keyUsages
+      },
     });
 
     // Set RSA public key attributes
@@ -251,13 +267,15 @@ export class RsaCrypto implements types.IContainer {
 
   /**
    * Creates PKCS11 template
-   * @param type Key type
-   * @param attributes PKCS11 attributes
+   * @param params
    */
-  protected createTemplate(type: KeyType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
-    const template = this.container.templateBuilder.build(type, {
-      ...attributes,
-      label: attributes.label || "RSA",
+  protected createTemplate(params: types.ITemplateBuildParameters): types.ITemplate {
+    const template = this.container.templateBuilder.build({
+      ...params,
+      attributes: {
+        ...params.attributes,
+        label: params.attributes.label || "RSA",
+      }
     });
 
     template.keyType = graphene.KeyType.RSA;

@@ -48,10 +48,14 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
 
     const certLabel = this.getName();
 
-    const template = this.crypto.templateBuilder.build("x509", {
-      id: hashSPKI,
-      label: algorithm.label || certLabel,
-      token: !!(algorithm.token),
+    const template = this.crypto.templateBuilder.build({
+      action: "import",
+      type: "x509",
+      attributes: {
+        id: hashSPKI,
+        label: algorithm.label || certLabel,
+        token: !!(algorithm.token),
+      },
     });
 
     // set X509 attributes

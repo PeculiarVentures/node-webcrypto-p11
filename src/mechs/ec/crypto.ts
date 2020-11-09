@@ -31,8 +31,16 @@ export class EcCrypto implements types.IContainer {
         extractable,
         usages: keyUsages,
       }
-      const privateTemplate = this.createTemplate("private", attrs);
-      const publicTemplate = this.createTemplate("public", attrs);
+      const privateTemplate = this.createTemplate({
+        action: "generate",
+        type: "private",
+        attributes: attrs,
+      });
+      const publicTemplate = this.createTemplate({
+        action: "generate",
+        type: "public",
+        attributes: attrs,
+      });
 
       // EC params
       publicTemplate.paramsEC = this.getJsonNamedCurve(algorithm.namedCurve).value;
@@ -178,13 +186,17 @@ export class EcCrypto implements types.IContainer {
 
   protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
     const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
-    const template = this.createTemplate("private", {
-      id: utils.GUID(),
-      token: algorithm.token,
-      sensitive: algorithm.sensitive,
-      label: algorithm.label,
-      extractable,
-      usages: keyUsages
+    const template = this.createTemplate({
+      action: "import",
+      type: "private",
+      attributes: {
+        id: utils.GUID(),
+        token: algorithm.token,
+        sensitive: algorithm.sensitive,
+        label: algorithm.label,
+        extractable,
+        usages: keyUsages,
+      },
     });
 
     // Set EC private key attributes
@@ -198,12 +210,16 @@ export class EcCrypto implements types.IContainer {
 
   protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
     const namedCurve = this.getJsonNamedCurve(algorithm.namedCurve);
-    const template = this.createTemplate("public", {
-      id: utils.GUID(),
-      token: algorithm.token,
-      label: algorithm.label,
-      extractable,
-      usages: keyUsages
+    const template = this.createTemplate({
+      action: "import",
+      type: "public",
+      attributes: {
+        id: utils.GUID(),
+        token: algorithm.token,
+        label: algorithm.label,
+        extractable,
+        usages: keyUsages,
+      }
     });
 
     // Set EC public key attributes
@@ -257,13 +273,15 @@ export class EcCrypto implements types.IContainer {
 
   /**
    * Creates PKCS11 template
-   * @param type Key type
-   * @param attributes PKCS11 attributes
+   * @param params
    */
-  protected createTemplate(type: KeyType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
-    const template = this.container.templateBuilder.build(type, {
-      ...attributes,
-      label: attributes.label || "EC",
+  protected createTemplate(params: types.ITemplateBuildParameters): types.ITemplate {
+    const template = this.container.templateBuilder.build({
+      ...params,
+      attributes: {
+        ...params.attributes,
+        label: params.attributes.label || "EC",
+      },
     });
 
     template.keyType = graphene.KeyType.EC;

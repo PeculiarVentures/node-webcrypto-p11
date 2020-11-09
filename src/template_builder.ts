@@ -4,8 +4,9 @@ import * as types from "./types";
 
 export class TemplateBuilder implements types.ITemplateBuilder {
 
-  public build(type: types.TemplateBuilderType, attributes: types.Pkcs11Attributes): types.KeyTemplate {
-    const template: types.KeyTemplate = {
+  public build(params: types.ITemplateBuildParameters): types.ITemplate {
+    const {attributes, type} = params;
+    const template: types.ITemplate = {
       token: !!attributes.token,
     };
 
@@ -26,7 +27,7 @@ export class TemplateBuilder implements types.ITemplateBuilder {
 
     switch (type) {
       case "private":
-        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+        Object.assign<types.ITemplate, types.ITemplate>(template, {
           class: graphene.ObjectClass.PRIVATE_KEY,
           sensitive: !!attributes.sensitive,
           private: true,
@@ -38,7 +39,7 @@ export class TemplateBuilder implements types.ITemplateBuilder {
         });
         break;
       case "public":
-        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+        Object.assign<types.ITemplate, types.ITemplate>(template, {
           token: !!attributes.token,
           class: graphene.ObjectClass.PUBLIC_KEY,
           private: false,
@@ -49,7 +50,7 @@ export class TemplateBuilder implements types.ITemplateBuilder {
         });
         break;
       case "secret":
-        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+        Object.assign<types.ITemplate, types.ITemplate>(template, {
           class: graphene.ObjectClass.SECRET_KEY,
           sensitive: !!attributes.sensitive,
           extractable: !!attributes.extractable,
@@ -67,14 +68,14 @@ export class TemplateBuilder implements types.ITemplateBuilder {
           template.objectId = template.id;
           delete template.id;
         }
-        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+        Object.assign<types.ITemplate, types.ITemplate>(template, {
           class: graphene.ObjectClass.DATA,
           application: "webcrypto-p11",
           private: false,
         });
         break;
       case "x509":
-        Object.assign<types.KeyTemplate, types.KeyTemplate>(template, {
+        Object.assign<types.ITemplate, types.ITemplate>(template, {
           class: graphene.ObjectClass.CERTIFICATE,
           certType: graphene.CertificateType.X_509,
           private: false,

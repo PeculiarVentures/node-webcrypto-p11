@@ -40,10 +40,14 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
 
     const hashSPKI = this.publicKey.p11Object.id;
 
-    const template = this.crypto.templateBuilder.build("request", {
-      id: hashSPKI,
-      label: algorithm.label || "X509 Request",
-      token: !!(algorithm.token),
+    const template = this.crypto.templateBuilder.build({
+      action: "import",
+      type: "request",
+      attributes: {
+        id: hashSPKI,
+        label: algorithm.label || "X509 Request",
+        token: !!(algorithm.token),
+      },
     })
 
     // set data attributes

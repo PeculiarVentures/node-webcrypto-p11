@@ -146,6 +146,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   public removeItem(index: string): Promise<void>;
 }
 
+export type ITemplate = graphene.ITemplate;
 export interface Pkcs11Attributes {
   id?: BufferSource
   token?: boolean;
@@ -155,8 +156,15 @@ export interface Pkcs11Attributes {
   usages?: KeyUsage[];
 }
 
-export type KeyTemplate = graphene.ITemplate;
-export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "request";
+export type TemplateBuildType = "private" | "public" | "secret" | "x509" | "request";
+
+export type TemplateBuildAction = "generate" | "import";
+
+export interface ITemplateBuildParameters {
+  type: TemplateBuildType;
+  action: TemplateBuildAction;
+  attributes: Pkcs11Attributes;
+}
 
 /**
  * Interface of PKCS#11 template builder
@@ -164,14 +172,13 @@ export type TemplateBuilderType = "private" | "public" | "secret" | "x509" | "re
 export interface ITemplateBuilder {
   /**
    * Returns a PKCS#11 template
-   * @param type Type of key (private, public, secret)
-   * @param attributes PKCS#11 attributes
+   * @param params Template build parameters
    */
-  build(type: TemplateBuilderType, attributes: Pkcs11Attributes): KeyTemplate
+  build(params: ITemplateBuildParameters): ITemplate
 }
 
 export class TemplateBuilder implements ITemplateBuilder {
-  public build(type: TemplateBuilderType, attributes: Pkcs11Attributes): graphene.ITemplate;
+  build(params: ITemplateBuildParameters): ITemplate
 }
 
 export class Crypto implements core.NativeCrypto, core.CryptoStorages {

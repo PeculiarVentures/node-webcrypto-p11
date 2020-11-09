@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as graphene from "graphene-pk11";
-import { ITemplateBuilder, Pkcs11Attributes, TemplateBuilderType } from "../src/types";
+import * as types from "../src/types";
 import { config, crypto } from "./config";
 
 context("Crypto", () => {
@@ -30,9 +30,9 @@ context("Crypto", () => {
   });
 
   context("custom template builder", () => {
-    class CustomTemplateBuilder implements ITemplateBuilder {
+    class CustomTemplateBuilder implements types.ITemplateBuilder {
 
-      build(type: TemplateBuilderType, attributes: Pkcs11Attributes): graphene.ITemplate {
+      build(params: types.ITemplateBuildParameters): types.ITemplate {
         return {
           label: "CustomTemplate",
           token: false,
