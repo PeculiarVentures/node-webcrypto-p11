@@ -4,6 +4,7 @@ import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
+import { AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
 
 import { CryptoKey } from "../key";
 import { Pkcs11Object } from "../p11_object";
@@ -61,6 +62,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     // set X509 attributes
     template.value = Buffer.from(data);
     const asn = AsnConvert.parse(data, asnX509.Certificate);
+    template.serial = Buffer.from(AsnConvert.serialize(AsnIntegerArrayBufferConverter.toASN(asn.tbsCertificate.serialNumber)));
     template.subject = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.subject));
     template.issuer = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.issuer));
 
