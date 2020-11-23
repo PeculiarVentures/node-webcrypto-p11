@@ -173,6 +173,12 @@ export class RsaCrypto implements types.IContainer {
       publicExponent: null,
       modulus: null,
     });
+
+    // Remove padding
+    pkey.publicExponent = pkey.publicExponent!.length > 3
+      ? pkey.publicExponent!.slice(pkey.publicExponent!.length - 3)
+      : pkey.publicExponent;
+
     const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
     const jwk: JsonWebKey = {
       kty: "RSA",
@@ -182,6 +188,7 @@ export class RsaCrypto implements types.IContainer {
       e: Convert.ToBase64Url(pkey.publicExponent!),
       n: Convert.ToBase64Url(pkey.modulus!),
     };
+
     return jwk;
   }
 
@@ -196,21 +203,28 @@ export class RsaCrypto implements types.IContainer {
       exp2: null,
       coefficient: null,
     });
+
+    // Remove padding
+    pkey.publicExponent = pkey.publicExponent!.length > 3
+      ? pkey.publicExponent!.slice(pkey.publicExponent!.length - 3)
+      : pkey.publicExponent;
+
     const alg = this.jwkAlgName(key.algorithm as RsaHashedKeyAlgorithm);
     const jwk: JsonWebKey = {
       kty: "RSA",
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent as Uint8Array),
-      n: Convert.ToBase64Url(pkey.modulus as Uint8Array),
-      d: Convert.ToBase64Url(pkey.privateExponent as Uint8Array),
-      p: Convert.ToBase64Url(pkey.prime1 as Uint8Array),
-      q: Convert.ToBase64Url(pkey.prime2 as Uint8Array),
-      dp: Convert.ToBase64Url(pkey.exp1 as Uint8Array),
-      dq: Convert.ToBase64Url(pkey.exp2 as Uint8Array),
-      qi: Convert.ToBase64Url(pkey.coefficient as Uint8Array),
+      e: Convert.ToBase64Url(pkey.publicExponent!),
+      n: Convert.ToBase64Url(pkey.modulus!),
+      d: Convert.ToBase64Url(pkey.privateExponent!),
+      p: Convert.ToBase64Url(pkey.prime1!),
+      q: Convert.ToBase64Url(pkey.prime2!),
+      dp: Convert.ToBase64Url(pkey.exp1!),
+      dq: Convert.ToBase64Url(pkey.exp2!),
+      qi: Convert.ToBase64Url(pkey.coefficient!),
     };
+
     return jwk;
   }
 

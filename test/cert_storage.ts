@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as x509 from "@peculiar/x509";
 import { CryptoCertificateFormat, PemConverter } from "webcrypto-core";
 import { X509Certificate, X509CertificateRequest } from "../src";
 import { crypto } from "./config";
@@ -184,6 +185,63 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
       const raw = await crypto.certStorage.exportCert("raw", x509);
       assert.strictEqual(Buffer.from(raw).equals(X509_RAW), true);
+    });
+
+    it.only("test", async () => {
+      const alg = {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256",
+        publicExponent: new Uint8Array([1, 0, 1]),
+        modulusLength: 2048
+      };
+
+      const keys = await crypto.subtle.generateKey(
+        {
+          ...alg,
+          token: true,
+        } as any,
+        false,
+        [
+          "sign",
+          "verify"
+        ]) as CryptoKeyPair;
+      const keyIndex = await crypto.keyStorage.setItem(keys.privateKey);
+
+      const cert = await x509.X509CertificateGenerator.createSelfSigned(
+        {
+          serialNumber: "01",
+          name: "CN=Test",
+          notBefore: new Date("2020/01/01"),
+          notAfter: new Date("2020/01/02"),
+          signingAlgorithm: alg,
+          keys,
+          extensions: [
+            new x509.BasicConstraintsExtension(true, 2, true),
+            new x509.ExtendedKeyUsageExtension(
+              ["1.2.3.4.5.6.7", "2.3.4.5.6.7.8"],
+              true
+            ),
+            new x509.KeyUsagesExtension(
+              x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign,
+              true
+            )
+          ]
+        },
+        crypto as globalThis.Crypto
+      );
+
+      const fortifyCert = await crypto.certStorage.importCert(
+        "raw",
+        cert.rawData,
+        {
+          ...alg,
+          token: true,
+        },
+        ["verify"]
+      );
+      const certIndex = await crypto.certStorage.setItem(fortifyCert);
+
+      assert.strictEqual(keyIndex.split("-")[2], certIndex.split("-")[2]);
     });
 
   });
