@@ -187,7 +187,7 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       assert.strictEqual(Buffer.from(raw).equals(X509_RAW), true);
     });
 
-    it.only("test", async () => {
+    it("test", async () => {
       const alg = {
         name: "RSASSA-PKCS1-v1_5",
         hash: "SHA-256",
