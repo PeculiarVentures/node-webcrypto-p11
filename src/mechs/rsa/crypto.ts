@@ -59,6 +59,9 @@ export class RsaCrypto implements types.IContainer {
           if (err) {
             reject(new core.CryptoError(`Rsa: Can not generate new key\n${err.message}`));
           } else {
+            if (!keys) {
+              throw new Error("Cannot get keys from callback function");
+            }
             const wcKeyPair = {
               privateKey: new RsaCryptoKey(keys.privateKey, algorithm),
               publicKey: new RsaCryptoKey(keys.publicKey, algorithm),

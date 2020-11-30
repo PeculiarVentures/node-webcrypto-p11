@@ -51,6 +51,9 @@ export class EcCrypto implements types.IContainer {
           if (err) {
             reject(err);
           } else {
+            if (!keys) {
+              throw new Error("Cannot get keys from callback function");
+            }
             const wcKeyPair = {
               privateKey: new EcCryptoKey(keys.privateKey, algorithm),
               publicKey: new EcCryptoKey(keys.publicKey, algorithm),

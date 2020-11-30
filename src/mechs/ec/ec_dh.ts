@@ -92,6 +92,9 @@ export class EcdhProvider extends core.EcdhProvider implements types.IContainer 
           if (err) {
             reject(err);
           } else {
+            if (!key) {
+              throw new Error("Cannot get key from callback function");
+            }
             const secretKey = key.toType<graphene.SecretKey>();
             const value = secretKey.getAttribute({ value: null }).value as Buffer;
             resolve(new Uint8Array(value.slice(0, length >> 3)).buffer);

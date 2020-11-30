@@ -33,12 +33,15 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       template.valueLen = length >> 3;
 
       // PKCS11 generation
-      this.container.session.generateKey(graphene.KeyGenMechanism.GENERIC_SECRET, template, (err, aesKey) => {
+      this.container.session.generateKey(graphene.KeyGenMechanism.GENERIC_SECRET, template, (err, key) => {
         try {
           if (err) {
             reject(new core.CryptoError(`HMAC: Cannot generate new key\n${err.message}`));
           } else {
-            resolve(new HmacCryptoKey(aesKey, algorithm));
+            if (!key) {
+              throw new Error("Cannot get key from callback function");
+            }
+            resolve(new HmacCryptoKey(key, algorithm));
           }
         } catch (e) {
           reject(e);

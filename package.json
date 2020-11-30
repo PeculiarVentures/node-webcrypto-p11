@@ -38,7 +38,7 @@
     "@peculiar/asn1-x509": "^2.0.26",
     "@peculiar/json-schema": "^1.1.12",
     "@peculiar/x509": "^1.0.9",
-    "graphene-pk11": "^2.1.14",
+    "graphene-pk11": "^2.1.16",
     "tslib": "^2.0.3",
     "webcrypto-core": "^1.1.8"
   },

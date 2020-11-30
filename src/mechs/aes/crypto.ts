@@ -36,6 +36,9 @@ export class AesCrypto implements types.IContainer {
           if (err) {
             reject(new core.CryptoError(`Aes: Can not generate new key\n${err.message}`));
           } else {
+            if (!aesKey) {
+              throw new Error("Cannot get key from callback function");
+            }
             resolve(new AesCryptoKey(aesKey, algorithm));
           }
         } catch (e) {
