@@ -4,6 +4,7 @@
 import * as core from "webcrypto-core";
 const WebCryptoError = core.CryptoError;
 import * as graphene from "graphene-pk11";
+import * as pkcs11 from "pkcs11js";
 
 import { Assert } from "./assert";
 import { CertificateStorage } from "./cert_storage";
@@ -26,11 +27,6 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
   public isLoggedIn: boolean;
   public isLoginRequired: boolean;
 
-  /**
-   * PKCS11 Module
-   * @internal
-   */
-  public module?: graphene.Module;
   /**
    * PKCS11 Slot
    * @internal
@@ -74,7 +70,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
         mod.initialize();
       }
     } catch (e) {
-      if (!/CKR_CRYPTOKI_ALREADY_INITIALIZED/.test(e.message)) {
+      if (!(e instanceof pkcs11.Pkcs11Error && e.code === pkcs11.CKR_CRYPTOKI_ALREADY_INITIALIZED)) {
         throw e;
       }
     }
@@ -133,7 +129,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
     try {
       this.session.login(pin);
     } catch (error) {
-      if (!/CKR_USER_ALREADY_LOGGED_IN\:256/.test(error.message)) {
+      if (!(error instanceof pkcs11.Pkcs11Error && error.code === pkcs11.CKR_USER_ALREADY_LOGGED_IN)) {
         throw error;
       }
     }
@@ -149,7 +145,7 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
     try {
       this.session.logout();
     } catch (error) {
-      if (!/CKR_USER_NOT_LOGGED_IN\:257/.test(error.message)) {
+      if (!(error instanceof pkcs11.Pkcs11Error && error.code === pkcs11.CKR_USER_NOT_LOGGED_IN)) {
         throw error;
       }
     }
@@ -176,12 +172,10 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
    */
   public close() {
     if (this.initialized) {
-      Assert.isModule(this.module);
-
       this.session.logout();
       this.session.close();
-      this.module.finalize();
-      this.module.close();
+      this.slot.module.finalize();
+      this.slot.module.close();
     }
   }
 }
