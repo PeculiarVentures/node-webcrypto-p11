@@ -1,7 +1,7 @@
 # node-webcrypto-p11
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/PeculiarVentures/node-webcrypto-p11/master/LICENSE)
-[![CircleCI](https://circleci.com/gh/PeculiarVentures/node-webcrypto-p11/tree/master.svg?style=svg)](https://circleci.com/gh/PeculiarVentures/node-webcrypto-p11/tree/master)
+![test](https://github.com/PeculiarVentures/node-webcrypto-p11/workflows/test/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/PeculiarVentures/node-webcrypto-p11/badge.svg?branch=master)](https://coveralls.io/github/PeculiarVentures/node-webcrypto-p11?branch=master)
 [![npm version](https://badge.fury.io/js/node-webcrypto-p11.svg)](https://badge.fury.io/js/node-webcrypto-p11)
 
