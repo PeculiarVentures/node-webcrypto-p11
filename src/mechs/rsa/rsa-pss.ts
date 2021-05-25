@@ -82,7 +82,7 @@ export class RsaPssProvider extends core.RsaPssProvider implements types.IContai
     }
   }
 
-  protected wc2pk11(alg: RsaPssParams, keyAlg: RsaHashedKeyAlgorithm): graphene.IAlgorithm {
+  protected wc2pk11(alg: RsaPssParams, keyAlg: RsaHashedKeyAlgorithm): { name: string, params: graphene.IParams } {
     let mech: string;
     let param: graphene.RsaPssParams;
     const saltLen = alg.saltLength;

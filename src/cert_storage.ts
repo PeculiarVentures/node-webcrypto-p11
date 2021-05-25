@@ -124,9 +124,14 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
 
     // don't copy object from token
     if (!data.p11Object.token) {
-      const obj = this.crypto.session.copy(data.p11Object, {
-        token: true,
-      });
+      const template = this.crypto.templateBuilder.build({
+        action: "copy",
+        type: data.type,
+        attributes: {
+          token: true,
+        }
+      })
+      const obj = this.crypto.session.copy(data.p11Object, template);
       return certs.CryptoCertificate.getID(obj.toType<any>());
     } else {
       return data.id;

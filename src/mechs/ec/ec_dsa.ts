@@ -1,4 +1,3 @@
-import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -85,7 +84,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     }
   }
 
-  protected wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): graphene.IAlgorithm {
+  protected wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): { name: string, params: null } {
     let algName: string;
     const hashAlg = (alg.hash as Algorithm).name.toUpperCase();
     switch (hashAlg) {

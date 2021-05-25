@@ -14,7 +14,7 @@ export interface Pkcs11Attributes {
 
 export type TemplateBuildType = "private" | "public" | "secret" | "x509" | "request";
 
-export type TemplateBuildAction = "generate" | "import";
+export type TemplateBuildAction = "generate" | "import" | "copy";
 
 export interface ITemplateBuildParameters {
   type: TemplateBuildType;

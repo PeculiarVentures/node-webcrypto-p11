@@ -160,9 +160,14 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
     // don't copy object from token
     if (!(this.hasItem(data) && p11Key.key.token)) {
-      const obj = this.crypto.session.copy(p11Key.key, {
-        token: true,
-      });
+      const template = this.crypto.templateBuilder.build({
+        action: "copy",
+        type: p11Key.type,
+        attributes: {
+          token: true,
+        }
+      })
+      const obj = this.crypto.session.copy(p11Key.key, template);
       return CryptoKey.getID(obj.toType<any>());
     } else {
       return data.id;

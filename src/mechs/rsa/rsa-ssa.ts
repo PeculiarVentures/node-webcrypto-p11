@@ -1,4 +1,3 @@
-import { IAlgorithm } from "graphene-pk11";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -82,7 +81,7 @@ export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContai
     }
   }
 
-  protected wc2pk11(alg: Algorithm, keyAlg: RsaHashedKeyAlgorithm): IAlgorithm {
+  protected wc2pk11(alg: Algorithm, keyAlg: RsaHashedKeyAlgorithm): { name: string, params: null } {
     let res: string;
     switch (keyAlg.hash.name.toUpperCase()) {
       case "SHA-1":

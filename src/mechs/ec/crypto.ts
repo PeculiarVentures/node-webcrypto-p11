@@ -135,7 +135,7 @@ export class EcCrypto implements types.IContainer {
     }
   }
 
-  public getAlgorithm(p11AlgorithmName: string) {
+  public getAlgorithm(p11AlgorithmName: string | number) {
     const mechanisms = this.container.session.slot.getMechanisms();
     let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
