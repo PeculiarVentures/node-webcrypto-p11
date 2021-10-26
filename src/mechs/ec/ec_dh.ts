@@ -9,6 +9,8 @@ import { EcCryptoKey } from "./key";
 
 export class EcdhProvider extends core.EcdhProvider implements types.IContainer {
 
+  public namedCurves = core.EcCurves.names;
+
   public usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "deriveKey", "deriveBits"],
     publicKey: ["verify"],
@@ -22,7 +24,7 @@ export class EcdhProvider extends core.EcdhProvider implements types.IContainer 
     this.crypto = new EcCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,

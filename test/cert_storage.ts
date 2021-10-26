@@ -204,7 +204,7 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
         [
           "sign",
           "verify"
-        ]) as CryptoKeyPair;
+        ]);
       const keyIndex = await crypto.keyStorage.setItem(keys.privateKey);
 
       const cert = await x509.X509CertificateGenerator.createSelfSigned(

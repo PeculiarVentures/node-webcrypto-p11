@@ -36,7 +36,9 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     // #endregion
   }
 
-  public async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
+  public async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair>;
+  public async generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
+  public async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair | CryptoKey> {
     const keys = await super.generateKey(algorithm, extractable, keyUsages) as CryptoKey;
 
     // Fix ID for generated key pair. It must be hash of public key raw

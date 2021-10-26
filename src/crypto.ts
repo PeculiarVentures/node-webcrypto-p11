@@ -158,7 +158,10 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
    * @param array Initialize array
    */
   // Based on: https://github.com/KenanY/get-random-values
-  public getRandomValues<T extends ArrayBufferView>(array: T): T {
+  public getRandomValues<T extends ArrayBufferView | null>(array: T): T {
+    if (!ArrayBuffer.isView(array)) {
+      throw new TypeError("Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'");
+    }
     if (array.byteLength > 65536) {
       throw new core.CryptoError(`Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (${array.byteLength}) exceeds the number of bytes of entropy available via this API (65536).`);
     }

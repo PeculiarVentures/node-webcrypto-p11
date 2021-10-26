@@ -26,7 +26,7 @@ import { isNSS } from "./helper";
             publicExponent: new Uint8Array([1, 0, 1]),
             modulusLength: 1024,
           };
-          const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]) as CryptoKeyPair;
+          const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]);
           const key = (keys as any)[type] as CryptoKey;
 
           const index = await crypto.keyStorage.setItem(key);
@@ -81,7 +81,7 @@ import { isNSS } from "./helper";
           publicExponent: new Uint8Array([1,0,1]),
           modulusLength: 2048,
         };
-        const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]) as CryptoKeyPair;
+        const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]);
         assert(keys, "Has no keys");
         assert(keys.privateKey, "Has no private key");
         assert(keys.publicKey, "Has no public key");
@@ -110,7 +110,7 @@ import { isNSS } from "./helper";
         publicExponent: new Uint8Array([1, 0, 1]),
         modulusLength: 2048,
       };
-      const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]) as CryptoKeyPair;
+      const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]);
 
       // Set keys to storage
       await crypto.keyStorage.setItem(keys.publicKey);
@@ -143,7 +143,7 @@ import { isNSS } from "./helper";
             publicExponent: new Uint8Array([1, 0, 1]),
             modulusLength: 2048,
           };
-          const keys = await crypto.subtle.generateKey(algorithm, true, ["sign", "verify", "encrypt", "decrypt"]) as CryptoKeyPair;
+          const keys = await crypto.subtle.generateKey(algorithm, true, ["sign", "verify", "encrypt", "decrypt"]);
 
           // Set key to storage
           const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -183,7 +183,7 @@ import { isNSS } from "./helper";
               } as RsaHashedKeyGenParams,
               false,
               ["sign", "verify"],
-            ) as CryptoKeyPair;
+            );
 
             // Set key to storage
             const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -208,7 +208,7 @@ import { isNSS } from "./helper";
               } as EcKeyGenParams,
               false,
               ["sign", "verify"],
-            ) as CryptoKeyPair;
+            );
 
             // Set key to storage
             const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -231,7 +231,7 @@ import { isNSS } from "./helper";
             } as EcKeyGenParams,
               false,
               ["sign", "verify"],
-            ) as CryptoKeyPair;
+            );
 
             // Set key to storage
             const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -253,10 +253,10 @@ import { isNSS } from "./helper";
               hash: "SHA-1",
               publicExponent: new Uint8Array([1, 0, 1]),
               modulusLength: 2048,
-            } as RsaKeyGenParams,
+            } as RsaHashedKeyGenParams,
               false,
               ["encrypt", "decrypt"],
-            ) as CryptoKeyPair;
+            );
 
             // Set key to storage
             const index = await crypto.keyStorage.setItem(keys.publicKey);
@@ -304,7 +304,7 @@ import { isNSS } from "./helper";
             } as EcKeyGenParams,
             false,
             ["deriveBits"],
-          ) as CryptoKeyPair;
+          );
           // Set key to storage
           const index = await crypto.keyStorage.setItem(keys.publicKey);
 

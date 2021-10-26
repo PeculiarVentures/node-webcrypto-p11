@@ -29,7 +29,7 @@ context("Subtle", () => {
         { name: "ECDSA", namedCurve: "P-256" },
       ].map((alg) => {
         it(alg.name, async () => {
-          const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
+          const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
 
           const id = await getId(keys.publicKey);
           assert.strictEqual((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);
@@ -46,7 +46,7 @@ context("Subtle", () => {
           { name: "ECDSA", namedCurve: "P-256", token: true, sensitive: true, label: "ECDSA" },
         ].map((alg) => {
           it(alg.name, async () => {
-            const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
+            const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
 
             const id = await getId(keys.publicKey);
             assert.strictEqual((keys.publicKey as P11CryptoKey).key.id.toString("hex"), id);

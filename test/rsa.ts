@@ -17,7 +17,7 @@ context("RSA", () => {
         sensitive: true,
       };
 
-      const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]) as CryptoKeyPair;
+      const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
 
       const privateKey = keys.privateKey as RsaCryptoKey;
       assert.strictEqual(privateKey.algorithm.token, true);

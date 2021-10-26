@@ -8,7 +8,7 @@ import { EcCryptoKey } from "./key";
 
 export class EcdsaProvider extends core.EcdsaProvider implements types.IContainer {
 
-  public namedCurves = ["P-256", "P-384", "P-521", "K-256"];
+  public namedCurves = core.EcCurves.names;
 
   public usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "deriveKey", "deriveBits"],
@@ -23,7 +23,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     this.crypto = new EcCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
