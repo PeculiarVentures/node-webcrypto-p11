@@ -25,12 +25,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Install SoftHSM
         run: |
           brew install softhsm
           softhsm2-util --init-token --so-pin "12345" --pin "12345" --slot 0 --label "My slot 0"
-      
+
       - name: Install NSS
         run: brew install nss
 
@@ -50,6 +50,9 @@ jobs:
         run: |
           npm i yarn -g
           yarn
+
+      - name: Run lint
+        run: npm run lint
 
       - name: Run test with coverage
         run: npm run coverage
