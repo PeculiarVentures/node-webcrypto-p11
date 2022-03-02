@@ -4,6 +4,7 @@ import * as core from "webcrypto-core";
 import { Crypto } from "../crypto";
 import { CryptoKey } from "../key";
 import { Pkcs11Object } from "../p11_object";
+import { Pkcs11Params } from "../types";
 
 export interface Pkcs11CryptoCertificate extends CryptoCertificate {
   token: boolean;

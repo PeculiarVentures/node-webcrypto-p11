@@ -1,8 +1,9 @@
 import * as crypto from "crypto";
-import { Slot, SlotFlag } from "graphene-pk11";
-import { Convert } from "pvtsutils";
-import { BufferSourceConverter } from "webcrypto-core";
+import * as graphene from "graphene-pk11";
+import * as utils from "pvtsutils";
+import * as core from "webcrypto-core";
 import { ID_DIGEST } from "./const";
+import { ProviderInfo } from "./types";
 
 export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;
@@ -13,7 +14,7 @@ export function GUID(): Buffer {
 }
 
 export function b64UrlDecode(b64url: string): Buffer {
-  return Buffer.from(Convert.FromBase64Url(b64url));
+  return Buffer.from(utils.Convert.FromBase64Url(b64url));
 }
 
 /**
@@ -21,7 +22,7 @@ export function b64UrlDecode(b64url: string): Buffer {
  * @param data Array which must be prepared
  */
 export function prepareData(data: BufferSource): Buffer {
-  return Buffer.from(BufferSourceConverter.toArrayBuffer(data));
+  return Buffer.from(core.BufferSourceConverter.toArrayBuffer(data));
 }
 
 export function isHashedAlgorithm(data: any): data is HashedAlgorithm {
@@ -55,16 +56,16 @@ export function prepareAlgorithm(algorithm: AlgorithmIdentifier): Algorithm {
  */
 export function digest(algorithm: string, data: BufferSource): Buffer {
   const hash = crypto.createHash(algorithm.replace("-", ""));
-  hash.update(prepareData(Buffer.from(BufferSourceConverter.toArrayBuffer(data))));
+  hash.update(prepareData(Buffer.from(core.BufferSourceConverter.toArrayBuffer(data))));
   return hash.digest();
 }
 
-function calculateProviderID(slot: Slot) {
+function calculateProviderID(slot: graphene.Slot) {
   const str = slot.manufacturerID + slot.slotDescription + slot.getToken().serialNumber + slot.handle.toString("hex");
   return digest(ID_DIGEST, Buffer.from(str)).toString("hex");
 }
 
-export function getProviderInfo(slot: Slot) {
+export function getProviderInfo(slot: graphene.Slot) {
   // get index of slot
   const slots = slot.module.getSlots(true);
   let index = -1;
@@ -83,8 +84,8 @@ export function getProviderInfo(slot: Slot) {
     reader: slot.slotDescription,
     serialNumber: slot.getToken().serialNumber,
     algorithms: [],
-    isRemovable: !!(slot.flags & SlotFlag.REMOVABLE_DEVICE),
-    isHardware: !!(slot.flags & SlotFlag.HW_SLOT),
+    isRemovable: !!(slot.flags & graphene.SlotFlag.REMOVABLE_DEVICE),
+    isHardware: !!(slot.flags & graphene.SlotFlag.HW_SLOT),
   };
 
   const algorithms = slot.getMechanisms();

@@ -61,7 +61,7 @@ context("Crypto", () => {
 
     it("create AES-CBC", async () => {
       const key = await crypto.subtle.generateKey({ name: "AES-CBC", length: 128 } as AesKeyGenParams, true, ["encrypt", "decrypt"]) as CryptoKey;
-      assert.strictEqual((key.algorithm as Pkcs11AesKeyAlgorithm).label, "CustomTemplate");
+      assert.strictEqual((key.algorithm as types.Pkcs11AesKeyAlgorithm).label, "CustomTemplate");
       assert.deepStrictEqual(key.usages, ["encrypt"]);
     });
   })

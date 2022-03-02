@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { AesCryptoKey } from "../src/mechs";
+import { Pkcs11AesKeyGenParams, Pkcs11AesKeyImportParams } from "../src/types";
 import { crypto } from "./config";
 
 context("AES", () => {

@@ -1,5 +1,3 @@
-/// <reference path="./typings/index.d.ts" />
-
 // Core
 import * as core from "webcrypto-core";
 const WebCryptoError = core.CryptoError;
@@ -17,8 +15,8 @@ import { TemplateBuilder } from "./template_builder";
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionContainer {
-  public info?: ProviderInfo;
+export class Crypto extends core.Crypto implements core.CryptoStorages, types.ISessionContainer {
+  public info?: types.ProviderInfo;
   public subtle: SubtleCrypto;
 
   public keyStorage: KeyStorage;
@@ -58,7 +56,9 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
    * Creates an instance of WebCrypto.
    * @param props PKCS11 module init parameters
    */
-  constructor(props: CryptoParams) {
+  constructor(props: types.CryptoParams) {
+    super();
+
     const mod = graphene.Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {
@@ -106,10 +106,11 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
       flags |= graphene.SessionFlag.RW_SESSION;
     }
     this.#session = this.slot.open(flags);
-    this.info = utils.getProviderInfo(this.slot);
+    const info = utils.getProviderInfo(this.slot);
     if (this.name) {
-      this.info.name = this.name;
+      info.name = this.name;
     }
+    this.info = info;
   }
 
   public reset() {

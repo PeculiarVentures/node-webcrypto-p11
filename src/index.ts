@@ -5,3 +5,4 @@ export { CryptoCertificate, X509Certificate, X509CertificateRequest } from "./ce
 export { KeyStorage } from "./key_storage";
 export { CertificateStorage } from "./cert_storage";
 export * from "./template_builder";
+export * from "./types";

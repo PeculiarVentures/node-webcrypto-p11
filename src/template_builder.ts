@@ -1,5 +1,5 @@
 import * as graphene from "graphene-pk11";
-import { BufferSourceConverter } from "pvtsutils";
+import * as utils from "pvtsutils";
 import * as types from "./types";
 
 export class TemplateBuilder implements types.ITemplateBuilder {
@@ -25,7 +25,7 @@ export class TemplateBuilder implements types.ITemplateBuilder {
         template.label = attributes.label
       }
       if (attributes.id) {
-        template.id = Buffer.from(BufferSourceConverter.toArrayBuffer(attributes.id));
+        template.id = Buffer.from(utils.BufferSourceConverter.toArrayBuffer(attributes.id));
       }
 
       const sign = attributes.usages?.includes("sign");

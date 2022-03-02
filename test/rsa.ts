@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { Pkcs11RsaHashedImportParams, Pkcs11RsaHashedKeyGenParams } from "../src";
 import { RsaCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 

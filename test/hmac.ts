@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { HmacCryptoKey } from "../src/mechs";
+import { Pkcs11HmacKeyGenParams, Pkcs11HmacKeyImportParams } from "../src/types";
 import { crypto } from "./config";
 
 context("HMAC", () => {

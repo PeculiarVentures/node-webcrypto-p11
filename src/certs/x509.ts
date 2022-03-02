@@ -1,10 +1,9 @@
-import { AsnConvert } from "@peculiar/asn1-schema";
+import * as asnSchema from "@peculiar/asn1-schema";
 import * as asnX509 from "@peculiar/asn1-x509";
 import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as utils from "pvtsutils";
 import * as core from "webcrypto-core";
-import { AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
 
 import { CryptoKey } from "../key";
 import { Pkcs11Object } from "../p11_object";
@@ -35,7 +34,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     return new Uint8Array(this.p11Object.value).buffer;
   }
 
-  public p11Object?: graphene.X509Certificate;
+  declare public p11Object?: graphene.X509Certificate;
   protected x509?: x509.X509Certificate;
 
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
@@ -43,7 +42,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     this.parse(array.buffer as ArrayBuffer);
 
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
-    this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
+    this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
 
@@ -61,10 +60,10 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
 
     // set X509 attributes
     template.value = Buffer.from(data);
-    const asn = AsnConvert.parse(data, asnX509.Certificate);
-    template.serial = Buffer.from(AsnConvert.serialize(AsnIntegerArrayBufferConverter.toASN(asn.tbsCertificate.serialNumber)));
-    template.subject = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.subject));
-    template.issuer = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.issuer));
+    const asn = asnSchema.AsnConvert.parse(data, asnX509.Certificate);
+    template.serial = Buffer.from(asnSchema.AsnConvert.serialize(asnSchema.AsnIntegerArrayBufferConverter.toASN(asn.tbsCertificate.serialNumber)));
+    template.subject = Buffer.from(asnSchema.AsnConvert.serialize(asn.tbsCertificate.subject));
+    template.issuer = Buffer.from(asnSchema.AsnConvert.serialize(asn.tbsCertificate.issuer));
 
     this.p11Object = this.crypto.session.create(template).toType<graphene.X509Certificate>();
   }
@@ -82,7 +81,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       issuerName: this.issuerName,
       serialNumber: this.serialNumber,
       type: this.type,
-      value: Convert.ToBase64Url(this.value),
+      value: utils.Convert.ToBase64Url(this.value),
     };
   }
 

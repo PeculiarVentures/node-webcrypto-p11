@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { CryptoKey } from "../src";
+import { CryptoKey, Pkcs11EcKeyAlgorithm, Pkcs11RsaHashedKeyAlgorithm } from "../src";
 import { crypto } from "./config";
 import { isNSS } from "./helper";
 
