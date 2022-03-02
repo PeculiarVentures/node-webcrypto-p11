@@ -3,7 +3,7 @@ import { Pkcs11HmacKeyAlgorithm } from "../../types";
 
 export class HmacCryptoKey extends CryptoKey<Pkcs11HmacKeyAlgorithm> {
 
-    protected onAssign() {
+    protected override onAssign() {
       this.algorithm.length = this.key.get("valueLen") << 3;
     }
 

@@ -8,7 +8,8 @@
         "removeComments": true,
         "strict": true,
         "experimentalDecorators": true,
-        "importHelpers": true
+        "importHelpers": true,
+        "noImplicitOverride": true
     },
     "exclude": [
         "build"

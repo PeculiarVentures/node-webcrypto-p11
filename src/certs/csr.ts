@@ -13,7 +13,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   public get subjectName() {
     return this.getData()?.subject;
   }
-  public type: "request" = "request";
+  public override type: "request" = "request";
   declare public p11Object?: graphene.Data;
   public csr?: x509.Pkcs10CertificateRequest;
 

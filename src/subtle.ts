@@ -36,9 +36,9 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     // #endregion
   }
 
-  public async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair>;
-  public async generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
-  public async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
+  public override async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair>;
+  public override async generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
+  public override async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
     const keys = await super.generateKey(algorithm, extractable, keyUsages) as CryptoKey;
 
     // Fix ID for generated key pair. It must be hash of public key raw
@@ -57,7 +57,7 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     return keys;
   }
 
-  public async importKey(format: KeyFormat, keyData: JsonWebKey | BufferSource, algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public override async importKey(format: KeyFormat, keyData: JsonWebKey | BufferSource, algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await super.importKey(format, keyData, algorithm, extractable, keyUsages);
 
     // Fix ID for generated key pair. It must be hash of public key raw

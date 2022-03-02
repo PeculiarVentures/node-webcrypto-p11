@@ -50,7 +50,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onSign(algorithm: Algorithm, key: HmacCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public override async onSign(algorithm: Algorithm, key: HmacCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       this.container.session.createSign(mechanism, key.key).once(Buffer.from(data), (err, data2) => {
@@ -63,7 +63,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onVerify(algorithm: Algorithm, key: HmacCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
+  public override async onVerify(algorithm: Algorithm, key: HmacCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       this.container.session.createVerify(mechanism, key.key).once(Buffer.from(data), Buffer.from(signature), (err, ok) => {
@@ -138,7 +138,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     }
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof HmacCryptoKey)) {
       throw new TypeError("key: Is not HMAC CryptoKey");
