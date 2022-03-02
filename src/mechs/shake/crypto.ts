@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 import * as core from "webcrypto-core";
 
 export class ShakeCrypto {
