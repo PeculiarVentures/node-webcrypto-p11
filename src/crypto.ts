@@ -17,7 +17,7 @@ import { TemplateBuilder } from "./template_builder";
 /**
  * PKCS11 with WebCrypto Interface
  */
-export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionContainer {
+export class Crypto extends core.Crypto implements core.CryptoStorages, types.ISessionContainer {
   public info?: ProviderInfo;
   public subtle: SubtleCrypto;
 
@@ -59,6 +59,8 @@ export class Crypto implements core.Crypto, core.CryptoStorages, types.ISessionC
    * @param props PKCS11 module init parameters
    */
   constructor(props: CryptoParams) {
+    super();
+
     const mod = graphene.Module.load(props.library, props.name || props.library);
     this.name = props.name;
     try {

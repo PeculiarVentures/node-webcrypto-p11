@@ -93,8 +93,8 @@ export class SubtleCrypto implements core.NativeSubtleCrypto {
   public exportKey(format: "jwk", key: CryptoKey): Promise<JsonWebKey>;
   public exportKey(format: "raw" | "pkcs8" | "spki", key: CryptoKey): Promise<ArrayBuffer>;
   public exportKey(format: string, key: CryptoKey): Promise<ArrayBuffer | JsonWebKey>;
-  public generateKey(algorithm: string, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKey | core.CryptoKeyPair>;
-  public generateKey(algorithm: (RsaHashedKeyGenParams | EcKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<core.CryptoKeyPair>;
+  public generateKey(algorithm: string, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKey | CryptoKeyPair>;
+  public generateKey(algorithm: (RsaHashedKeyGenParams | EcKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKeyPair>;
   public generateKey(algorithm: (Pbkdf2Params | AesKeyGenParams | HmacKeyGenParams) & Pkcs11KeyGenParams, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKey>;
   public importKey(format: "jwk", keyData: JsonWebKey, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKey>;
   public importKey(format: "raw" | "pkcs8" | "spki", keyData: BufferSource, algorithm: string | Pkcs11ImportAlgorithms, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<CryptoKey>;
@@ -181,13 +181,13 @@ export class TemplateBuilder implements ITemplateBuilder {
   build(params: ITemplateBuildParameters): ITemplate
 }
 
-export class Crypto implements core.NativeCrypto, core.CryptoStorages {
+export class Crypto extends core.Crypto implements core.NativeCrypto, core.CryptoStorages {
   public templateBuilder: ITemplateBuilder;
   public readonly session: graphene.Session;
 
   public keyStorage: KeyStorage;
   public certStorage: CertificateStorage;
-  public subtle: SubtleCrypto;
+  public subtle: core.SubtleCrypto;
 
   public info: ProviderInfo;
   public isReadWrite: boolean;
