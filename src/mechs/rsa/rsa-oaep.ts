@@ -21,7 +21,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
     this.crypto = new RsaCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
+  public async onGenerateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,

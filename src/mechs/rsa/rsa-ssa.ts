@@ -20,7 +20,7 @@ export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContai
     this.crypto = new RsaCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
+  public async onGenerateKey(algorithm: RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,

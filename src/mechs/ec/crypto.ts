@@ -22,8 +22,8 @@ export class EcCrypto implements types.IContainer {
   public constructor(public container: types.ISessionContainer) {
   }
 
-  public async generateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
-    return new Promise<core.CryptoKeyPair>((resolve, reject) => {
+  public async generateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+    return new Promise<CryptoKeyPair>((resolve, reject) => {
       // Create PKCS#11 templates
       const attrs: types.Pkcs11Attributes = {
         id: utils.GUID(),

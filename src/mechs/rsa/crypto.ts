@@ -24,7 +24,7 @@ export class RsaCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) { }
 
-  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<core.CryptoKeyPair> {
+  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const size = algorithm.modulusLength;
     const exp = Buffer.from(algorithm.publicExponent);
 
@@ -53,7 +53,7 @@ export class RsaCrypto implements types.IContainer {
     publicTemplate.modulusBits = size;
 
     // PKCS11 generation
-    return new Promise<core.CryptoKeyPair>((resolve, reject) => {
+    return new Promise<CryptoKeyPair>((resolve, reject) => {
       this.container.session.generateKeyPair(graphene.KeyGenMechanism.RSA, publicTemplate, privateTemplate, (err, keys) => {
         try {
           if (err) {
