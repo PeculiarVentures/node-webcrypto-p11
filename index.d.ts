@@ -83,7 +83,7 @@ export interface ProviderInfo {
   isHardware: boolean;
 }
 
-export class SubtleCrypto implements core.NativeSubtleCrypto {
+export class SubtleCrypto extends core.SubtleCrypto {
   constructor(crypto: Crypto);
   public decrypt(algorithm: string | RsaOaepParams | AesCtrParams | AesCbcParams | core.AesCmacParams | AesGcmParams, key: CryptoKey, data: BufferSource): Promise<ArrayBuffer>;
   public deriveBits(algorithm: string | EcdhKeyDeriveParams | HkdfParams | Pbkdf2Params, baseKey: CryptoKey, length: number): Promise<ArrayBuffer>;
