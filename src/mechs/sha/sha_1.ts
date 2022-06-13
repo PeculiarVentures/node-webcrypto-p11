@@ -15,7 +15,7 @@ export class Sha1Provider extends core.ProviderCrypto implements types.IContaine
     this.crypto = new ShaCrypto(container);
   }
 
-  public async onDigest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public override async onDigest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
     return this.crypto.digest(algorithm, data);
   }
 

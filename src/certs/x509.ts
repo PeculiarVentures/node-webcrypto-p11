@@ -28,14 +28,14 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public get subjectName() {
     return this.getData().subject;
   }
-  public type: "x509" = "x509";
+  public override type: "x509" = "x509";
 
   public get value(): ArrayBuffer {
     Pkcs11Object.assertStorage(this.p11Object);
     return new Uint8Array(this.p11Object.value).buffer;
   }
 
-  public p11Object?: graphene.X509Certificate;
+  public override p11Object?: graphene.X509Certificate;
   protected x509?: x509.X509Certificate;
 
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {

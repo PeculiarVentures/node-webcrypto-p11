@@ -41,10 +41,10 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
   public id: string;
   public p11Object: graphene.Key | graphene.SecretKey | graphene.PublicKey | graphene.PrivateKey;
 
-  public type: KeyType = "secret";
-  public extractable: boolean = false;
-  public algorithm: T;
-  public usages: KeyUsage[] = [];
+  public override type: KeyType = "secret";
+  public override extractable: boolean = false;
+  public override algorithm: T;
+  public override usages: KeyUsage[] = [];
 
   public get key(): graphene.Key {
     return this.p11Object.toType<graphene.Key>();

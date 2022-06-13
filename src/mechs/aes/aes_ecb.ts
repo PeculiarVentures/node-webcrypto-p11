@@ -18,7 +18,7 @@ export class AesEcbProvider extends core.ProviderCrypto implements types.IContai
     this.crypto = new AesCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public override async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
@@ -27,23 +27,23 @@ export class AesEcbProvider extends core.ProviderCrypto implements types.IContai
     return key;
   }
 
-  public async onEncrypt(algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public override async onEncrypt(algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return this.crypto.encrypt(true, algorithm, key, new Uint8Array(data));
   }
 
-  public async onDecrypt(algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public override async onDecrypt(algorithm: Algorithm, key: AesCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return this.crypto.decrypt(true, algorithm, key, new Uint8Array(data));
   }
 
-  public async onExportKey(format: KeyFormat, key: AesCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
+  public override async onExportKey(format: KeyFormat, key: AesCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     return this.crypto.exportKey(format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public override async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof CryptoKey)) {
       throw new TypeError("key: Is not a PKCS11 CryptoKey");

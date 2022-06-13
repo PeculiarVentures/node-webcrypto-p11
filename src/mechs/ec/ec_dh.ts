@@ -9,9 +9,9 @@ import { EcCryptoKey } from "./key";
 
 export class EcdhProvider extends core.EcdhProvider implements types.IContainer {
 
-  public namedCurves = core.EcCurves.names;
+  public override namedCurves = core.EcCurves.names;
 
-  public usages: core.ProviderKeyPairUsage = {
+  public override usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "deriveKey", "deriveBits"],
     publicKey: ["verify"],
   };
@@ -42,7 +42,7 @@ export class EcdhProvider extends core.EcdhProvider implements types.IContainer 
     return key;
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof EcCryptoKey)) {
       throw new TypeError("key: Is not EC CryptoKey");
