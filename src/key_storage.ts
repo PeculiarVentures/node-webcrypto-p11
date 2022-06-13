@@ -139,7 +139,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
       return key;
     } else {
-      throw new Error(`Certificate storage item '${key}' not found`);
+      throw new Error(`Certificate storage item not found`);
     }
   }
 
