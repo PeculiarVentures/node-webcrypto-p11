@@ -324,19 +324,10 @@
     asn1js "^3.0.4"
     tslib "^2.4.0"
 
-"@peculiar/asn1-schema@^2.1.6":
-  version "2.1.7"
-  resolved "https://registry.yarnpkg.com/@peculiar/asn1-schema/-/asn1-schema-2.1.7.tgz#17d9b79f7df748ef84158ea61a24fc11d9f3f4d9"
-  integrity sha512-RxnHrl7WgNxWPsGeSw7YUGTS3s5En7JwhdOilRpEShQJQ9TH8v1nZtslyZGX5GxgUJ1P4dnRsCnt7R5EYmvtUg==
-  dependencies:
-    asn1js "^3.0.3"
-    pvtsutils "^1.3.2"
-    tslib "^2.4.0"
-
-"@peculiar/asn1-schema@^2.1.8":
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/@peculiar/asn1-schema/-/asn1-schema-2.1.8.tgz#552300a1ed7991b22c9abf789a3920a3cb94c26b"
-  integrity sha512-u34H/bpqCdDuqrCVZvH0vpwFBT/dNEdNY+eE8u4IuC26yYnhDkXF4+Hliqca88Avbb7hyN2EF/eokyDdyS7G/A==
+"@peculiar/asn1-schema@^2.1.6", "@peculiar/asn1-schema@^2.1.8", "@peculiar/asn1-schema@^2.1.9":
+  version "2.1.9"
+  resolved "https://registry.yarnpkg.com/@peculiar/asn1-schema/-/asn1-schema-2.1.9.tgz#273f4b1a9487dfea37c7999aca2cd12c79674673"
+  integrity sha512-Ipio+pXGpL/Vb0qB4GnOgFMgc1RAhKHOVy24rQYLvmOAVp9z/aFb+VdIiQH09NjgvGVmaWOUqSWd9vRHk3xbrg==
   dependencies:
     asn1js "^3.0.4"
     pvtsutils "^1.3.2"
@@ -352,12 +343,12 @@
     asn1js "^3.0.4"
     tslib "^2.4.0"
 
-"@peculiar/asn1-x509@^2.1.3", "@peculiar/asn1-x509@^2.1.8":
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/@peculiar/asn1-x509/-/asn1-x509-2.1.8.tgz#b67317ba1ee33c758ad7c6145dbaa1ddef4f1913"
-  integrity sha512-asAcoeZ+bjy/4/lf6gbMlfmywHpxLBa7LBE4pPCzSAKBM0IHXWa7bqsDyshtywzLW+VpA+G2m0Fs7Lt7Woh7RA==
+"@peculiar/asn1-x509@^2.1.3", "@peculiar/asn1-x509@^2.1.8", "@peculiar/asn1-x509@^2.1.9":
+  version "2.1.9"
+  resolved "https://registry.yarnpkg.com/@peculiar/asn1-x509/-/asn1-x509-2.1.9.tgz#ce5db9443531f67a06a663d928578f2b3dc1088d"
+  integrity sha512-mqU8ZlWaBfDSG/iafCYKOa9N7scXiaXfHNgOyqG0GIPZGGjNeeBjgLRrlup6L8/Ipvlun5VIm7vNJdR8/XIqtg==
   dependencies:
-    "@peculiar/asn1-schema" "^2.1.8"
+    "@peculiar/asn1-schema" "^2.1.9"
     asn1js "^3.0.4"
     ipaddr.js "^2.0.1"
     pvtsutils "^1.3.2"
@@ -534,16 +525,7 @@ asn1@~0.2.3:
   dependencies:
     safer-buffer "~2.1.0"
 
-asn1js@^3.0.1, asn1js@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/asn1js/-/asn1js-3.0.3.tgz#fbecdcced2c046552db0c63af284eccc494e0e74"
-  integrity sha512-Oz62ld3K3n6KlRUr4iZSMbSFDDPCW84G1yX7b/gWK5a0Ka7ZYOmCxFpu91lFdQygkBi2Hgoft1/WxRqFrONqLA==
-  dependencies:
-    pvtsutils "^1.3.2"
-    pvutils "^1.1.3"
-    tslib "^2.4.0"
-
-asn1js@^3.0.4:
+asn1js@^3.0.1, asn1js@^3.0.4:
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/asn1js/-/asn1js-3.0.5.tgz#5ea36820443dbefb51cc7f88a2ebb5b462114f38"
   integrity sha512-FVnvrKJwpt9LP2lAMl8qZswRNm3T4q9CON+bxldk2iwk3FFpuwhx2FfinyitizWHsVYyaY+y5JzDR0rCMV5yTQ==
