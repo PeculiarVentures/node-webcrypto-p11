@@ -43,7 +43,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
    * PKCS11 token
    * @internal
    */
-  public get session() {
+  public get session(): graphene.Session {
     Assert.isSession(this.#session);
     return this.#session;
   }
@@ -102,7 +102,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
     this.certStorage = new CertificateStorage(this);
   }
 
-  public open(rw?: boolean) {
+  public open(rw?: boolean): void {
     let flags = graphene.SessionFlag.SERIAL_SESSION;
     if (rw) {
       flags |= graphene.SessionFlag.RW_SESSION;
@@ -114,7 +114,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
     }
   }
 
-  public reset() {
+  public reset(): void {
     if (this.isLoggedIn && this.isLoginRequired) {
       this.logout();
     }
@@ -123,7 +123,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
     this.open(this.isReadWrite);
   }
 
-  public login(pin: string) {
+  public login(pin: string): void {
     if (!this.isLoginRequired) {
       return;
     }
@@ -139,7 +139,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
     this.isLoggedIn = true;
   }
 
-  public logout() {
+  public logout(): void {
     if (!this.isLoginRequired) {
       return;
     }
@@ -175,7 +175,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
   /**
    * Close PKCS11 module
    */
-  public close() {
+  public close(): void {
     if (this.initialized) {
       this.session.logout();
       this.session.close();

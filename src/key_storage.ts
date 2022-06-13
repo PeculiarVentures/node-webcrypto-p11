@@ -15,7 +15,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
     this.crypto = crypto;
   }
 
-  public async keys() {
+  public async keys(): Promise<string[]> {
     const keys: string[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
@@ -26,14 +26,14 @@ export class KeyStorage implements core.CryptoKeyStorage {
     return keys;
   }
 
-  public async indexOf(item: CryptoKey) {
+  public async indexOf(item: CryptoKey): Promise<string | null> {
     if (item instanceof CryptoKey && item.key.token) {
       return CryptoKey.getID(item.key);
     }
     return null;
   }
 
-  public async clear() {
+  public async clear(): Promise<void> {
     const keys: SessionObject[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
@@ -49,7 +49,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   /** @deprecated Use getItem(index, algorithm, extractable, keyUsages) */
   public async getItem(key: string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
   public async getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>
-  public async getItem(key: string, ...args: any[]) {
+  public async getItem(key: string, ...args: any[]): Promise<CryptoKey> {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
       const p11Key = subjectObject.toType<SecretKey>();
@@ -139,11 +139,11 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
       return key;
     } else {
-      return null;
+      throw new Error(`Certificate storage item '${key}' not found`);
     }
   }
 
-  public async removeItem(key: string) {
+  public async removeItem(key: string): Promise<void> {
     const sessionObject = this.getItemById(key);
     if (sessionObject) {
       sessionObject.destroy();
@@ -151,7 +151,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async setItem(data: core.NativeCryptoKey): Promise<string>;
-  public async setItem(data: CryptoKey) {
+  public async setItem(data: CryptoKey): Promise<string> {
     if (!(data instanceof CryptoKey)) {
       throw new core.CryptoError("Parameter 1 is not P11CryptoKey");
     }
@@ -176,7 +176,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
   }
 
-  public async hasItem(key: CryptoKey) {
+  public async hasItem(key: CryptoKey): Promise<boolean> {
     const item = this.getItemById(key.id);
     return !!item;
   }

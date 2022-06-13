@@ -4,7 +4,7 @@ import { CryptoKey } from "../../key";
 
 export class EcCryptoKey extends CryptoKey<Pkcs11EcKeyAlgorithm> {
 
-  protected override onAssign() {
+  protected override onAssign(): void {
     if (!this.algorithm.namedCurve) {
       try {
         const paramsECDSA = AsnConvert.parse(this.key.get("paramsECDSA"), core.asn1.ObjectIdentifier);

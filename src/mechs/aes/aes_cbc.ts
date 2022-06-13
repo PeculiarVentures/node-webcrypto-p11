@@ -42,7 +42,7 @@ export class AesCbcProvider extends core.AesCbcProvider implements types.IContai
     return this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
   }
 
-  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     Assert.isCryptoKey(key);
   }

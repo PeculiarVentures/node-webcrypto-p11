@@ -138,7 +138,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     }
   }
 
-  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof HmacCryptoKey)) {
       throw new TypeError("key: Is not HMAC CryptoKey");

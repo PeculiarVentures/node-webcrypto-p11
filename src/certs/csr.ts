@@ -3,14 +3,21 @@ import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 
-import { CryptoKey } from "../key";
+import { CryptoKey, CryptoKeyJson } from "../key";
 import { Pkcs11Object } from "../p11_object";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
 
+interface X509CertificateRequestJson {
+  publicKey: CryptoKeyJson<Pkcs11KeyAlgorithm>;
+  subjectName: string;
+  type: "request";
+  value: string;
+}
+
 export class X509CertificateRequest extends CryptoCertificate implements core.CryptoX509CertificateRequest {
 
-  public get subjectName() {
+  public get subjectName(): string {
     return this.getData()?.subject;
   }
   public override type: "request" = "request";
@@ -29,7 +36,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param algorithm
    * @param keyUsages
    */
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<void> {
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
 
@@ -56,11 +63,11 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     this.p11Object = this.crypto.session.create(template).toType<graphene.Data>();
   }
 
-  public async exportCert() {
+  public async exportCert(): Promise<ArrayBuffer> {
     return this.value;
   }
 
-  public toJSON() {
+  public toJSON(): X509CertificateRequestJson {
     return {
       publicKey: this.publicKey.toJSON(),
       subjectName: this.subjectName,
@@ -71,7 +78,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
 
   public async exportKey(): Promise<CryptoKey>;
   public async exportKey(algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
-  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]) {
+  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]): Promise<CryptoKey> {
     if (!this.publicKey) {
       const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
       const keyIndexes = await this.crypto.keyStorage.keys();
@@ -97,14 +104,14 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     return this.publicKey;
   }
 
-  protected parse(data: ArrayBuffer) {
+  protected parse(data: ArrayBuffer): void {
     this.csr = new Pkcs10CertificateRequest(data);
   }
 
   /**
    * returns parsed ASN1 value
    */
-  protected getData() {
+  protected getData(): Pkcs10CertificateRequest {
     if (!this.csr) {
       this.parse(this.value);
     }

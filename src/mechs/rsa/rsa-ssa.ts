@@ -74,7 +74,7 @@ export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContai
     return key;
   }
 
-  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof RsaCryptoKey)) {
       throw new TypeError("key: Is not PKCS11 CryptoKey");

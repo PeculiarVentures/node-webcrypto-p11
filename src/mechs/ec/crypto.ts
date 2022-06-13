@@ -137,7 +137,7 @@ export class EcCrypto implements types.IContainer {
     }
   }
 
-  public getAlgorithm(p11AlgorithmName: string | number) {
+  public getAlgorithm(p11AlgorithmName: string | number): string {
     const mechanisms = this.container.session.slot.getMechanisms();
     let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
@@ -152,12 +152,12 @@ export class EcCrypto implements types.IContainer {
     return EC;
   }
 
-  public prepareData(hashAlgorithm: string, data: Buffer) {
+  public prepareData(hashAlgorithm: string, data: Buffer): Buffer {
     // use nodejs crypto for digest calculating
     return utils.digest(hashAlgorithm.replace("-", ""), data);
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -180,7 +180,7 @@ export class EcCrypto implements types.IContainer {
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const namedCurve = core.EcCurves.get(algorithm.namedCurve);
     const template = this.createTemplate({
       action: "import",
@@ -211,7 +211,7 @@ export class EcCrypto implements types.IContainer {
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected exportJwkPublicKey(key: EcCryptoKey) {
+  protected exportJwkPublicKey(key: EcCryptoKey): JsonWebKey {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       pointEC: null,
     });
@@ -236,7 +236,7 @@ export class EcCrypto implements types.IContainer {
     return jwk;
   }
 
-  protected async exportJwkPrivateKey(key: EcCryptoKey) {
+  protected async exportJwkPrivateKey(key: EcCryptoKey): Promise<JsonWebKey> {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       value: null,
     });
@@ -303,7 +303,7 @@ export class EcCrypto implements types.IContainer {
     return AsnSerializer.serialize(keyInfo);
   }
 
-  protected getCoordinate(b64: string, coordinateLength: number) {
+  protected getCoordinate(b64: string, coordinateLength: number): ArrayBuffer {
     const buf = Convert.FromBase64Url(b64);
     const offset = coordinateLength - buf.byteLength;
     const res = new Uint8Array(coordinateLength);
@@ -312,7 +312,7 @@ export class EcCrypto implements types.IContainer {
     return res.buffer as ArrayBuffer;
   }
 
-  protected jwk2spki(jwk: JsonWebKey) {
+  protected jwk2spki(jwk: JsonWebKey): ArrayBuffer {
     if (!jwk.crv) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }

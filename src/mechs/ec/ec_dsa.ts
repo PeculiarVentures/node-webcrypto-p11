@@ -77,7 +77,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     return key;
   }
 
-  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof EcCryptoKey)) {
       throw new TypeError("key: Is not EC CryptoKey");

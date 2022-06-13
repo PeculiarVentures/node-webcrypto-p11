@@ -6,26 +6,37 @@ import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
 import { AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
 
-import { CryptoKey } from "../key";
+import { CryptoKey, CryptoKeyJson } from "../key";
 import { Pkcs11Object } from "../p11_object";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
 
+interface X509CertificateJson {
+  publicKey: CryptoKeyJson;
+  notBefore: Date;
+  notAfter: Date;
+  subjectName: string;
+  issuerName: string;
+  serialNumber: string;
+  type: "x509";
+  value: string;
+}
+
 export class X509Certificate extends CryptoCertificate implements core.CryptoX509Certificate {
 
-  public get serialNumber() {
+  public get serialNumber(): string {
     return this.getData().serialNumber;
   }
-  public get notBefore() {
+  public get notBefore(): Date {
     return this.getData().notBefore;
   }
-  public get notAfter() {
+  public get notAfter(): Date {
     return this.getData().notAfter;
   }
-  public get issuerName() {
+  public get issuerName(): string {
     return this.getData().issuer;
   }
-  public get subjectName() {
+  public get subjectName(): string {
     return this.getData().subject;
   }
   public override type: "x509" = "x509";
@@ -38,7 +49,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public override p11Object?: graphene.X509Certificate;
   protected x509?: x509.X509Certificate;
 
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<void> {
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
@@ -69,11 +80,11 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     this.p11Object = this.crypto.session.create(template).toType<graphene.X509Certificate>();
   }
 
-  public async exportCert() {
+  public async exportCert(): Promise<ArrayBuffer> {
     return this.value;
   }
 
-  public toJSON() {
+  public toJSON(): X509CertificateJson {
     return {
       publicKey: this.publicKey.toJSON(),
       notBefore: this.notBefore,
@@ -88,7 +99,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
 
   public async exportKey(): Promise<CryptoKey>;
   public async exportKey(algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
-  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]) {
+  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]): Promise<CryptoKey> {
     if (!this.publicKey) {
       const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
       const keyIndexes = await this.crypto.keyStorage.keys();
@@ -114,14 +125,14 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     return this.publicKey;
   }
 
-  protected parse(data: ArrayBuffer) {
+  protected parse(data: ArrayBuffer): void {
     this.x509 = new x509.X509Certificate(data);
   }
 
   /**
    * returns parsed ASN1 value
    */
-  protected getData() {
+  protected getData(): x509.X509Certificate {
     if (!this.x509) {
       this.parse(this.value);
     }
@@ -131,7 +142,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   /**
    * Returns name from subject of the certificate
    */
-  protected getName() {
+  protected getName(): string {
     const name = new x509.Name(this.subjectName).toJSON();
     for (const item of name) {
       const commonName = item.CN;

@@ -2,7 +2,7 @@ import { CryptoKey } from "../../key";
 
 export class RsaCryptoKey extends CryptoKey<Pkcs11RsaHashedKeyAlgorithm> {
 
-  protected override onAssign() {
+  protected override onAssign(): void {
     if (!this.algorithm.modulusLength) {
       this.algorithm.modulusLength = 0;
       try {

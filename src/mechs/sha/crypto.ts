@@ -6,7 +6,7 @@ export class ShaCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) { }
 
-  public async digest(algorithm: Algorithm, data: ArrayBuffer) {
+  public async digest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
     const p11Mech: IAlgorithm = {
       name: algorithm.name.toUpperCase().replace("-", ""),
       params: null,

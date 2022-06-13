@@ -43,7 +43,7 @@ export class AesEcbProvider extends core.ProviderCrypto implements types.IContai
     return this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
   }
 
-  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof CryptoKey)) {
       throw new TypeError("key: Is not a PKCS11 CryptoKey");

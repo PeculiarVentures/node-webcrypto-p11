@@ -8,6 +8,23 @@ import * as types from "../../types";
 
 import { AesCryptoKey } from "./key";
 
+interface AesGcmPkcs11Algorithm {
+  name: "AES_GCM";
+  params: graphene.AesGcmParams;
+}
+
+interface AesCbcPkcs11Algorithm {
+  name: "AES_CBC_PAD";
+  params: Buffer;
+}
+
+interface AecEcbPkcs11Algorithm {
+  name: "AES_ECB";
+  params: null;
+}
+
+type AesPkcs11Algorithms = AesGcmPkcs11Algorithm | AesCbcPkcs11Algorithm | AecEcbPkcs11Algorithm;
+
 export class AesCrypto implements types.IContainer {
 
   constructor(public container: types.ISessionContainer) {
@@ -182,7 +199,7 @@ export class AesCrypto implements types.IContainer {
     return algorithm.name.toUpperCase() === "AES-ECB";
   }
 
-  protected wc2pk11(algorithm: Algorithm) {
+  protected wc2pk11(algorithm: Algorithm): AesPkcs11Algorithms {
     const session = this.container.session;
     if (this.isAesGCM(algorithm)) {
       const aad = algorithm.additionalData ? utils.prepareData(algorithm.additionalData) : undefined;

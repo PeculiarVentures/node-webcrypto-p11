@@ -16,7 +16,7 @@ export type Pkcs11ImportAlgorithms = core.ImportAlgorithms & Pkcs11Params;
 export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11CryptoCertificate {
   public crypto: Crypto;
 
-  public static getID(p11Object: graphene.Storage) {
+  public static getID(p11Object: graphene.Storage): string {
     let type: string | undefined;
     let id: Buffer | undefined;
     if (p11Object instanceof graphene.Data) {
@@ -32,7 +32,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
     return `${type}-${p11Object.handle.toString("hex")}-${id.toString("hex")}`;
   }
 
-  public get id() {
+  public get id(): string {
     Pkcs11Object.assertStorage(this.p11Object);
 
     return CryptoCertificate.getID(this.p11Object);
@@ -41,7 +41,7 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
   public type: core.CryptoCertificateType = "x509";
   public publicKey!: CryptoKey;
 
-  public get token() {
+  public get token(): boolean {
     try {
       Pkcs11Object.assertStorage(this.p11Object);
       return this.p11Object.token;
@@ -49,11 +49,11 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
     return false;
   }
 
-  public get sensitive() {
+  public get sensitive(): boolean {
     return false;
   }
 
-  public get label() {
+  public get label(): string {
     try {
       Pkcs11Object.assertStorage(this.p11Object);
       return this.p11Object.label;

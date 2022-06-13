@@ -4,7 +4,7 @@ import { Crypto } from "../src";
 import * as config from "./config";
 import { isNSS, isSoftHSM } from "./helper";
 
-function fixEcImport(item: ITestImportAction) {
+function fixEcImport(item: ITestImportAction): void {
   if (item.name?.startsWith("JWK private key")) {
     const jwk = item.data as JsonWebKey;
     delete jwk.x;

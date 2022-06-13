@@ -6,7 +6,7 @@ import { crypto } from "./config";
 
 context("Subtle", () => {
 
-  async function getId(publicKey: CryptoKey) {
+  async function getId(publicKey: CryptoKey): Promise<string> {
     const raw = await crypto.subtle.exportKey("spki", publicKey);
     const hash = await (await crypto.subtle.digest(ID_DIGEST, raw)).slice(0, 16);
     return Buffer.from(hash).toString("hex");

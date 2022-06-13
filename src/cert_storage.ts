@@ -42,14 +42,14 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   }
 
   public indexOf(item: core.CryptoCertificate): Promise<string | null>;
-  public async indexOf(item: certs.CryptoCertificate) {
+  public async indexOf(item: certs.CryptoCertificate): Promise<string | null> {
     if (item instanceof certs.CryptoCertificate && item.p11Object?.token) {
       return certs.CryptoCertificate.getID(item.p11Object);
     }
     return null;
   }
 
-  public async keys() {
+  public async keys(): Promise<string[]> {
     const keys: string[] = [];
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
@@ -61,7 +61,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     return keys;
   }
 
-  public async clear() {
+  public async clear(): Promise<void> {
     const objects: graphene.SessionObject[] = [];
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
@@ -73,7 +73,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     });
   }
 
-  public async hasItem(item: certs.CryptoCertificate) {
+  public async hasItem(item: certs.CryptoCertificate): Promise<boolean> {
     const sessionObject = this.getItemById(item.id);
     return !!sessionObject;
   }
@@ -108,7 +108,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  public async removeItem(key: string) {
+  public async removeItem(key: string): Promise<void> {
     const sessionObject = this.getItemById(key);
     if (sessionObject) {
       sessionObject.destroy();
@@ -116,7 +116,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
   }
 
   public setItem(data: core.CryptoCertificate): Promise<string>;
-  public async setItem(data: certs.CryptoCertificate) {
+  public async setItem(data: certs.CryptoCertificate): Promise<string> {
     if (!(data instanceof certs.CryptoCertificate)) {
       throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
     }

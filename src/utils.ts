@@ -59,12 +59,12 @@ export function digest(algorithm: string, data: BufferSource): Buffer {
   return hash.digest();
 }
 
-function calculateProviderID(slot: Slot) {
+function calculateProviderID(slot: Slot): string {
   const str = slot.manufacturerID + slot.slotDescription + slot.getToken().serialNumber + slot.handle.toString("hex");
   return digest(ID_DIGEST, Buffer.from(str)).toString("hex");
 }
 
-export function getProviderInfo(slot: Slot) {
+export function getProviderInfo(slot: Slot): ProviderInfo {
   // get index of slot
   const slots = slot.module.getSlots(true);
   let index = -1;

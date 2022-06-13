@@ -15,6 +15,11 @@
         "no-console": false,
         "no-reference": false,
         "eofline": true,
-        "quotemark": [true, "double"]
+        "quotemark": [true, "double"],
+        "typedef": [
+            true,
+            "call-signature",
+            "property-declaration"
+        ]
     }
 }
