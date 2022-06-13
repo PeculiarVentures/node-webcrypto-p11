@@ -1,21 +1,16 @@
 {
-    "compilerOptions": {
-        "target": "es2018",
-        "noUnusedLocals": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "rootDir": "src",
-        "outDir": "build",
-        "allowSyntheticDefaultImports": true,
-        "removeComments": true,
-        "declaration": false,
-        "sourceMap": false,
-        "strict": true,
-        "experimentalDecorators": true,
-        "importHelpers": true
-    },
-    "exclude": [
-        "node_modules",
-        "test"
-    ]
+  "compilerOptions": {
+    "target": "es2019",
+    "noUnusedLocals": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "noImplicitOverride": true
+  },
+  "exclude": [
+    "build/*.ts"
+  ]
 }
