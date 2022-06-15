@@ -1,7 +1,8 @@
 export { Crypto } from "./crypto";
 export { SubtleCrypto } from "./subtle";
-export { CryptoKey } from "./key";
-export { CryptoCertificate, X509Certificate, X509CertificateRequest } from "./certs";
+export { CryptoKey, CryptoKeyJson } from "./key";
 export { KeyStorage } from "./key_storage";
-export { CertificateStorage } from "./cert_storage";
-export * from "./template_builder";
+export { CertificateStorage, IGetValue } from "./cert_storage";
+export { TemplateBuilder } from "./template_builder";
+export * from "./types";
+export * from "./certs";

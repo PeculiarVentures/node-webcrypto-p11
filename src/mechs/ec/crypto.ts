@@ -1,7 +1,7 @@
-import { AsnConvert, AsnParser, AsnSerializer, OctetString } from "@peculiar/asn1-schema";
-import { JsonParser, JsonSerializer } from "@peculiar/json-schema";
+import * as asn1Schema from "@peculiar/asn1-schema";
+import * as jsonSchema from "@peculiar/json-schema";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { Assert } from "../../assert";
@@ -22,7 +22,7 @@ export class EcCrypto implements types.IContainer {
   public constructor(public container: types.ISessionContainer) {
   }
 
-  public async generateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async generateKey(algorithm: types.Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     return new Promise<CryptoKeyPair>((resolve, reject) => {
       // Create PKCS#11 templates
       const attrs: types.Pkcs11Attributes = {
@@ -90,9 +90,9 @@ export class EcCrypto implements types.IContainer {
         // export subjectPublicKey BIT_STRING value
         const jwk = await this.exportJwkPublicKey(key);
         if ((key.algorithm as EcKeyGenParams).namedCurve === "X25519") {
-          return Convert.FromBase64Url(jwk.x!);
+          return pvtsutils.Convert.FromBase64Url(jwk.x!);
         } else {
-          const publicKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
+          const publicKey = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
           return publicKey.value;
         }
       }
@@ -101,7 +101,7 @@ export class EcCrypto implements types.IContainer {
     }
   }
 
-  public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk": {
         const jwk: any = keyData;
@@ -125,10 +125,10 @@ export class EcCrypto implements types.IContainer {
         const jwk: JsonWebKey = {
           kty: "EC",
           crv: algorithm.namedCurve,
-          x: Convert.ToBase64Url(ecPoint.x),
+          x: pvtsutils.Convert.ToBase64Url(ecPoint.x),
         };
         if (ecPoint.y) {
-          jwk.y = Convert.ToBase64Url(ecPoint.y);
+          jwk.y = pvtsutils.Convert.ToBase64Url(ecPoint.y);
         }
         return this.importJwkPublicKey(jwk, algorithm, extractable, keyUsages);
       }
@@ -137,7 +137,7 @@ export class EcCrypto implements types.IContainer {
     }
   }
 
-  public getAlgorithm(p11AlgorithmName: string | number) {
+  public getAlgorithm(p11AlgorithmName: string | number): string {
     const mechanisms = this.container.session.slot.getMechanisms();
     let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
@@ -152,12 +152,12 @@ export class EcCrypto implements types.IContainer {
     return EC;
   }
 
-  public prepareData(hashAlgorithm: string, data: Buffer) {
+  public prepareData(hashAlgorithm: string, data: Buffer): Buffer {
     // use nodejs crypto for digest calculating
     return utils.digest(hashAlgorithm.replace("-", ""), data);
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -180,7 +180,7 @@ export class EcCrypto implements types.IContainer {
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const namedCurve = core.EcCurves.get(algorithm.namedCurve);
     const template = this.createTemplate({
       action: "import",
@@ -201,7 +201,7 @@ export class EcCrypto implements types.IContainer {
       pointEc = utils.b64UrlDecode(jwk.x!);
     } else {
       const point = core.EcUtils.encodePoint({ x: utils.b64UrlDecode(jwk.x!), y: utils.b64UrlDecode(jwk.y!) }, namedCurve.size)
-      const derPoint = AsnConvert.serialize(new OctetString(point))
+      const derPoint = asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(point))
       pointEc = Buffer.from(derPoint);
     }
     template.pointEC = pointEc;
@@ -211,7 +211,7 @@ export class EcCrypto implements types.IContainer {
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected exportJwkPublicKey(key: EcCryptoKey) {
+  protected exportJwkPublicKey(key: EcCryptoKey): JsonWebKey {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       pointEC: null,
     });
@@ -221,22 +221,22 @@ export class EcCrypto implements types.IContainer {
     if (!p11PointEC) {
       throw new Error("Cannot get required ECPoint attribute");
     }
-    const derEcPoint = AsnConvert.parse(p11PointEC, OctetString);
+    const derEcPoint = asn1Schema.AsnConvert.parse(p11PointEC, asn1Schema.OctetString);
     const ecPoint = core.EcUtils.decodePoint(derEcPoint, curve.size);
     const jwk: JsonWebKey = {
       kty: "EC",
       crv: key.algorithm.namedCurve,
       ext: true,
       key_ops: key.usages,
-      x: Convert.ToBase64Url(ecPoint.x),
+      x: pvtsutils.Convert.ToBase64Url(ecPoint.x),
     };
     if (curve.name !== "curve25519") {
-      jwk.y = Convert.ToBase64Url(ecPoint.y!);
+      jwk.y = pvtsutils.Convert.ToBase64Url(ecPoint.y!);
     }
     return jwk;
   }
 
-  protected async exportJwkPrivateKey(key: EcCryptoKey) {
+  protected async exportJwkPrivateKey(key: EcCryptoKey): Promise<JsonWebKey> {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       value: null,
     });
@@ -245,7 +245,7 @@ export class EcCrypto implements types.IContainer {
       crv: (key.algorithm as EcKeyGenParams).namedCurve,
       ext: true,
       key_ops: key.usages,
-      d: Convert.ToBase64Url(pkey.value!),
+      d: pvtsutils.Convert.ToBase64Url(pkey.value!),
     };
     return jwk;
   }
@@ -269,17 +269,17 @@ export class EcCrypto implements types.IContainer {
   }
 
   protected spki2jwk(raw: ArrayBuffer): JsonWebKey {
-    const keyInfo = AsnParser.parse(raw, core.asn1.PublicKeyInfo);
+    const keyInfo = asn1Schema.AsnParser.parse(raw, core.asn1.PublicKeyInfo);
 
     if (keyInfo.publicKeyAlgorithm.algorithm !== id_ecPublicKey) {
       throw new Error("SPKI is not EC public key");
     }
 
-    const namedCurveId = AsnParser.parse(keyInfo.publicKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier);
+    const namedCurveId = asn1Schema.AsnParser.parse(keyInfo.publicKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier);
     const namedCurve = core.EcCurves.get(namedCurveId.value);
 
     const ecPublicKey = new core.asn1.EcPublicKey(keyInfo.publicKey);
-    const json = JsonSerializer.toJSON(ecPublicKey);
+    const json = jsonSchema.JsonSerializer.toJSON(ecPublicKey);
 
     return {
       kty: "EC",
@@ -292,19 +292,19 @@ export class EcCrypto implements types.IContainer {
     Assert.requiredParameter(jwk.crv, "crv");
     const namedCurve = core.EcCurves.get(jwk.crv);
 
-    const ecPrivateKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPrivateKey });
+    const ecPrivateKey = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPrivateKey });
 
     const keyInfo = new core.asn1.PrivateKeyInfo();
     keyInfo.privateKeyAlgorithm = new core.asn1.AlgorithmIdentifier();
     keyInfo.privateKeyAlgorithm.algorithm = id_ecPublicKey;
     keyInfo.privateKeyAlgorithm.parameters = namedCurve.raw;
-    keyInfo.privateKey = AsnSerializer.serialize(ecPrivateKey);
+    keyInfo.privateKey = asn1Schema.AsnSerializer.serialize(ecPrivateKey);
 
-    return AsnSerializer.serialize(keyInfo);
+    return asn1Schema.AsnSerializer.serialize(keyInfo);
   }
 
-  protected getCoordinate(b64: string, coordinateLength: number) {
-    const buf = Convert.FromBase64Url(b64);
+  protected getCoordinate(b64: string, coordinateLength: number): ArrayBuffer {
+    const buf = pvtsutils.Convert.FromBase64Url(b64);
     const offset = coordinateLength - buf.byteLength;
     const res = new Uint8Array(coordinateLength);
     res.set(new Uint8Array(buf), offset);
@@ -312,23 +312,23 @@ export class EcCrypto implements types.IContainer {
     return res.buffer as ArrayBuffer;
   }
 
-  protected jwk2spki(jwk: JsonWebKey) {
+  protected jwk2spki(jwk: JsonWebKey): ArrayBuffer {
     if (!jwk.crv) {
       throw new Error("Absent mandatory parameter \"crv\"");
     }
     const namedCurve = core.EcCurves.get(jwk.crv);
 
-    const ecPublicKey = JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
+    const ecPublicKey = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.EcPublicKey });
 
     const keyInfo = new core.asn1.PublicKeyInfo();
     keyInfo.publicKeyAlgorithm.algorithm = id_ecPublicKey;
     keyInfo.publicKeyAlgorithm.parameters = namedCurve.raw;
     keyInfo.publicKey = ecPublicKey.value;
-    return AsnSerializer.serialize(keyInfo);
+    return asn1Schema.AsnSerializer.serialize(keyInfo);
   }
 
   protected pkcs2jwk(raw: ArrayBuffer): JsonWebKey {
-    const keyInfo = AsnParser.parse(raw, core.asn1.PrivateKeyInfo);
+    const keyInfo = asn1Schema.AsnParser.parse(raw, core.asn1.PrivateKeyInfo);
 
     if (keyInfo.privateKeyAlgorithm.algorithm !== id_ecPublicKey) {
       throw new Error("PKCS8 is not EC private key");
@@ -338,11 +338,11 @@ export class EcCrypto implements types.IContainer {
       throw new Error("Cannot get required Named curve parameters from ASN.1 PrivateKeyInfo structure");
     }
 
-    const namedCurveId = AsnParser.parse(keyInfo.privateKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier);
+    const namedCurveId = asn1Schema.AsnParser.parse(keyInfo.privateKeyAlgorithm.parameters!, core.asn1.ObjectIdentifier);
     const namedCurve = core.EcCurves.get(namedCurveId.value);
 
-    const ecPrivateKey = AsnParser.parse(keyInfo.privateKey, core.asn1.EcPrivateKey);
-    const json = JsonSerializer.toJSON(ecPrivateKey);
+    const ecPrivateKey = asn1Schema.AsnParser.parse(keyInfo.privateKey, core.asn1.EcPrivateKey);
+    const json = jsonSchema.JsonSerializer.toJSON(ecPrivateKey);
 
     return {
       kty: "EC",

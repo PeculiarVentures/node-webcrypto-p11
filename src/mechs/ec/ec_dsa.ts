@@ -8,9 +8,9 @@ import { EcCryptoKey } from "./key";
 
 export class EcdsaProvider extends core.EcdsaProvider implements types.IContainer {
 
-  public namedCurves = core.EcCurves.names;
+  public override namedCurves = core.EcCurves.names;
 
-  public usages: core.ProviderKeyPairUsage = {
+  public override usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "deriveKey", "deriveBits"],
     publicKey: ["verify"],
   };
@@ -23,7 +23,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     this.crypto = new EcCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: types.Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
@@ -72,12 +72,12 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     return this.crypto.exportKey(format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof EcCryptoKey)) {
       throw new TypeError("key: Is not EC CryptoKey");

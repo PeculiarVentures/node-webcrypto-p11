@@ -16,7 +16,7 @@ export class AesGcmProvider extends core.AesGcmProvider implements types.IContai
     this.crypto = new AesCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: types.Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
@@ -37,11 +37,11 @@ export class AesGcmProvider extends core.AesGcmProvider implements types.IContai
     return this.crypto.exportKey(format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof CryptoKey)) {
       throw new TypeError("key: Is not a PKCS11 CryptoKey");

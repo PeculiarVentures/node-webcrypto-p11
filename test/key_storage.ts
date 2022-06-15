@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { CryptoKey } from "../src";
+import { CryptoKey, Pkcs11EcKeyAlgorithm, Pkcs11RsaHashedKeyAlgorithm } from "../src";
 import { crypto } from "./config";
 import { isNSS } from "./helper";
 
@@ -131,8 +131,7 @@ import { isNSS } from "./helper";
     context("getItem", () => {
 
       it("wrong key identity", async () => {
-        const key = await crypto.keyStorage.getItem("key not exist");
-        assert.strictEqual(key, null);
+        assert.rejects(crypto.keyStorage.getItem("key doesn't exist"), new Error("Certificate storage item not found"))
       });
 
       context("with algorithm", () => {

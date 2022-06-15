@@ -9,7 +9,7 @@ import { RsaCryptoKey } from "./key";
 
 export class RsaOaepProvider extends core.RsaOaepProvider implements types.IContainer {
 
-  public usages: core.ProviderKeyPairUsage = {
+  public override usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "decrypt", "unwrapKey"],
     publicKey: ["verify", "encrypt", "wrapKey"],
   };
@@ -21,7 +21,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
     this.crypto = new RsaCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async onGenerateKey(algorithm: types.Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
@@ -66,19 +66,19 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
     return this.crypto.exportKey(format, key);
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
     return key;
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof RsaCryptoKey)) {
       throw new TypeError("key: Is not PKCS11 CryptoKey");
     }
   }
 
-  protected wc2pk11(alg: RsaOaepParams, keyAlg: Pkcs11RsaHashedKeyAlgorithm): graphene.IAlgorithm {
+  protected wc2pk11(alg: RsaOaepParams, keyAlg: types.Pkcs11RsaHashedKeyAlgorithm): graphene.IAlgorithm {
     let params: graphene.RsaOaepParams;
     const sourceData = alg.label ? Buffer.from((alg as RsaOaepParams).label as Uint8Array) : undefined;
     switch (keyAlg.hash.name.toUpperCase()) {

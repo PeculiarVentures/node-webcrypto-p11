@@ -1,8 +1,9 @@
 import { CryptoKey } from "../../key";
+import { Pkcs11HmacKeyAlgorithm } from "../../types";
 
 export class HmacCryptoKey extends CryptoKey<Pkcs11HmacKeyAlgorithm> {
 
-    protected onAssign() {
+    protected override onAssign(): void {
       this.algorithm.length = this.key.get("valueLen") << 3;
     }
 

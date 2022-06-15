@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { Pkcs11RsaHashedImportParams, Pkcs11RsaHashedKeyGenParams } from "../src";
 import { RsaCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 
@@ -65,7 +66,7 @@ context("RSA", () => {
     };
     const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
 
-    assert.strictEqual((keys.privateKey.algorithm as RsaHashedKeyAlgorithm).modulusLength, 3072);
+    assert.strictEqual((keys.privateKey.algorithm as unknown as RsaHashedKeyAlgorithm).modulusLength, 3072);
   });
 
 });

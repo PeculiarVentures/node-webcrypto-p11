@@ -1,5 +1,5 @@
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -8,12 +8,29 @@ import * as types from "../../types";
 
 import { AesCryptoKey } from "./key";
 
+interface AesGcmPkcs11Algorithm {
+  name: "AES_GCM";
+  params: graphene.AesGcmParams;
+}
+
+interface AesCbcPkcs11Algorithm {
+  name: "AES_CBC_PAD";
+  params: Buffer;
+}
+
+interface AecEcbPkcs11Algorithm {
+  name: "AES_ECB";
+  params: null;
+}
+
+type AesPkcs11Algorithms = AesGcmPkcs11Algorithm | AesCbcPkcs11Algorithm | AecEcbPkcs11Algorithm;
+
 export class AesCrypto implements types.IContainer {
 
   constructor(public container: types.ISessionContainer) {
   }
 
-  public async generateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async generateKey(algorithm: types.Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       const template = this.container.templateBuilder.build({
         action: "generate",
@@ -55,7 +72,7 @@ export class AesCrypto implements types.IContainer {
         const aes: string = /AES-(\w+)/.exec(key.algorithm.name!)![1];
         const jwk: JsonWebKey = {
           kty: "oct",
-          k: Convert.ToBase64Url(template.value!),
+          k: pvtsutils.Convert.ToBase64Url(template.value!),
           alg: `A${template.valueLen! * 8}${aes}`,
           ext: true,
           key_ops: key.usages,
@@ -69,7 +86,7 @@ export class AesCrypto implements types.IContainer {
     }
   }
 
-  public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -79,7 +96,7 @@ export class AesCrypto implements types.IContainer {
         if (!jwk.k) {
           throw new core.OperationError("jwk.k: Cannot get required property");
         }
-        keyData = Convert.FromBase64Url(jwk.k);
+        keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
       case "raw":
         value = keyData as ArrayBuffer;
         switch (value.byteLength) {
@@ -96,7 +113,7 @@ export class AesCrypto implements types.IContainer {
     }
 
     // prepare key algorithm
-    const aesAlg: Pkcs11AesKeyAlgorithm = {
+    const aesAlg: types.Pkcs11AesKeyAlgorithm = {
       ...AesCryptoKey.defaultKeyAlgorithm(),
       ...algorithm,
       length: value.byteLength * 8,
@@ -182,7 +199,7 @@ export class AesCrypto implements types.IContainer {
     return algorithm.name.toUpperCase() === "AES-ECB";
   }
 
-  protected wc2pk11(algorithm: Algorithm) {
+  protected wc2pk11(algorithm: Algorithm): AesPkcs11Algorithms {
     const session = this.container.session;
     if (this.isAesGCM(algorithm)) {
       const aad = algorithm.additionalData ? utils.prepareData(algorithm.additionalData) : undefined;
@@ -210,7 +227,7 @@ export class AesCrypto implements types.IContainer {
    * `false` - decryption operation
    * @param dataSize size of incoming data
    */
-  protected getOutputBufferSize(keyAlg: Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
+  protected getOutputBufferSize(keyAlg: types.Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
     const len = keyAlg.length >> 3;
     if (enc) {
       return (Math.ceil(dataSize / len) * len) + len;

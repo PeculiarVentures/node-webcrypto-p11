@@ -1,7 +1,7 @@
 import * as asnSchema from "@peculiar/asn1-schema";
 import * as jsonSchema from "@peculiar/json-schema";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -24,7 +24,7 @@ export class RsaCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) { }
 
-  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async generateKey(algorithm: types.Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const size = algorithm.modulusLength;
     const exp = Buffer.from(algorithm.publicExponent);
 
@@ -126,7 +126,7 @@ export class RsaCrypto implements types.IContainer {
     }
   }
 
-  public getAlgorithm(wcAlgorithmName: string, p11AlgorithmName: string) {
+  public getAlgorithm(wcAlgorithmName: string, p11AlgorithmName: string): string {
     const DEFAULT_RSA = wcAlgorithmName === "RSASSA-PKCS1-v1_5" ? "RSA_PKCS"
       : wcAlgorithmName === "RSA-PSS" ? "RSA_PKCS_PSS"
         : wcAlgorithmName === "RSA-OAEP" ? "RSA_PKCS_OAEP" : "RSA_PKCS";
@@ -145,7 +145,7 @@ export class RsaCrypto implements types.IContainer {
     return RSA;
   }
 
-  public prepareData(hashAlgorithm: string, data: Buffer) {
+  public prepareData(hashAlgorithm: string, data: Buffer): Buffer {
     // use nodejs crypto for digest calculating
     const hash = utils.digest(hashAlgorithm.replace("-", ""), data);
 
@@ -157,7 +157,7 @@ export class RsaCrypto implements types.IContainer {
     return Buffer.concat([hashPrefix, hash]);
   }
 
-  protected jwkAlgName(algorithm: RsaHashedKeyAlgorithm) {
+  protected jwkAlgName(algorithm: RsaHashedKeyAlgorithm): string {
     switch (algorithm.name.toUpperCase()) {
       case "RSA-OAEP":
         const mdSize = /(\d+)$/.exec(algorithm.hash.name)![1];
@@ -171,7 +171,7 @@ export class RsaCrypto implements types.IContainer {
     }
   }
 
-  protected async exportJwkPublicKey(key: RsaCryptoKey) {
+  protected async exportJwkPublicKey(key: RsaCryptoKey): Promise<JsonWebKey> {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
@@ -188,14 +188,14 @@ export class RsaCrypto implements types.IContainer {
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent!),
-      n: Convert.ToBase64Url(pkey.modulus!),
+      e: pvtsutils.Convert.ToBase64Url(pkey.publicExponent!),
+      n: pvtsutils.Convert.ToBase64Url(pkey.modulus!),
     };
 
     return jwk;
   }
 
-  protected async exportJwkPrivateKey(key: RsaCryptoKey) {
+  protected async exportJwkPrivateKey(key: RsaCryptoKey): Promise<JsonWebKey> {
     const pkey: graphene.ITemplate = key.key.getAttribute({
       publicExponent: null,
       modulus: null,
@@ -218,20 +218,20 @@ export class RsaCrypto implements types.IContainer {
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent!),
-      n: Convert.ToBase64Url(pkey.modulus!),
-      d: Convert.ToBase64Url(pkey.privateExponent!),
-      p: Convert.ToBase64Url(pkey.prime1!),
-      q: Convert.ToBase64Url(pkey.prime2!),
-      dp: Convert.ToBase64Url(pkey.exp1!),
-      dq: Convert.ToBase64Url(pkey.exp2!),
-      qi: Convert.ToBase64Url(pkey.coefficient!),
+      e: pvtsutils.Convert.ToBase64Url(pkey.publicExponent!),
+      n: pvtsutils.Convert.ToBase64Url(pkey.modulus!),
+      d: pvtsutils.Convert.ToBase64Url(pkey.privateExponent!),
+      p: pvtsutils.Convert.ToBase64Url(pkey.prime1!),
+      q: pvtsutils.Convert.ToBase64Url(pkey.prime2!),
+      dp: pvtsutils.Convert.ToBase64Url(pkey.exp1!),
+      dq: pvtsutils.Convert.ToBase64Url(pkey.exp2!),
+      qi: pvtsutils.Convert.ToBase64Url(pkey.coefficient!),
     };
 
     return jwk;
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: types.Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -260,7 +260,7 @@ export class RsaCrypto implements types.IContainer {
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]) {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: types.Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "public",
@@ -300,7 +300,7 @@ export class RsaCrypto implements types.IContainer {
     return template;
   }
 
-  protected jwk2spki(jwk: JsonWebKey) {
+  protected jwk2spki(jwk: JsonWebKey): ArrayBuffer {
     const key = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.RsaPublicKey });
 
     const keyInfo = new core.asn1.PublicKeyInfo();
@@ -312,7 +312,7 @@ export class RsaCrypto implements types.IContainer {
     return asnSchema.AsnSerializer.serialize(keyInfo);
   }
 
-  protected jwk2pkcs(jwk: JsonWebKey) {
+  protected jwk2pkcs(jwk: JsonWebKey): ArrayBuffer {
     const key = jsonSchema.JsonParser.fromJSON(jwk, { targetSchema: core.asn1.RsaPrivateKey });
 
     const keyInfo = new core.asn1.PrivateKeyInfo();

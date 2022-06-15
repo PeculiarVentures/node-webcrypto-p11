@@ -1,5 +1,5 @@
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -14,7 +14,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: types.Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       const length = (algorithm.length || this.getDefaultLength((algorithm.hash as Algorithm).name)) >> 3 << 3;
       algorithm = { ...algorithm, name: this.name, length };
@@ -50,7 +50,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onSign(algorithm: Algorithm, key: HmacCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
+  public override async onSign(algorithm: Algorithm, key: HmacCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       this.container.session.createSign(mechanism, key.key).once(Buffer.from(data), (err, data2) => {
@@ -63,7 +63,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onVerify(algorithm: Algorithm, key: HmacCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
+  public override async onVerify(algorithm: Algorithm, key: HmacCryptoKey, signature: ArrayBuffer, data: ArrayBuffer): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       const mechanism = this.wc2pk11(algorithm, key.algorithm);
       this.container.session.createVerify(mechanism, key.key).once(Buffer.from(data), Buffer.from(signature), (err, ok) => {
@@ -76,7 +76,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11HmacKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11HmacKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -86,7 +86,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
         if (!jwk.k) {
           throw new core.OperationError("jwk.k: Cannot get required property");
         }
-        keyData = Convert.FromBase64Url(jwk.k);
+        keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
       case "raw":
         value = keyData as ArrayBuffer;
         break;
@@ -98,7 +98,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       ...algorithm,
       name: this.name,
       length: value.byteLength * 8 || this.getDefaultLength((algorithm as any).hash.name),
-    } as Pkcs11HmacKeyAlgorithm;
+    } as types.Pkcs11HmacKeyAlgorithm;
     const template: graphene.ITemplate = this.createTemplate({
       action: "import",
       type: "secret",
@@ -124,7 +124,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       case "jwk":
         const jwk: JsonWebKey = {
           kty: "oct",
-          k: Convert.ToBase64Url(template.value!),
+          k: pvtsutils.Convert.ToBase64Url(template.value!),
           alg: `HS${key.algorithm.hash.name.replace("SHA-", "")}`,
           ext: true,
           key_ops: key.usages,
@@ -138,7 +138,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     }
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof HmacCryptoKey)) {
       throw new TypeError("key: Is not HMAC CryptoKey");

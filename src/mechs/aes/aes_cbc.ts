@@ -17,7 +17,7 @@ export class AesCbcProvider extends core.AesCbcProvider implements types.IContai
     this.crypto = new AesCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: types.Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,
@@ -42,7 +42,7 @@ export class AesCbcProvider extends core.AesCbcProvider implements types.IContai
     return this.crypto.importKey(format, keyData, { ...algorithm, name: this.name }, extractable, keyUsages);
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     Assert.isCryptoKey(key);
   }

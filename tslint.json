@@ -2,6 +2,11 @@
     "extends": [
         "tslint:recommended"
     ],
+    "linterOptions": {
+        "exclude": [
+            "**/*.js"
+        ]
+    },
     "rules": {
         "interface-name": false,
         "prefer-const": true,
@@ -15,6 +20,14 @@
         "no-console": false,
         "no-reference": false,
         "eofline": true,
-        "quotemark": [true, "double"]
+        "quotemark": [
+            true,
+            "double"
+        ],
+        "typedef": [
+            true,
+            "call-signature",
+            "property-declaration"
+        ]
     }
 }

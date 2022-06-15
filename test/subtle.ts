@@ -1,12 +1,12 @@
 import * as assert from "assert";
 import * as graphene from "graphene-pk11";
+import { CryptoKey as P11CryptoKey } from "../src";
 import { ID_DIGEST } from "../src/const";
-import { CryptoKey as P11CryptoKey } from "../src/key";
 import { crypto } from "./config";
 
 context("Subtle", () => {
 
-  async function getId(publicKey: CryptoKey) {
+  async function getId(publicKey: CryptoKey): Promise<string> {
     const raw = await crypto.subtle.exportKey("spki", publicKey);
     const hash = await (await crypto.subtle.digest(ID_DIGEST, raw)).slice(0, 16);
     return Buffer.from(hash).toString("hex");

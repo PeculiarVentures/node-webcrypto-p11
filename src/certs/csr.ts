@@ -1,21 +1,30 @@
-import { Pkcs10CertificateRequest } from "@peculiar/x509";
+import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
-import { CryptoKey } from "../key";
+import { CryptoKey, CryptoKeyJson } from "../key";
 import { Pkcs11Object } from "../p11_object";
+import { Pkcs11KeyAlgorithm } from "../types";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
+import { ParserError } from "./parser_error";
+
+interface X509CertificateRequestJson {
+  publicKey: CryptoKeyJson<Pkcs11KeyAlgorithm>;
+  subjectName: string;
+  type: "request";
+  value: string;
+}
 
 export class X509CertificateRequest extends CryptoCertificate implements core.CryptoX509CertificateRequest {
 
-  public get subjectName() {
+  public get subjectName(): string {
     return this.getData()?.subject;
   }
-  public type: "request" = "request";
-  public p11Object?: graphene.Data;
-  public csr?: Pkcs10CertificateRequest;
+  public override type: "request" = "request";
+  declare public p11Object?: graphene.Data;
+  public csr?: x509.Pkcs10CertificateRequest;
 
   public get value(): ArrayBuffer {
     Pkcs11Object.assertStorage(this.p11Object);
@@ -29,11 +38,9 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
    * @param algorithm
    * @param keyUsages
    */
-  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]) {
+  public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<void> {
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
-
-
 
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
     this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
@@ -56,22 +63,22 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     this.p11Object = this.crypto.session.create(template).toType<graphene.Data>();
   }
 
-  public async exportCert() {
+  public async exportCert(): Promise<ArrayBuffer> {
     return this.value;
   }
 
-  public toJSON() {
+  public toJSON(): X509CertificateRequestJson {
     return {
       publicKey: this.publicKey.toJSON(),
       subjectName: this.subjectName,
       type: this.type,
-      value: Convert.ToBase64Url(this.value),
+      value: pvtsutils.Convert.ToBase64Url(this.value),
     };
   }
 
   public async exportKey(): Promise<CryptoKey>;
   public async exportKey(algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
-  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]) {
+  public async exportKey(algorithm?: Algorithm, usages?: KeyUsage[]): Promise<CryptoKey> {
     if (!this.publicKey) {
       const publicKeyID = this.id.replace(/\w+-\w+-/i, "");
       const keyIndexes = await this.crypto.keyStorage.keys();
@@ -97,14 +104,18 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     return this.publicKey;
   }
 
-  protected parse(data: ArrayBuffer) {
-    this.csr = new Pkcs10CertificateRequest(data);
+  protected parse(data: ArrayBuffer): void {
+    try {
+      this.csr = new x509.Pkcs10CertificateRequest(data);
+    } catch (e) {
+      throw new ParserError("Cannot parse PKCS10 certificate request");
+    }
   }
 
   /**
    * returns parsed ASN1 value
    */
-  protected getData() {
+  protected getData(): x509.Pkcs10CertificateRequest {
     if (!this.csr) {
       this.parse(this.value);
     }

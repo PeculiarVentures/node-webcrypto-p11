@@ -9,7 +9,7 @@ import { RsaCryptoKey } from "./key";
 
 export class RsaPssProvider extends core.RsaPssProvider implements types.IContainer {
 
-  public usages: core.ProviderKeyPairUsage = {
+  public override usages: core.ProviderKeyPairUsage = {
     privateKey: ["sign", "decrypt", "unwrapKey"],
     publicKey: ["verify", "encrypt", "wrapKey"],
   };
@@ -75,7 +75,7 @@ export class RsaPssProvider extends core.RsaPssProvider implements types.IContai
     return key;
   }
 
-  public checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage) {
+  public override checkCryptoKey(key: CryptoKey, keyUsage?: KeyUsage): void {
     super.checkCryptoKey(key, keyUsage);
     if (!(key instanceof RsaCryptoKey)) {
       throw new TypeError("key: Is not PKCS11 CryptoKey");
