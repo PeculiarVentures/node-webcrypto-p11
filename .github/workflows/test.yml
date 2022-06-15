@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        run: yarn
+        run: yarn --no-lockfile
 
       - name: Run test with coverage
         run: npm run coverage
