@@ -17,7 +17,7 @@ export class AesCbcProvider extends core.AesCbcProvider implements types.IContai
     this.crypto = new AesCrypto(container);
   }
 
-  public async onGenerateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: types.Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await this.crypto.generateKey(
       { ...algorithm, name: this.name },
       extractable,

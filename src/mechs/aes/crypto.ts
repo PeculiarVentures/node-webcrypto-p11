@@ -30,7 +30,7 @@ export class AesCrypto implements types.IContainer {
   constructor(public container: types.ISessionContainer) {
   }
 
-  public async generateKey(algorithm: Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async generateKey(algorithm: types.Pkcs11AesKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       const template = this.container.templateBuilder.build({
         action: "generate",
@@ -86,7 +86,7 @@ export class AesCrypto implements types.IContainer {
     }
   }
 
-  public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -113,7 +113,7 @@ export class AesCrypto implements types.IContainer {
     }
 
     // prepare key algorithm
-    const aesAlg: Pkcs11AesKeyAlgorithm = {
+    const aesAlg: types.Pkcs11AesKeyAlgorithm = {
       ...AesCryptoKey.defaultKeyAlgorithm(),
       ...algorithm,
       length: value.byteLength * 8,
@@ -227,7 +227,7 @@ export class AesCrypto implements types.IContainer {
    * `false` - decryption operation
    * @param dataSize size of incoming data
    */
-  protected getOutputBufferSize(keyAlg: Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
+  protected getOutputBufferSize(keyAlg: types.Pkcs11AesKeyAlgorithm, enc: boolean, dataSize: number): number {
     const len = keyAlg.length >> 3;
     if (enc) {
       return (Math.ceil(dataSize / len) * len) + len;

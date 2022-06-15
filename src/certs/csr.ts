@@ -5,8 +5,10 @@ import * as core from "webcrypto-core";
 
 import { CryptoKey, CryptoKeyJson } from "../key";
 import { Pkcs11Object } from "../p11_object";
+import { Pkcs11KeyAlgorithm } from "../types";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
+import { ParserError } from "./parser_error";
 
 interface X509CertificateRequestJson {
   publicKey: CryptoKeyJson<Pkcs11KeyAlgorithm>;
@@ -21,7 +23,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     return this.getData()?.subject;
   }
   public override type: "request" = "request";
-  public override p11Object?: graphene.Data;
+  declare public p11Object?: graphene.Data;
   public csr?: Pkcs10CertificateRequest;
 
   public get value(): ArrayBuffer {
@@ -39,8 +41,6 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<void> {
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
-
-
 
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
     this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
@@ -105,7 +105,11 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   }
 
   protected parse(data: ArrayBuffer): void {
-    this.csr = new Pkcs10CertificateRequest(data);
+    try {
+      this.csr = new Pkcs10CertificateRequest(data);
+    } catch (e) {
+      throw new ParserError("Cannot parse PKCS10 certificate request");
+    }
   }
 
   /**

@@ -1,15 +1,15 @@
-import { AsnConvert } from "@peculiar/asn1-schema";
+import { AsnConvert, AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
 import * as asnX509 from "@peculiar/asn1-x509";
 import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import * as core from "webcrypto-core";
-import { AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
 
 import { CryptoKey, CryptoKeyJson } from "../key";
 import { Pkcs11Object } from "../p11_object";
 
 import { CryptoCertificate, Pkcs11ImportAlgorithms } from "./cert";
+import { ParserError } from "./parser_error";
 
 interface X509CertificateJson {
   publicKey: CryptoKeyJson;
@@ -46,7 +46,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     return new Uint8Array(this.p11Object.value).buffer;
   }
 
-  public override p11Object?: graphene.X509Certificate;
+  declare public p11Object?: graphene.X509Certificate;
   protected x509?: x509.X509Certificate;
 
   public async importCert(data: Buffer, algorithm: Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<void> {
@@ -126,7 +126,11 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   }
 
   protected parse(data: ArrayBuffer): void {
-    this.x509 = new x509.X509Certificate(data);
+    try {
+      this.x509 = new x509.X509Certificate(data);
+    } catch (e) {
+      throw new ParserError("Cannot parse X509 certificate");
+    }
   }
 
   /**

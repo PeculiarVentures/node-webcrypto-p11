@@ -22,7 +22,7 @@ export class EcCrypto implements types.IContainer {
   public constructor(public container: types.ISessionContainer) {
   }
 
-  public async generateKey(algorithm: Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async generateKey(algorithm: types.Pkcs11EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     return new Promise<CryptoKeyPair>((resolve, reject) => {
       // Create PKCS#11 templates
       const attrs: types.Pkcs11Attributes = {
@@ -101,7 +101,7 @@ export class EcCrypto implements types.IContainer {
     }
   }
 
-  public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk": {
         const jwk: any = keyData;
@@ -157,7 +157,7 @@ export class EcCrypto implements types.IContainer {
     return utils.digest(hashAlgorithm.replace("-", ""), data);
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -180,7 +180,7 @@ export class EcCrypto implements types.IContainer {
     return new EcCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
     const namedCurve = core.EcCurves.get(algorithm.namedCurve);
     const template = this.createTemplate({
       action: "import",

@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as graphene from "graphene-pk11";
-import * as types from "../src/types";
+import * as types from "../src";
+import { Pkcs11AesKeyAlgorithm } from "../src";
 import { config, crypto } from "./config";
 
 context("Crypto", () => {

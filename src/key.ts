@@ -2,6 +2,7 @@
 import * as core from "webcrypto-core";
 
 import * as graphene from "graphene-pk11";
+import { Pkcs11KeyAlgorithm } from "./types";
 
 export interface ITemplatePair {
   privateKey: graphene.ITemplate;

@@ -24,7 +24,7 @@ export class RsaCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) { }
 
-  public async generateKey(algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
+  public async generateKey(algorithm: types.Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair> {
     const size = algorithm.modulusLength;
     const exp = Buffer.from(algorithm.publicExponent);
 
@@ -231,7 +231,7 @@ export class RsaCrypto implements types.IContainer {
     return jwk;
   }
 
-  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
+  protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: types.Pkcs11RsaHashedKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -260,7 +260,7 @@ export class RsaCrypto implements types.IContainer {
     return new RsaCryptoKey(p11key, algorithm);
   }
 
-  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
+  protected importJwkPublicKey(jwk: JsonWebKey, algorithm: types.Pkcs11RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): RsaCryptoKey {
     const template = this.createTemplate({
       action: "import",
       type: "public",

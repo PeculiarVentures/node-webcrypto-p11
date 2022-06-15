@@ -41,7 +41,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     return null;
   }
 
-  public indexOf(item: core.CryptoCertificate): Promise<string | null>;
+  public async indexOf(item: certs.Pkcs11CryptoCertificate): Promise<string | null>;
   public async indexOf(item: certs.CryptoCertificate): Promise<string | null> {
     if (item instanceof certs.CryptoCertificate && item.p11Object?.token) {
       return certs.CryptoCertificate.getID(item.p11Object);
@@ -73,14 +73,14 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     });
   }
 
-  public async hasItem(item: certs.CryptoCertificate): Promise<boolean> {
+  public async hasItem(item: certs.Pkcs11CryptoCertificate): Promise<boolean> {
     const sessionObject = this.getItemById(item.id);
     return !!sessionObject;
   }
 
-  public getItem(index: string): Promise<core.CryptoCertificate>;
-  public getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public async getItem(index: string, algorithm?: Algorithm, usages?: KeyUsage[]): Promise<core.CryptoCertificate> {
+  public async getItem(index: string): Promise<certs.Pkcs11CryptoCertificate>;
+  public async getItem(index: string, algorithm: core.ImportAlgorithms, keyUsages: KeyUsage[]): Promise<certs.Pkcs11CryptoCertificate>;
+  public async getItem(index: string, algorithm?: Algorithm, usages?: KeyUsage[]): Promise<certs.Pkcs11CryptoCertificate> {
     const storageObject = this.getItemById(index);
     if (storageObject instanceof graphene.X509Certificate) {
       const x509Object = storageObject.toType<graphene.X509Certificate>();
@@ -115,7 +115,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  public setItem(data: core.CryptoCertificate): Promise<string>;
+  public async setItem(data: certs.Pkcs11CryptoCertificate): Promise<string>;
   public async setItem(data: certs.CryptoCertificate): Promise<string> {
     if (!(data instanceof certs.CryptoCertificate)) {
       throw new Error("Incoming data is not PKCS#11 CryptoCertificate");
@@ -138,9 +138,9 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  public exportCert(format: core.CryptoCertificateFormat, item: core.CryptoCertificate): Promise<ArrayBuffer | string>;
-  public exportCert(format: "raw", item: core.CryptoCertificate): Promise<ArrayBuffer>;
-  public exportCert(format: "pem", item: core.CryptoCertificate): Promise<string>;
+  public async exportCert(format: core.CryptoCertificateFormat, item: certs.Pkcs11CryptoCertificate): Promise<ArrayBuffer | string>;
+  public async exportCert(format: "raw", item: certs.Pkcs11CryptoCertificate): Promise<ArrayBuffer>;
+  public async exportCert(format: "pem", item: certs.Pkcs11CryptoCertificate): Promise<string>;
   public async exportCert(format: core.CryptoCertificateFormat, cert: certs.CryptoCertificate): Promise<ArrayBuffer | string> {
     switch (format) {
       case "pem": {
@@ -154,9 +154,9 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     }
   }
 
-  public importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "raw", data: BufferSource, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
-  public importCert(format: "pem", data: string, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<core.CryptoCertificate>;
+  public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<certs.Pkcs11CryptoCertificate>;
+  public async importCert(format: "raw", data: BufferSource, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<certs.Pkcs11CryptoCertificate>;
+  public async importCert(format: "pem", data: string, algorithm: certs.Pkcs11ImportAlgorithms, keyUsages: KeyUsage[]): Promise<certs.Pkcs11CryptoCertificate>;
   public async importCert(format: core.CryptoCertificateFormat, data: BufferSource | string, algorithm: certs.Pkcs11ImportAlgorithms, usages: KeyUsage[]): Promise<certs.CryptoCertificate> {
     let rawData: ArrayBuffer;
     let rawType: core.CryptoCertificateType | null = null;
@@ -202,16 +202,20 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
           const x509 = new certs.X509Certificate(this.crypto);
           await x509.importCert(Buffer.from(rawData), algorithm, usages);
           return x509;
-        } catch {
-          // nothing
+        } catch (e) {
+          if (!(e instanceof certs.ParserError)) {
+            throw e;
+          }
         }
 
         try {
           const request = new certs.X509CertificateRequest(this.crypto);
           await request.importCert(Buffer.from(rawData), algorithm, usages);
           return request;
-        } catch {
-          // nothing
+        } catch (e) {
+          if (!(e instanceof certs.ParserError)) {
+            throw e;
+          }
         }
 
         throw new core.OperationError("Cannot parse Certificate or Certificate Request from incoming ASN1");

@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { Convert } from "pvtsutils";
+import { Pkcs11EcKeyGenParams } from "../src";
 import { EcCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 

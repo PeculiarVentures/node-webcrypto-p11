@@ -1,6 +1,7 @@
 import { AsnConvert } from "@peculiar/asn1-schema";
 import * as core from "webcrypto-core";
 import { CryptoKey } from "../../key";
+import { Pkcs11EcKeyAlgorithm } from "../../types";
 
 export class EcCryptoKey extends CryptoKey<Pkcs11EcKeyAlgorithm> {
 

@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { Pkcs11HmacKeyGenParams, Pkcs11HmacKeyImportParams } from "../src";
 import { HmacCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 

@@ -3,6 +3,7 @@ import { Slot, SlotFlag } from "graphene-pk11";
 import { Convert } from "pvtsutils";
 import { BufferSourceConverter } from "webcrypto-core";
 import { ID_DIGEST } from "./const";
+import { ProviderInfo } from "./types";
 
 export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;

@@ -6,6 +6,11 @@ import * as mechs from "./mechs";
 import * as types from "./types";
 import * as utils from "./utils";
 
+export interface CryptoKeyPair {
+  privateKey: CryptoKey;
+  publicKey: CryptoKey;
+}
+
 export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer {
 
   public constructor(public container: types.ISessionContainer) {
@@ -46,8 +51,7 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
       const publicKey = keys.publicKey as P11CryptoKey;
       const privateKey = keys.privateKey as P11CryptoKey;
 
-      const raw = await this.exportKey("spki", publicKey);
-      const digest = utils.digest(ID_DIGEST, raw).slice(0, 16);
+      const digest = await this.computeId(publicKey);
       publicKey.key.id = digest;
       publicKey.id = P11CryptoKey.getID(publicKey.key);
       privateKey.key.id = digest;
@@ -57,6 +61,12 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     return keys;
   }
 
+  protected async computeId(publicKey: CryptoKey<types.Pkcs11KeyAlgorithm>): Promise<Buffer> {
+    const raw = await this.exportKey("spki", publicKey);
+    const digest = utils.digest(ID_DIGEST, raw).slice(0, 16);
+    return digest;
+  }
+
   public override async importKey(format: KeyFormat, keyData: JsonWebKey | BufferSource, algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     const key = await super.importKey(format, keyData, algorithm, extractable, keyUsages);
 
@@ -64,8 +74,7 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     if (key.type === "public" && extractable) {
       const publicKey = key as P11CryptoKey;
 
-      const raw = await this.exportKey("spki", publicKey);
-      const digest = utils.digest(ID_DIGEST, raw).slice(0, 16);
+      const digest = await this.computeId(publicKey);
       publicKey.key.id = digest;
       publicKey.id = P11CryptoKey.getID(publicKey.key);
     }

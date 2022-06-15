@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as x509 from "@peculiar/x509";
 import { CryptoCertificateFormat, PemConverter } from "webcrypto-core";
-import { X509Certificate, X509CertificateRequest } from "../src";
+import { Pkcs11RsaHashedKeyAlgorithm, X509Certificate, X509CertificateRequest } from "../src";
 import { crypto } from "./config";
 import { isNSS } from "./helper";
 

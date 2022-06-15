@@ -3,6 +3,7 @@ import * as core from "webcrypto-core";
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
 import { AesCryptoKey, EcCryptoKey, HmacCryptoKey, RsaCryptoKey } from "./mechs";
+import { Pkcs11KeyAlgorithm } from "./types";
 import * as utils from "./utils";
 
 const OBJECT_TYPES = [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY, ObjectClass.SECRET_KEY];

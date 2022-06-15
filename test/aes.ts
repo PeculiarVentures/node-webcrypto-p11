@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { Pkcs11AesKeyGenParams, Pkcs11AesKeyImportParams } from "../src";
 import { AesCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
 

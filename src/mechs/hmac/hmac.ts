@@ -14,7 +14,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     super();
   }
 
-  public async onGenerateKey(algorithm: Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onGenerateKey(algorithm: types.Pkcs11HmacKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     return new Promise<CryptoKey>((resolve, reject) => {
       const length = (algorithm.length || this.getDefaultLength((algorithm.hash as Algorithm).name)) >> 3 << 3;
       algorithm = { ...algorithm, name: this.name, length };
@@ -76,7 +76,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     });
   }
 
-  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: Pkcs11HmacKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
+  public async onImportKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11HmacKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
     let value: ArrayBuffer;
 
@@ -98,7 +98,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
       ...algorithm,
       name: this.name,
       length: value.byteLength * 8 || this.getDefaultLength((algorithm as any).hash.name),
-    } as Pkcs11HmacKeyAlgorithm;
+    } as types.Pkcs11HmacKeyAlgorithm;
     const template: graphene.ITemplate = this.createTemplate({
       action: "import",
       type: "secret",
