@@ -39,6 +39,10 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     // #region HMAC
     this.providers.set(new mechs.HmacProvider(this.container));
     // #endregion
+    // #region SHAKE
+    this.providers.set(new mechs.Shake128Provider());
+    this.providers.set(new mechs.Shake256Provider());
+    // #endregion
   }
 
   public override async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair>;
