@@ -1,6 +1,7 @@
 import * as x509 from "@peculiar/x509";
 import * as assert from "assert";
-import { ITemplate } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
+
 import { TemplateBuilder, ITemplateBuilder, ITemplateBuildParameters } from "../src";
 import { crypto } from "./config";
 
@@ -8,7 +9,7 @@ const certPEM = "-----BEGIN CERTIFICATE-----\nMIIDLjCCAhagAwIBAgIBATANBgkqhkiG9w
 const csrPEM = "-----BEGIN CERTIFICATE REQUEST-----\nMIICvzCCAacCAQAwOjEZMBcGA1UEAxMQVGVzdCBjZXJ0aWZpY2F0ZTEdMBsGCSqG\nSIb3DQEJARYOc29tZUBlbWFpbC5uZXQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw\nggEKAoIBAQCtZcH9/fTHqS/xsbgHcXyIayW59YHI9mIgkY5CcWT6uvzylEeXmBlM\nqOruYlLNJau8rRaRJjx8BhbLm1uQgvraJx88XWQVNqLdZGt/kEL12lYCM4buq1Jz\nsmfh+8e9ya8/bcfYv8mrNi5pfoB+Gn4mAgcXzdeWJBgbHqfuP38DfcCCSrFejeDI\nmZbD/eIaxY3KQTgmwLe9OypQFMHoRwqBKRyIjkPFCrCXaCBRNzykfJt4yTMBwJvR\nsqiHYS/HTEeMQiHJCVg8GLEZLfqhzx9CQ0gA503m0bbw6CL5sK9x7kyElqrw9z0K\ny2rH7KCtDhjWeikq8/yQ0KkSAA3DAnepAgMBAAGgQDA+BgkqhkiG9w0BCQ4xMTAv\nMA4GA1UdDwEB/wQEAwIGwDAdBgNVHQ4EFgQU8DicWElyhsq6FbDUF+XbSMbX7uow\nDQYJKoZIhvcNAQELBQADggEBAKPBebW8DQXW8HVDWXtskr1ik9I9ZyjKgvNpfU5X\nGmI1hM8Co5DA0Ow/MsrqoezbuRlMGQyPsGEgbGmyybfL9/VvlD0u5RN7P4fHp+V7\nJbd0Jdtj6W4vu+xcprp5enZO7HkJgxE+1rNArCasMUuxMKubnyLxMdzqORDeiffY\nMqoYoUcDQd8c5h98OJOBRv2cqN5HfIfWb4FVKJAM6cO+zZjB8u+9pQQtMKOD4f+E\n6jOnxDxJaOcVBq2vbmq3z05LZzoxJPQMTx7tTkQB8JxxACssI5eMQ0RE6BVhh1uF\n3xCaO8IoLaTSS8Z1rfL3Jli75zLwWkuf9Ki/LF+IDvjss8s=\n-----END CERTIFICATE REQUEST-----"
 
 class TokenTemplateBuilder extends TemplateBuilder implements ITemplateBuilder {
-  public override build(params: ITemplateBuildParameters): ITemplate {
+  public override build(params: ITemplateBuildParameters): graphene.ITemplate {
     const template = super.build(params);
 
     switch (params.type) {
@@ -16,7 +17,7 @@ class TokenTemplateBuilder extends TemplateBuilder implements ITemplateBuilder {
       case "request": {
         switch (params.action) {
           case "import":
-            Object.assign<ITemplate, ITemplate>(template, {
+            Object.assign<graphene.ITemplate, graphene.ITemplate>(template, {
               token: true,
             })
             break;

@@ -1,10 +1,10 @@
 import * as graphene from "graphene-pk11";
-import { BufferSource } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 
 export type ITemplate = graphene.ITemplate;
 
 export interface Pkcs11Attributes {
-  id?: BufferSource
+  id?: pvtsutils.BufferSource
   token?: boolean;
   sensitive?: boolean;
   label?: string;

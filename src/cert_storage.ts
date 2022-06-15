@@ -1,4 +1,5 @@
 import * as graphene from "graphene-pk11";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import * as certs from "./certs";
@@ -177,10 +178,10 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
         rawData = core.PemConverter.toArrayBuffer(data);
         break;
       case "raw":
-        if (!core.BufferSourceConverter.isBufferSource(data)) {
+        if (!pvtsutils.BufferSourceConverter.isBufferSource(data)) {
           throw new TypeError("data: Is not type ArrayBuffer or ArrayBufferView");
         }
-        rawData = core.BufferSourceConverter.toArrayBuffer(data);
+        rawData = pvtsutils.BufferSourceConverter.toArrayBuffer(data);
         break;
       default:
         throw new TypeError("format: Is invalid value. Must be 'raw', 'pem'");

@@ -1,16 +1,16 @@
-import { Storage } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 
 export class Pkcs11Object {
 
-  public static assertStorage(obj: Storage | undefined): asserts obj is Storage {
+  public static assertStorage(obj: graphene.Storage | undefined): asserts obj is graphene.Storage {
     if (!obj) {
       throw new TypeError("PKCS#11 object is empty");
     }
   }
 
-  public p11Object?: Storage;
+  public p11Object?: graphene.Storage;
 
-  constructor(object?: Storage) {
+  constructor(object?: graphene.Storage) {
     this.p11Object = object;
   }
 

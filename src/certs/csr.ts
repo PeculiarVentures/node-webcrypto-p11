@@ -1,6 +1,6 @@
-import { Pkcs10CertificateRequest } from "@peculiar/x509";
+import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey, CryptoKeyJson } from "../key";
@@ -24,7 +24,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   }
   public override type: "request" = "request";
   declare public p11Object?: graphene.Data;
-  public csr?: Pkcs10CertificateRequest;
+  public csr?: x509.Pkcs10CertificateRequest;
 
   public get value(): ArrayBuffer {
     Pkcs11Object.assertStorage(this.p11Object);
@@ -72,7 +72,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
       publicKey: this.publicKey.toJSON(),
       subjectName: this.subjectName,
       type: this.type,
-      value: Convert.ToBase64Url(this.value),
+      value: pvtsutils.Convert.ToBase64Url(this.value),
     };
   }
 
@@ -106,7 +106,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
 
   protected parse(data: ArrayBuffer): void {
     try {
-      this.csr = new Pkcs10CertificateRequest(data);
+      this.csr = new x509.Pkcs10CertificateRequest(data);
     } catch (e) {
       throw new ParserError("Cannot parse PKCS10 certificate request");
     }
@@ -115,7 +115,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   /**
    * returns parsed ASN1 value
    */
-  protected getData(): Pkcs10CertificateRequest {
+  protected getData(): x509.Pkcs10CertificateRequest {
     if (!this.csr) {
       this.parse(this.value);
     }

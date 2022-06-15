@@ -1,12 +1,13 @@
-import { KeyType, ObjectClass, SecretKey, SessionObject } from "graphene-pk11";
+import * as graphene from "graphene-pk11";
 import * as core from "webcrypto-core";
+
 import { Crypto } from "./crypto";
 import { CryptoKey } from "./key";
 import { AesCryptoKey, EcCryptoKey, HmacCryptoKey, RsaCryptoKey } from "./mechs";
 import { Pkcs11KeyAlgorithm } from "./types";
 import * as utils from "./utils";
 
-const OBJECT_TYPES = [ObjectClass.PRIVATE_KEY, ObjectClass.PUBLIC_KEY, ObjectClass.SECRET_KEY];
+const OBJECT_TYPES = [graphene.ObjectClass.PRIVATE_KEY, graphene.ObjectClass.PUBLIC_KEY, graphene.ObjectClass.SECRET_KEY];
 
 export class KeyStorage implements core.CryptoKeyStorage {
 
@@ -35,7 +36,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   }
 
   public async clear(): Promise<void> {
-    const keys: SessionObject[] = [];
+    const keys: graphene.SessionObject[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
         keys.push(obj);
@@ -53,7 +54,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   public async getItem(key: string, ...args: any[]): Promise<CryptoKey> {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
-      const p11Key = subjectObject.toType<SecretKey>();
+      const p11Key = subjectObject.toType<graphene.SecretKey>();
       let alg: Pkcs11KeyAlgorithm | undefined;
       let algorithm: Algorithm | undefined;
       let usages: KeyUsage[] | undefined;
@@ -79,7 +80,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
           label: "",
         };
         switch (p11Key.type) {
-          case KeyType.RSA: {
+          case graphene.KeyType.RSA: {
             if (p11Key.sign || p11Key.verify) {
               alg.name = "RSASSA-PKCS1-v1_5";
             } else {
@@ -88,7 +89,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             (alg as any).hash = { name: "SHA-256" };
             break;
           }
-          case KeyType.EC: {
+          case graphene.KeyType.EC: {
             if (p11Key.sign || p11Key.verify) {
               alg.name = "ECDSA";
             } else {
@@ -97,8 +98,8 @@ export class KeyStorage implements core.CryptoKeyStorage {
 
             break;
           }
-          case KeyType.GENERIC_SECRET:
-          case KeyType.AES: {
+          case graphene.KeyType.GENERIC_SECRET:
+          case graphene.KeyType.AES: {
             if (p11Key.sign || p11Key.verify) {
               alg.name = "HMAC";
             } else {
@@ -107,7 +108,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             break;
           }
           default:
-            throw new Error(`Unsupported type of key '${KeyType[p11Key.type] || p11Key.type}'`);
+            throw new Error(`Unsupported type of key '${graphene.KeyType[p11Key.type] || p11Key.type}'`);
         }
       }
       let CryptoKeyClass: typeof CryptoKey;
@@ -182,9 +183,9 @@ export class KeyStorage implements core.CryptoKeyStorage {
     return !!item;
   }
 
-  protected getItemById(id: string): SessionObject | null {
+  protected getItemById(id: string): graphene.SessionObject | null {
 
-    let key: SessionObject | null = null;
+    let key: graphene.SessionObject | null = null;
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
         const item = obj.toType<any>();

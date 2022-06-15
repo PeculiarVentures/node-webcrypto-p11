@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import { Pkcs11EcKeyGenParams } from "../src";
 import { EcCryptoKey } from "../src/mechs";
 import { crypto } from "./config";
@@ -38,7 +38,7 @@ context("EC", () => {
         token: true,
         sensitive: true,
       };
-      const spki = Convert.FromBase64("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEc7MvmXG6zXIRe0q6S9IWJxqeiAl++411K6TGJKtAbs32jxVnLvWGR+QElM0CRs/Xgit5g1xGywroh0cN3cJBbA==");
+      const spki = pvtsutils.Convert.FromBase64("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEc7MvmXG6zXIRe0q6S9IWJxqeiAl++411K6TGJKtAbs32jxVnLvWGR+QElM0CRs/Xgit5g1xGywroh0cN3cJBbA==");
 
       const publicKey = await crypto.subtle.importKey("spki", spki, alg, false, ["verify"]) as EcCryptoKey;
 
@@ -127,8 +127,8 @@ context("EC", () => {
           const derivedBits2 = await crypto.subtle.deriveBits({ name: "ECDH", public: keys.publicKey } as EcdhKeyDeriveParams, privateKey, 128);
           const derivedBits3 = await crypto.subtle.deriveBits({ name: "ECDH", public: publicKey } as EcdhKeyDeriveParams, keys.privateKey, 128);
 
-          assert.strictEqual(Convert.ToHex(derivedBits2), Convert.ToHex(derivedBits));
-          assert.strictEqual(Convert.ToHex(derivedBits3), Convert.ToHex(derivedBits));
+          assert.strictEqual(pvtsutils.Convert.ToHex(derivedBits2), pvtsutils.Convert.ToHex(derivedBits));
+          assert.strictEqual(pvtsutils.Convert.ToHex(derivedBits3), pvtsutils.Convert.ToHex(derivedBits));
         });
       });
     });

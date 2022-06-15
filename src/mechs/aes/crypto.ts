@@ -1,5 +1,5 @@
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -72,7 +72,7 @@ export class AesCrypto implements types.IContainer {
         const aes: string = /AES-(\w+)/.exec(key.algorithm.name!)![1];
         const jwk: JsonWebKey = {
           kty: "oct",
-          k: Convert.ToBase64Url(template.value!),
+          k: pvtsutils.Convert.ToBase64Url(template.value!),
           alg: `A${template.valueLen! * 8}${aes}`,
           ext: true,
           key_ops: key.usages,
@@ -96,7 +96,7 @@ export class AesCrypto implements types.IContainer {
         if (!jwk.k) {
           throw new core.OperationError("jwk.k: Cannot get required property");
         }
-        keyData = Convert.FromBase64Url(jwk.k);
+        keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
       case "raw":
         value = keyData as ArrayBuffer;
         switch (value.byteLength) {

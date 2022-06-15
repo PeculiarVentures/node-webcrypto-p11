@@ -1,8 +1,8 @@
-import { AsnConvert, AsnIntegerArrayBufferConverter } from "@peculiar/asn1-schema";
+import * as asn1Schema from "@peculiar/asn1-schema";
 import * as asnX509 from "@peculiar/asn1-x509";
 import * as x509 from "@peculiar/x509";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey, CryptoKeyJson } from "../key";
@@ -72,10 +72,10 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
 
     // set X509 attributes
     template.value = Buffer.from(data);
-    const asn = AsnConvert.parse(data, asnX509.Certificate);
-    template.serial = Buffer.from(AsnConvert.serialize(AsnIntegerArrayBufferConverter.toASN(asn.tbsCertificate.serialNumber)));
-    template.subject = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.subject));
-    template.issuer = Buffer.from(AsnConvert.serialize(asn.tbsCertificate.issuer));
+    const asn = asn1Schema.AsnConvert.parse(data, asnX509.Certificate);
+    template.serial = Buffer.from(asn1Schema.AsnConvert.serialize(asn1Schema.AsnIntegerArrayBufferConverter.toASN(asn.tbsCertificate.serialNumber)));
+    template.subject = Buffer.from(asn1Schema.AsnConvert.serialize(asn.tbsCertificate.subject));
+    template.issuer = Buffer.from(asn1Schema.AsnConvert.serialize(asn.tbsCertificate.issuer));
 
     this.p11Object = this.crypto.session.create(template).toType<graphene.X509Certificate>();
   }
@@ -93,7 +93,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       issuerName: this.issuerName,
       serialNumber: this.serialNumber,
       type: this.type,
-      value: Convert.ToBase64Url(this.value),
+      value: pvtsutils.Convert.ToBase64Url(this.value),
     };
   }
 

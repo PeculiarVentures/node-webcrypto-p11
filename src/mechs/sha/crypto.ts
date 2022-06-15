@@ -1,4 +1,4 @@
-import type { IAlgorithm } from "graphene-pk11";
+import type * as graphene from "graphene-pk11";
 
 import * as types from "../../types";
 
@@ -7,7 +7,7 @@ export class ShaCrypto implements types.IContainer {
   public constructor(public container: types.ISessionContainer) { }
 
   public async digest(algorithm: Algorithm, data: ArrayBuffer): Promise<ArrayBuffer> {
-    const p11Mech: IAlgorithm = {
+    const p11Mech: graphene.IAlgorithm = {
       name: algorithm.name.toUpperCase().replace("-", ""),
       params: null,
     };

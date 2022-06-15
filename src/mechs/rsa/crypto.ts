@@ -1,7 +1,7 @@
 import * as asnSchema from "@peculiar/asn1-schema";
 import * as jsonSchema from "@peculiar/json-schema";
 import * as graphene from "graphene-pk11";
-import { Convert } from "pvtsutils";
+import * as pvtsutils from "pvtsutils";
 import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
@@ -188,8 +188,8 @@ export class RsaCrypto implements types.IContainer {
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent!),
-      n: Convert.ToBase64Url(pkey.modulus!),
+      e: pvtsutils.Convert.ToBase64Url(pkey.publicExponent!),
+      n: pvtsutils.Convert.ToBase64Url(pkey.modulus!),
     };
 
     return jwk;
@@ -218,14 +218,14 @@ export class RsaCrypto implements types.IContainer {
       alg,
       ext: true,
       key_ops: key.usages,
-      e: Convert.ToBase64Url(pkey.publicExponent!),
-      n: Convert.ToBase64Url(pkey.modulus!),
-      d: Convert.ToBase64Url(pkey.privateExponent!),
-      p: Convert.ToBase64Url(pkey.prime1!),
-      q: Convert.ToBase64Url(pkey.prime2!),
-      dp: Convert.ToBase64Url(pkey.exp1!),
-      dq: Convert.ToBase64Url(pkey.exp2!),
-      qi: Convert.ToBase64Url(pkey.coefficient!),
+      e: pvtsutils.Convert.ToBase64Url(pkey.publicExponent!),
+      n: pvtsutils.Convert.ToBase64Url(pkey.modulus!),
+      d: pvtsutils.Convert.ToBase64Url(pkey.privateExponent!),
+      p: pvtsutils.Convert.ToBase64Url(pkey.prime1!),
+      q: pvtsutils.Convert.ToBase64Url(pkey.prime2!),
+      dp: pvtsutils.Convert.ToBase64Url(pkey.exp1!),
+      dq: pvtsutils.Convert.ToBase64Url(pkey.exp2!),
+      qi: pvtsutils.Convert.ToBase64Url(pkey.coefficient!),
     };
 
     return jwk;
