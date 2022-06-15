@@ -44,6 +44,9 @@ jobs:
       - name: Run test with coverage
         run: npm run coverage
 
+      - name: Find lcov.info file
+        run: find . -type f -name lcov.info
+
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
