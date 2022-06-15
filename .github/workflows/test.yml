@@ -45,10 +45,15 @@ jobs:
       - name: Run test with coverage
         run: npm run coverage
 
+      # Fixes problem with incorrect SF paths. See https://github.com/coverallsapp/github-action/issues/125
+      - name: Update lcov.info
+        run: |
+          sed -E "s/SF:(.+file:(.+))/SF:\2/g" ./coverage/lcov.info >coverage/lcov.new.info
+          mv ./coverage/lcov.new.info ./coverage/lcov.info
+
       - name: Coveralls
         uses: coverallsapp/github-action@master
         env:
           NODE_COVERALLS_DEBUG: 1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-path: ./
