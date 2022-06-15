@@ -60,7 +60,6 @@
     "@peculiar/webcrypto-test": "^1.0.7",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.42",
-    "coveralls": "^3.1.1",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
     "rollup": "^2.75.6",
