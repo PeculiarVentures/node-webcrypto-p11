@@ -50,3 +50,4 @@ jobs:
           NODE_COVERALLS_DEBUG: 1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-path: ./
