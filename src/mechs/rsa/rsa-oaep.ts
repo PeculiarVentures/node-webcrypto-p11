@@ -3,6 +3,7 @@ import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
 import * as types from "../../types";
+import { alwaysAuthenticate } from "../../utils";
 
 import { RsaCrypto } from "./crypto";
 import { RsaCryptoKey } from "./key";
@@ -47,18 +48,30 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
   }
 
   public async onDecrypt(algorithm: RsaOaepParams, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      const buf = Buffer.from(data);
-      const mechanism = this.wc2pk11(algorithm, key.algorithm);
-      const context = Buffer.alloc((key.algorithm).modulusLength >> 3);
-      this.container.session.createDecipher(mechanism, key.key)
-        .once(buf, context, (err, data2) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(new Uint8Array(data2).buffer);
-          }
-        });
+    const buf = Buffer.from(data);
+    const mechanism = this.wc2pk11(algorithm, key.algorithm);
+    const context = Buffer.alloc((key.algorithm).modulusLength >> 3);
+
+    const decipher = this.container.session.createDecipher(mechanism, key.key);
+    try {
+      await alwaysAuthenticate(key, this.container);
+    } catch (e) {
+      try {
+        // call C_SignFinal to close the active state
+        decipher.once(buf, context);
+      } catch {
+        // nothing
+      }
+      throw e;
+    }
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      decipher.once(buf, context, (err, data2) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(new Uint8Array(data2).buffer);
+        }
+      });
     });
   }
 

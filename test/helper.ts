@@ -21,6 +21,13 @@ function testManufacturer(manufacturerID: string, message: string): boolean {
   return false;
 }
 
+export function is(condition: boolean, message: string): boolean {
+  if (condition) {
+    console.warn("    \x1b[33mWARN:\x1b[0m Test is not supported. %s", message || "");
+  }
+  return condition;
+}
+
 export function isSoftHSM(message: string): boolean {
   return testManufacturer("SoftHSMv2", message);
 }

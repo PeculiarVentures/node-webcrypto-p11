@@ -32,6 +32,9 @@ export class EcCrypto implements types.IContainer {
         sensitive: algorithm.sensitive,
         extractable,
         usages: keyUsages,
+      };
+      if (algorithm.alwaysAuthenticate) {
+        attrs.alwaysAuthenticate = true;
       }
       const privateTemplate = this.createTemplate({
         action: "generate",
@@ -158,6 +161,7 @@ export class EcCrypto implements types.IContainer {
   }
 
   protected importJwkPrivateKey(jwk: JsonWebKey, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): EcCryptoKey {
+
     const template = this.createTemplate({
       action: "import",
       type: "private",
@@ -166,6 +170,7 @@ export class EcCrypto implements types.IContainer {
         token: algorithm.token,
         sensitive: algorithm.sensitive,
         label: algorithm.label,
+        alwaysAuthenticate: algorithm.alwaysAuthenticate,
         extractable,
         usages: keyUsages,
       },
@@ -200,8 +205,8 @@ export class EcCrypto implements types.IContainer {
     if (namedCurve.name === "curve25519") {
       pointEc = utils.b64UrlDecode(jwk.x!);
     } else {
-      const point = core.EcUtils.encodePoint({ x: utils.b64UrlDecode(jwk.x!), y: utils.b64UrlDecode(jwk.y!) }, namedCurve.size)
-      const derPoint = asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(point))
+      const point = core.EcUtils.encodePoint({ x: utils.b64UrlDecode(jwk.x!), y: utils.b64UrlDecode(jwk.y!) }, namedCurve.size);
+      const derPoint = asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(point));
       pointEc = Buffer.from(derPoint);
     }
     template.pointEC = pointEc;
