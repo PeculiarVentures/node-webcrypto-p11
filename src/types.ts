@@ -9,6 +9,10 @@ export interface Pkcs11Attributes {
   sensitive?: boolean;
   label?: string;
   extractable?: boolean;
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
   alwaysAuthenticate?: boolean;
   usages?: KeyUsage[];
 }
@@ -40,6 +44,10 @@ export type AlwaysAuthenticateHandle = (key: CryptoKey, crypto: ISessionContaine
 export interface ISessionContainer {
   readonly session: graphene.Session;
   templateBuilder: ITemplateBuilder;
+  /**
+   * Returns the PIN for the force re-authentication. Re-authentication occurs by calling sign or decrypt functions.
+   * @since v2.6.0
+   */
   onAlwaysAuthenticate?: AlwaysAuthenticateHandle;
 }
 
@@ -93,6 +101,11 @@ export interface Pkcs11Params {
 }
 
 export interface AlwaysAuthenticateParams {
+
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
   alwaysAuthenticate?: boolean;
 }
 

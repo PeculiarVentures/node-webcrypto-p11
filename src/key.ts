@@ -49,6 +49,10 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
   public id: string;
   public p11Object: graphene.Key | graphene.SecretKey | graphene.PublicKey | graphene.PrivateKey;
 
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
   public alwaysAuthenticate?: boolean | undefined;
 
   public override type: KeyType = "secret";

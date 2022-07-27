@@ -166,6 +166,12 @@ export function getProviderInfo(slot: graphene.Slot): ProviderInfo {
   return provider;
 }
 
+/**
+ * Checks and calls `onAlwaysAuthenticate` method
+ * @param key Crypto key
+ * @param container Crypto container
+ * @throws Throws CryptoError if `alwaysAuthenticate` is enabled for the key and `onAlwaysAuthenticate` method of the container is undefined
+ */
 export async function alwaysAuthenticate(key: CryptoKey, container: ISessionContainer): Promise<void> {
   if (key.key instanceof graphene.PrivateKey && key.key.alwaysAuthenticate) {
     if (!container.onAlwaysAuthenticate) {
