@@ -169,7 +169,7 @@ export function getProviderInfo(slot: graphene.Slot): ProviderInfo {
 export async function alwaysAuthenticate(key: CryptoKey, container: ISessionContainer): Promise<void> {
   if (key.key instanceof graphene.PrivateKey && key.key.alwaysAuthenticate) {
     if (!container.onAlwaysAuthenticate) {
-      throw new core.CryptoError("Crypto key requires re-authentication but Crypto doesn't have `onAlwaysAuthenticate` method");
+      throw new core.CryptoError("Crypto key requires re-authentication, but Crypto doesn't have 'onAlwaysAuthenticate' method");
     }
 
     const pin = await container.onAlwaysAuthenticate(key, container);

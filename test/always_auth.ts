@@ -4,6 +4,8 @@ import { CryptoKey, Pkcs11RsaHashedImportParams, Pkcs11RsaHashedKeyGenParams } f
 import { config, crypto } from "./config";
 import { is } from "./helper";
 
+const ERROR_METHOD_REQUIRED = "Crypto key requires re-authentication, but Crypto doesn't have 'onAlwaysAuthenticate' method";
+
 (is(config.pin === undefined, "Tests require PIN usage")
   ? context.skip
   : context)
@@ -108,7 +110,7 @@ import { is } from "./helper";
               await assert.rejects(async () => {
                 await crypto.subtle.sign(v.algorithm, keys.privateKey, new Uint8Array(10));
               },
-                new Error("Crypto key requires re-authentication but Crypto doesn't have `onAlwaysAuthenticate` method"));
+                new Error(ERROR_METHOD_REQUIRED));
             });
 
             it("skip C_Login", async () => {
@@ -150,7 +152,7 @@ import { is } from "./helper";
               await assert.rejects(async () => {
                 await crypto.subtle.decrypt(v.algorithm, keys.privateKey, data);
               },
-                new Error("Crypto key requires re-authentication but Crypto doesn't have `onAlwaysAuthenticate` method"));
+                new Error(ERROR_METHOD_REQUIRED));
             });
 
             it("skip C_Login", async () => {
