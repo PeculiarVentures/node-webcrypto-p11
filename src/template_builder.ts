@@ -22,7 +22,7 @@ export class TemplateBuilder implements types.ITemplateBuilder {
       }
     } else {
       if (attributes.label) {
-        template.label = attributes.label
+        template.label = attributes.label;
       }
       if (attributes.id) {
         template.id = Buffer.from(pvtsutils.BufferSourceConverter.toArrayBuffer(attributes.id));
@@ -48,6 +48,9 @@ export class TemplateBuilder implements types.ITemplateBuilder {
             decrypt,
             unwrap,
           });
+          if (attributes.alwaysAuthenticate) {
+            template.alwaysAuth = true;
+          }
           break;
         case "public":
           Object.assign<types.ITemplate, types.ITemplate>(template, {

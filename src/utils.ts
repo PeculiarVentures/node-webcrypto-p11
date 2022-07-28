@@ -1,8 +1,10 @@
 import * as crypto from "crypto";
 import * as graphene from "graphene-pk11";
 import * as pvtsutils from "pvtsutils";
+import * as core from "webcrypto-core";
 import { ID_DIGEST } from "./const";
-import { ProviderInfo } from "./types";
+import { ISessionContainer, ProviderInfo } from "./types";
+import { CryptoKey } from "./key";
 
 export interface HashedAlgorithm extends Algorithm {
   hash: AlgorithmIdentifier;
@@ -162,4 +164,23 @@ export function getProviderInfo(slot: graphene.Slot): ProviderInfo {
   }
 
   return provider;
+}
+
+/**
+ * Checks and calls `onAlwaysAuthenticate` method
+ * @param key Crypto key
+ * @param container Crypto container
+ * @throws Throws CryptoError if `alwaysAuthenticate` is enabled for the key and `onAlwaysAuthenticate` method of the container is undefined
+ */
+export async function alwaysAuthenticate(key: CryptoKey, container: ISessionContainer): Promise<void> {
+  if (key.key instanceof graphene.PrivateKey && key.key.alwaysAuthenticate) {
+    if (!container.onAlwaysAuthenticate) {
+      throw new core.CryptoError("Crypto key requires re-authentication, but Crypto doesn't have 'onAlwaysAuthenticate' method");
+    }
+
+    const pin = await container.onAlwaysAuthenticate(key, container);
+    if (pin) {
+      container.session.login(pin, graphene.UserType.CONTEXT_SPECIFIC);
+    }
+  }
 }

@@ -10,7 +10,7 @@ import * as utils from "../../utils";
 
 import { RsaCryptoKey } from "./key";
 
-const HASH_PREFIXES: { [alg: string]: Buffer } = {
+const HASH_PREFIXES: { [alg: string]: Buffer; } = {
   "sha-1": Buffer.from([0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14]),
   "sha-256": Buffer.from([0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20]),
   "sha-384": Buffer.from([0x30, 0x41, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02, 0x05, 0x00, 0x04, 0x30]),
@@ -36,7 +36,11 @@ export class RsaCrypto implements types.IContainer {
       sensitive: algorithm.sensitive,
       extractable,
       usages: keyUsages,
+    };
+    if (algorithm.alwaysAuthenticate) {
+      attrs.alwaysAuthenticate = true;
     }
+
     const privateTemplate = this.createTemplate({
       action: "generate",
       type: "private",
@@ -95,7 +99,7 @@ export class RsaCrypto implements types.IContainer {
         const jwk = await this.exportJwkPublicKey(key);
         const spki = this.jwk2spki(jwk);
         const asn = asnSchema.AsnConvert.parse(spki, core.asn1.PublicKeyInfo);
-        return asn.publicKey
+        return asn.publicKey;
       }
       default:
         throw new core.OperationError("format: Must be 'raw', 'jwk', 'pkcs8' or 'spki'");
@@ -241,6 +245,7 @@ export class RsaCrypto implements types.IContainer {
         sensitive: algorithm.sensitive,
         label: algorithm.label,
         extractable,
+        alwaysAuthenticate: algorithm.alwaysAuthenticate,
         usages: keyUsages
       },
     });

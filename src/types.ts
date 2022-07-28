@@ -4,11 +4,16 @@ import * as pvtsutils from "pvtsutils";
 export type ITemplate = graphene.ITemplate;
 
 export interface Pkcs11Attributes {
-  id?: pvtsutils.BufferSource
+  id?: pvtsutils.BufferSource;
   token?: boolean;
   sensitive?: boolean;
   label?: string;
   extractable?: boolean;
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
+  alwaysAuthenticate?: boolean;
   usages?: KeyUsage[];
 }
 
@@ -30,12 +35,20 @@ export interface ITemplateBuilder {
    * Returns a PKCS#11 template
    * @param params Template build parameters
    */
-  build(params: ITemplateBuildParameters): ITemplate
+  build(params: ITemplateBuildParameters): ITemplate;
 }
+
+export type AlwaysAuthenticateHandleResult = string | null;
+export type AlwaysAuthenticateHandle = (key: CryptoKey, crypto: ISessionContainer) => AlwaysAuthenticateHandleResult | Promise<AlwaysAuthenticateHandleResult>;
 
 export interface ISessionContainer {
   readonly session: graphene.Session;
-  templateBuilder: ITemplateBuilder
+  templateBuilder: ITemplateBuilder;
+  /**
+   * Returns the PIN for the force re-authentication. Re-authentication occurs by calling sign or decrypt functions.
+   * @since v2.6.0
+   */
+  onAlwaysAuthenticate?: AlwaysAuthenticateHandle;
 }
 
 export interface IContainer {
@@ -86,21 +99,31 @@ export interface Pkcs11Params {
   sensitive?: boolean;
   label?: string;
 }
+
+export interface AlwaysAuthenticateParams {
+
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
+  alwaysAuthenticate?: boolean;
+}
+
 export interface Pkcs11KeyGenParams extends Algorithm, Pkcs11Params { }
 
 export interface Pkcs11AesKeyGenParams extends AesKeyGenParams, Pkcs11KeyGenParams { }
 
 export interface Pkcs11HmacKeyGenParams extends HmacKeyGenParams, Pkcs11KeyGenParams { }
 
-export interface Pkcs11EcKeyGenParams extends EcKeyGenParams, Pkcs11KeyGenParams { }
+export interface Pkcs11EcKeyGenParams extends EcKeyGenParams, Pkcs11KeyGenParams, AlwaysAuthenticateParams { }
 
-export interface Pkcs11RsaHashedKeyGenParams extends RsaHashedKeyGenParams, Pkcs11KeyGenParams { }
+export interface Pkcs11RsaHashedKeyGenParams extends RsaHashedKeyGenParams, Pkcs11KeyGenParams, AlwaysAuthenticateParams { }
 
 export interface Pkcs11KeyImportParams extends Algorithm, Pkcs11Params { }
 
-export interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyImportParams { }
+export interface Pkcs11EcKeyImportParams extends EcKeyImportParams, Pkcs11KeyImportParams, AlwaysAuthenticateParams { }
 
-export interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyImportParams { }
+export interface Pkcs11RsaHashedImportParams extends RsaHashedImportParams, Pkcs11KeyImportParams, AlwaysAuthenticateParams { }
 
 export interface Pkcs11HmacKeyImportParams extends HmacImportParams, Pkcs11KeyImportParams { }
 

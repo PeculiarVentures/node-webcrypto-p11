@@ -2,6 +2,7 @@ import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
 import * as types from "../../types";
+import { alwaysAuthenticate } from "../../utils";
 
 import { EcCrypto } from "./crypto";
 import { EcCryptoKey } from "./key";
@@ -33,14 +34,26 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
   }
 
   public async onSign(algorithm: EcdsaParams, key: EcCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
-    return new Promise<ArrayBuffer>((resolve, reject) => {
-      let buf = Buffer.from(data);
-      const mechanism = this.wc2pk11(algorithm, algorithm);
-      mechanism.name = this.crypto.getAlgorithm(mechanism.name);
-      if (mechanism.name === "ECDSA") {
-        buf = this.crypto.prepareData((algorithm.hash as Algorithm).name, buf);
+    let buf = Buffer.from(data);
+    const mechanism = this.wc2pk11(algorithm, algorithm);
+    mechanism.name = this.crypto.getAlgorithm(mechanism.name);
+    if (mechanism.name === "ECDSA") {
+      buf = this.crypto.prepareData((algorithm.hash as Algorithm).name, buf);
+    }
+    const signer = this.container.session.createSign(mechanism, key.key);
+    try {
+      await alwaysAuthenticate(key, this.container);
+    } catch (e) {
+      try {
+        // call C_SignFinal to close the active state
+        signer.once(buf);
+      } catch {
+        // nothing
       }
-      this.container.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      throw e;
+    }
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      signer.once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -84,7 +97,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     }
   }
 
-  protected wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): { name: string, params: null } {
+  protected wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): { name: string, params: null; } {
     let algName: string;
     const hashAlg = (alg.hash as Algorithm).name.toUpperCase();
     switch (hashAlg) {

@@ -51,6 +51,7 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
   private initialized: boolean;
 
   public templateBuilder: types.ITemplateBuilder = new TemplateBuilder();
+  public onAlwaysAuthenticate?: types.AlwaysAuthenticateHandle;
 
   /**
    * Creates an instance of WebCrypto.

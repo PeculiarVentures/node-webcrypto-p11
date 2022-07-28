@@ -2,7 +2,7 @@
 import * as core from "webcrypto-core";
 
 import * as graphene from "graphene-pk11";
-import { Pkcs11KeyAlgorithm } from "./types";
+import { AlwaysAuthenticateParams, Pkcs11KeyAlgorithm } from "./types";
 
 export interface ITemplatePair {
   privateKey: graphene.ITemplate;
@@ -16,7 +16,7 @@ export interface CryptoKeyJson<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm
   extractable: boolean;
 }
 
-export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extends core.CryptoKey {
+export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extends core.CryptoKey implements AlwaysAuthenticateParams {
 
   public static defaultKeyAlgorithm(): Pkcs11KeyAlgorithm {
     const alg: Pkcs11KeyAlgorithm = {
@@ -48,6 +48,12 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
 
   public id: string;
   public p11Object: graphene.Key | graphene.SecretKey | graphene.PublicKey | graphene.PrivateKey;
+
+  /**
+   * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
+   * @since v2.6.0
+   */
+  public alwaysAuthenticate?: boolean | undefined;
 
   public override type: KeyType = "secret";
   public override extractable: boolean = false;
@@ -109,6 +115,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
   protected initPrivateKey(key: graphene.PrivateKey): void {
     this.p11Object = key;
     this.type = "private";
+    this.alwaysAuthenticate = key.alwaysAuthenticate;
     try {
       // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
       this.extractable = key.extractable;

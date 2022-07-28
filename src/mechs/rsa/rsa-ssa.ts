@@ -2,6 +2,7 @@ import * as core from "webcrypto-core";
 
 import { CryptoKey } from "../../key";
 import * as types from "../../types";
+import { alwaysAuthenticate } from "../../utils";
 
 import { RsaCrypto } from "./crypto";
 import { RsaCryptoKey } from "./key";
@@ -30,14 +31,26 @@ export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContai
   }
 
   public async onSign(algorithm: Algorithm, key: RsaCryptoKey, data: ArrayBuffer): Promise<ArrayBuffer> {
-    return new Promise<ArrayBuffer>((resolve, reject) => {
-      let buf = Buffer.from(data);
-      const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
-      mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
-      if (mechanism.name === "RSA_PKCS") {
-        buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
+    let buf = Buffer.from(data);
+    const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
+    mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
+    if (mechanism.name === "RSA_PKCS") {
+      buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
+    }
+    const signer = this.container.session.createSign(mechanism, key.key);
+    try {
+      await alwaysAuthenticate(key, this.container);
+    } catch (e) {
+      try {
+        // call C_SignFinal to close the active state
+        signer.once(buf);
+      } catch {
+        // nothing
       }
-      this.container.session.createSign(mechanism, key.key).once(buf, (err, data2) => {
+      throw e;
+    }
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      signer.once(buf, (err, data2) => {
         if (err) {
           reject(err);
         } else {
@@ -81,7 +94,7 @@ export class RsaSsaProvider extends core.RsaSsaProvider implements types.IContai
     }
   }
 
-  protected wc2pk11(alg: Algorithm, keyAlg: RsaHashedKeyAlgorithm): { name: string, params: null } {
+  protected wc2pk11(alg: Algorithm, keyAlg: RsaHashedKeyAlgorithm): { name: string, params: null; } {
     let res: string;
     switch (keyAlg.hash.name.toUpperCase()) {
       case "SHA-1":
