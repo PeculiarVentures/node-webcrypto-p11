@@ -53,7 +53,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
-    const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
+    const { token, label, sensitive, ...keyAlg } = algorithm as any; // remove custom attrs for key
     this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
 
     const hashSPKI = this.publicKey.p11Object.id;
@@ -64,7 +64,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       action: "import",
       type: "x509",
       attributes: {
-        id: hashSPKI,
+        id: keyAlg.id || hashSPKI,
         label: algorithm.label || certLabel,
         token: !!(algorithm.token),
       },
