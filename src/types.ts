@@ -4,7 +4,7 @@ import * as pvtsutils from "pvtsutils";
 export type ITemplate = graphene.ITemplate;
 
 export interface Pkcs11Attributes {
-  id?: pvtsutils.BufferSource;
+  id?: string | pvtsutils.BufferSource;
   token?: boolean;
   sensitive?: boolean;
   label?: string;
@@ -98,6 +98,7 @@ export interface Pkcs11Params {
   token?: boolean;
   sensitive?: boolean;
   label?: string;
+  id?: string;
 }
 
 export interface AlwaysAuthenticateParams {
