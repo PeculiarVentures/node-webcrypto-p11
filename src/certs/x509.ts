@@ -64,7 +64,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
       action: "import",
       type: "x509",
       attributes: {
-        id: hashSPKI,
+        id: keyAlg.id || hashSPKI,
         label: algorithm.label || certLabel,
         token: !!(algorithm.token),
       },

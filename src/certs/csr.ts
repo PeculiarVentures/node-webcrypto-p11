@@ -51,7 +51,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
       action: "import",
       type: "request",
       attributes: {
-        id: hashSPKI,
+        id: keyAlg.id || hashSPKI,
         label: algorithm.label || "X509 Request",
         token: !!(algorithm.token),
       },
