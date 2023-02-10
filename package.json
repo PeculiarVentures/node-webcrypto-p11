@@ -30,12 +30,12 @@
     "@peculiar/asn1-schema": "^2.3.3",
     "@peculiar/asn1-x509": "^2.3.4",
     "@peculiar/json-schema": "^1.1.12",
-    "@peculiar/x509": "^1.9.2",
+    "@peculiar/x509": "^1.9.3",
     "graphene-pk11": "^2.3.2",
     "pkcs11js": "^1.3.1",
     "pvtsutils": "^1.3.2",
-    "tslib": "^2.4.1",
-    "webcrypto-core": "^1.7.5"
+    "tslib": "^2.5.0",
+    "webcrypto-core": "^1.7.6"
   },
   "keywords": [
     "crypto",
@@ -59,15 +59,15 @@
   "devDependencies": {
     "@peculiar/webcrypto-test": "^1.0.7",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.13.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "rollup": "^3.10.0",
+    "rollup": "^3.15.0",
     "rollup-plugin-dts": "^5.1.1",
     "rollup-plugin-typescript2": "^0.34.1",
     "ts-node": "^10.9.1",
     "tslint": "^6.1.3",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.5"
   },
   "funding": {
     "type": "github",
