@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as graphene from "graphene-pk11";
 import * as x509 from "@peculiar/x509";
 import { CryptoCertificateFormat, PemConverter } from "webcrypto-core";
 import { Pkcs11RsaHashedKeyAlgorithm, X509Certificate, X509CertificateRequest } from "../src";
@@ -16,13 +17,8 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
   ("Certificate storage", () => {
 
     beforeEach(async () => {
-      let keys = await crypto.certStorage.keys();
-      if (keys.length) {
-        await crypto.certStorage.clear();
-      }
-
-      keys = await crypto.certStorage.keys();
-      assert.strictEqual(keys.length, 0);
+      await crypto.certStorage.clear();
+      await crypto.keyStorage.clear();
     });
 
     context("indexOf", () => {
@@ -244,4 +240,117 @@ const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIF
       assert.strictEqual(keyIndex.split("-")[2], certIndex.split("-")[2]);
     });
 
+    context("issue #75", () => {
+
+      /**
+       * Generate RSA key pair using graphene
+       * @returns id of generated key
+       */
+      function generateRsaKeys(): Buffer {
+        const id = crypto.getRandomValues(Buffer.alloc(10));
+
+        crypto.session.generateKeyPair(graphene.KeyGenMechanism.RSA, {
+          keyType: graphene.KeyType.RSA,
+          id,
+          modulusBits: 2048,
+          publicExponent: Buffer.from([1, 0, 1]),
+          token: true,
+          verify: true,
+          encrypt: true,
+          wrap: true
+        }, {
+          keyType: graphene.KeyType.RSA,
+          id,
+          token: true,
+          sign: true,
+          decrypt: true,
+          unwrap: true
+        });
+        return id;
+      }
+
+      interface NullableCryptoKeyPair {
+        privateKey: CryptoKey | null;
+        publicKey: CryptoKey | null;
+      }
+
+      /**
+       * Get CryptoKeyPair using node-webcrypto-p11
+       * @param id id of key pair
+       * @returns CryptoKeyPair
+       */
+      async function getCryptoKeys(id: Buffer): Promise<NullableCryptoKeyPair> {
+        let privateKey: CryptoKey | null = null;
+        let publicKey: CryptoKey | null = null;
+
+        const indexes = await crypto.keyStorage.keys();
+        for (const index of indexes) {
+          if (index.split("-")[2] === id.toString("hex")) {
+            const key = await crypto.keyStorage.getItem(index);
+            if (key.type === "private") {
+              privateKey = key;
+            } else if (key.type === "public") {
+              publicKey = key;
+            }
+          }
+        }
+
+        return { privateKey, publicKey };
+      }
+
+      it("import x509 certificate", async () => {
+        // generate RSA key using graphene
+        const id = generateRsaKeys();
+        const keys = await getCryptoKeys(id);
+
+        assert.ok(keys.privateKey, "Private key not found");
+        assert.ok(keys.publicKey, "Public key not found");
+
+        const signingAlg = {
+          name: "RSASSA-PKCS1-v1_5",
+          hash: "SHA-256",
+        };
+        const cert = await x509.X509CertificateGenerator.createSelfSigned({
+          serialNumber: "01",
+          name: "CN=Test",
+          notBefore: new Date("2020/01/01"),
+          notAfter: new Date("2020/01/02"),
+          signingAlgorithm: signingAlg,
+          keys: {
+            privateKey: keys.privateKey,
+            publicKey: keys.publicKey,
+          },
+        }, crypto);
+
+        const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
+        assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
+      });
+
+      it("import CSR", async () => {
+        // generate RSA key using graphene
+        const id = generateRsaKeys();
+        const keys = await getCryptoKeys(id);
+
+        assert.ok(keys.privateKey, "Private key not found");
+        assert.ok(keys.publicKey, "Public key not found");
+
+        const signingAlg = {
+          name: "RSASSA-PKCS1-v1_5",
+          hash: "SHA-256",
+        };
+        const cert = await x509.Pkcs10CertificateRequestGenerator.create({
+          name: "CN=Test",
+          signingAlgorithm: signingAlg,
+          keys: {
+            privateKey: keys.privateKey,
+            publicKey: keys.publicKey,
+          },
+        }, crypto);
+
+        const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
+        assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
+      });
+
+    });
   });
+

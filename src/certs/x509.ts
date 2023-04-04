@@ -54,17 +54,16 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     this.parse(array.buffer as ArrayBuffer);
 
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
-    this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
+    this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto) as CryptoKey;
 
-    const hashSPKI = this.publicKey.p11Object.id;
-
+    const id = await this.computeID();
     const certLabel = this.getName();
 
     const template = this.crypto.templateBuilder.build({
       action: "import",
       type: "x509",
       attributes: {
-        id: hashSPKI,
+        id,
         label: algorithm.label || certLabel,
         token: !!(algorithm.token),
       },
