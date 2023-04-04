@@ -1,8 +1,12 @@
+import * as assert from "node:assert";
 import { WebcryptoTest, vectors } from "@peculiar/webcrypto-test";
 import { ITestImportAction } from "@peculiar/webcrypto-test/build/types/types";
+import * as graphene from "graphene-pk11";
+import { Convert } from "pvtsutils";
+
 import { Crypto } from "../src";
 import * as config from "./config";
-import { isNSS, isSoftHSM } from "./helper";
+import { isNSS } from "./helper";
 
 function fixEcImport(item: ITestImportAction): void {
   if (item.name?.startsWith("JWK private key")) {
@@ -39,7 +43,6 @@ WebcryptoTest.check(config.crypto as Crypto, {
   AES128KW: true,
   AES192KW: true,
   AES256KW: true,
-  RSAOAEP: true,
   PBKDF2: true,
   HKDF: true,
   DESCBC: true,
@@ -53,106 +56,69 @@ WebcryptoTest.check(config.crypto as Crypto, {
   AES256CTR: true,
 });
 
-WebcryptoTest.add(config.crypto as Crypto, {
-  name: "RSA-OAEP-SHA1",
-  actions: {
-    encrypt: [
-      {
-        skip: isNSS("RSA-OAEP-SHA1 throws CKR_DEVICE_ERROR"),
-        name: "without label",
-        algorithm: {
-          name: "RSA-OAEP",
-        } as Algorithm,
-        data: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
-        encData: Buffer.from("MAKiRseL08AlR8Fmn1uVz/lDDdrDiRyI6KUW3mcE/0kxwW7/VizQJP+jiTSWyHexhQ+Sp0ugm6Doa/jahajuVf0aFkqJCcEKlSeMGvu4QdDc9tJzeNJVqSbPovFy60Criyjei4ganw2RQM2Umav//HfQEyqGTcyftMxXzkDDBQU=", "base64"),
-        key: {
-          publicKey: {
-            format: "jwk",
-            algorithm: { name: "RSA-OAEP", hash: "SHA-1" } as RsaHashedImportParams,
-            data: {
-              alg: "RSA-OAEP",
-              e: "AQAB",
-              ext: true,
-              key_ops: ["encrypt"],
-              kty: "RSA",
-              n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
-            },
-            extractable: true,
-            keyUsages: ["encrypt"],
-          },
-          privateKey: {
-            format: "jwk",
-            algorithm: { name: "RSA-OAEP", hash: "SHA-1" } as RsaHashedImportParams,
-            data: {
-              alg: "RSA-OAEP",
-              d: "AkeIWJywp9OfYsj0ECsKmhDVBw55ZL_yU-rbIrashQ_31P6gsc_0I-SVN1rd8Hz79OJ_rTY8ZRBZ4PIyFdPoyvuo5apHdAHH6riJKxDHWPxhE-ReNVEPSTiF1ry8DSe5zC7w9BLnH_QM8bkN4cOnvgqrg7EbrGWomAGJVvoRwOM",
-              dp: "pOolqL7HwnmWLn7GDX8zGkm0Q1IAj-ouBL7ZZbaTm3wETLtwu-dGsQheEdzP_mfL_CTiCAwGuQBcSItimD0DdQ",
-              dq: "FTSY59AnkgmB7TsErWNBE3xlVB_pMpE2xWyCBCz96gyDOUOFDz8vlSV-clhjawJeRd1n30nZOPSBtOHozhwZmQ",
-              e: "AQAB",
-              ext: true,
-              key_ops: ["decrypt"],
-              kty: "RSA",
-              n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
-              p: "6jFtmBJJQFIlQUXXZYIgvH70Y9a03oWKjNuF2veb5Zf09EtLNE86NpnIm463OnoHJPW0m8wHFXZZfcYVTIPR_w",
-              q: "0GttDMl1kIzSV2rNzGXpOS8tUqr5Lz0EtVZwIb9GJPMmJ0P3gZ801zEgZZ4-esU7cLUf-BSZEAmfnKA80G2jIw",
-              qi: "FByTxX4G2eXkk1xe0IuiEv7I5NS-CnFyp8iB4XLG0rabnfcIZFKpf__X0sNyVOAVo5-jJMuUYjCRTdaXNAWhkg",
-            },
-            extractable: true,
-            keyUsages: ["decrypt"],
-          },
-        },
-      },
-      {
-        skip: isSoftHSM("RSA-OAEP-SHA1 supports encryption without label only")
-          || isNSS("RSA-OAEP-SHA1 throws CKR_DEVICE_ERROR"),
-        name: "with label",
-        algorithm: {
-          name: "RSA-OAEP",
-          label: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
-        } as RsaOaepParams,
-        data: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
-        encData: Buffer.from("YLtmJDT8Y4Z2Y/VoGHUvhgs5kptNShFRUCcsKpUgI9A+YCYXL3K8fnEkbzO/Nkd4/0RsvfnmXkUJg3JdzPslwO1bOdlNsd2hRi0qi4cpxVmHDjuI3EHMb7FI3Pb9cF/kMFeEQzttpIDqh/UQJnoyh4d/RyZS1w37Vk0sNer7xw0=", "base64"),
-        key: {
-          publicKey: {
-            format: "jwk" as KeyFormat,
-            algorithm: { name: "RSA-OAEP", hash: "SHA-1" } as RsaHashedImportParams,
-            data: {
-              alg: "RSA-OAEP",
-              e: "AQAB",
-              ext: true,
-              key_ops: ["encrypt"],
-              kty: "RSA",
-              n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
-            },
-            extractable: true,
-            keyUsages: ["encrypt"],
-          },
-          privateKey: {
-            format: "jwk",
-            algorithm: { name: "RSA-OAEP", hash: "SHA-1" } as RsaHashedImportParams,
-            data: {
-              alg: "RSA-OAEP",
-              d: "AkeIWJywp9OfYsj0ECsKmhDVBw55ZL_yU-rbIrashQ_31P6gsc_0I-SVN1rd8Hz79OJ_rTY8ZRBZ4PIyFdPoyvuo5apHdAHH6riJKxDHWPxhE-ReNVEPSTiF1ry8DSe5zC7w9BLnH_QM8bkN4cOnvgqrg7EbrGWomAGJVvoRwOM",
-              dp: "pOolqL7HwnmWLn7GDX8zGkm0Q1IAj-ouBL7ZZbaTm3wETLtwu-dGsQheEdzP_mfL_CTiCAwGuQBcSItimD0DdQ",
-              dq: "FTSY59AnkgmB7TsErWNBE3xlVB_pMpE2xWyCBCz96gyDOUOFDz8vlSV-clhjawJeRd1n30nZOPSBtOHozhwZmQ",
-              e: "AQAB",
-              ext: true,
-              key_ops: ["decrypt"],
-              kty: "RSA",
-              n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
-              p: "6jFtmBJJQFIlQUXXZYIgvH70Y9a03oWKjNuF2veb5Zf09EtLNE86NpnIm463OnoHJPW0m8wHFXZZfcYVTIPR_w",
-              q: "0GttDMl1kIzSV2rNzGXpOS8tUqr5Lz0EtVZwIb9GJPMmJ0P3gZ801zEgZZ4-esU7cLUf-BSZEAmfnKA80G2jIw",
-              qi: "FByTxX4G2eXkk1xe0IuiEv7I5NS-CnFyp8iB4XLG0rabnfcIZFKpf__X0sNyVOAVo5-jJMuUYjCRTdaXNAWhkg",
-            },
-            extractable: true,
-            keyUsages: ["decrypt"],
-          },
-        },
-      },
-    ],
-  },
-});
+context("RSA-OAEP", () => {
 
+  const CKM_RSA_OAEP = graphene.MechanismEnum.RSA_X_509;
+
+  before(() => {
+    // @ts-ignore Change mechanism to skip CKM_RSA_X_509 usage
+    graphene.MechanismEnum.RSA_X_509 = graphene.MechanismEnum.VENDOR_DEFINED | graphene.MechanismEnum.RSA_X_509;
+  });
+
+  after(() => {
+    // @ts-ignore Restore mechanism
+    graphene.MechanismEnum.RSA_X_509 = CKM_RSA_OAEP;
+  });
+
+  const test = isNSS("RSA-OAEP-SHA1 throws CKR_DEVICE_ERROR") ? it.skip : it;
+
+  test("Use standard CKM_RSA_OAEP instead of CKM_RSA_X_509", async () => {
+    const data = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+    const encData = Buffer.from("MAKiRseL08AlR8Fmn1uVz/lDDdrDiRyI6KUW3mcE/0kxwW7/VizQJP+jiTSWyHexhQ+Sp0ugm6Doa/jahajuVf0aFkqJCcEKlSeMGvu4QdDc9tJzeNJVqSbPovFy60Criyjei4ganw2RQM2Umav//HfQEyqGTcyftMxXzkDDBQU=", "base64");
+
+    // import keys
+    const jwkPublicKey = {
+      alg: "RSA-OAEP",
+      e: "AQAB",
+      ext: true,
+      key_ops: ["encrypt"],
+      kty: "RSA",
+      n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
+    };
+    const jwkPrivateKey = {
+      alg: "RSA-OAEP",
+      d: "AkeIWJywp9OfYsj0ECsKmhDVBw55ZL_yU-rbIrashQ_31P6gsc_0I-SVN1rd8Hz79OJ_rTY8ZRBZ4PIyFdPoyvuo5apHdAHH6riJKxDHWPxhE-ReNVEPSTiF1ry8DSe5zC7w9BLnH_QM8bkN4cOnvgqrg7EbrGWomAGJVvoRwOM",
+      dp: "pOolqL7HwnmWLn7GDX8zGkm0Q1IAj-ouBL7ZZbaTm3wETLtwu-dGsQheEdzP_mfL_CTiCAwGuQBcSItimD0DdQ",
+      dq: "FTSY59AnkgmB7TsErWNBE3xlVB_pMpE2xWyCBCz96gyDOUOFDz8vlSV-clhjawJeRd1n30nZOPSBtOHozhwZmQ",
+      e: "AQAB",
+      ext: true,
+      key_ops: ["decrypt"],
+      kty: "RSA",
+      n: "vqpvdxuyZ6rKYnWTj_ZzDBFZAAAlpe5hpoiYHqa2j5kK7v8U5EaPY2bLib9m4B40j-n3FV9xUCGiplWdqMJJKT-4PjGO5E3S4N9kjFhu57noYT7z7302J0sJXeoFbXxlgE-4G55Oxlm52ID2_RJesP5nzcGTriQwoRbrJP5OEt0",
+      p: "6jFtmBJJQFIlQUXXZYIgvH70Y9a03oWKjNuF2veb5Zf09EtLNE86NpnIm463OnoHJPW0m8wHFXZZfcYVTIPR_w",
+      q: "0GttDMl1kIzSV2rNzGXpOS8tUqr5Lz0EtVZwIb9GJPMmJ0P3gZ801zEgZZ4-esU7cLUf-BSZEAmfnKA80G2jIw",
+      qi: "FByTxX4G2eXkk1xe0IuiEv7I5NS-CnFyp8iB4XLG0rabnfcIZFKpf__X0sNyVOAVo5-jJMuUYjCRTdaXNAWhkg",
+    };
+    const alg = { name: "RSA-OAEP", hash: "SHA-1" };
+    const keys = {
+      publicKey: await config.crypto.subtle.importKey("jwk", jwkPublicKey, alg, true, ["encrypt"]),
+      privateKey: await config.crypto.subtle.importKey("jwk", jwkPrivateKey, alg, true, ["decrypt"]),
+    };
+    const encKey = keys.publicKey;
+    const decKey = keys.privateKey;
+
+    // encrypt
+    const enc = await config.crypto.subtle.encrypt(alg, encKey, data);
+
+    // decrypt
+    let dec = await config.crypto.subtle.decrypt(alg, decKey, enc);
+    assert.equal(Convert.ToHex(dec), Convert.ToHex(data));
+
+    dec = await config.crypto.subtle.decrypt(alg, decKey, encData);
+    assert.equal(Convert.ToHex(dec), Convert.ToHex(data));
+  });
+
+});
 
 it("custom", async () => {
   const pem = [
@@ -160,7 +126,7 @@ it("custom", async () => {
     `-----BEGIN CERTIFICATE-----\nMIIFnDCCBISgAwIBAgIQXiLl2Y8He0o6EDaiiiW53DANBgkqhkiG9w0BAQsFADBs\nMQswCQYDVQQGEwJJVDEYMBYGA1UECgwPQXJ1YmFQRUMgUy5wLkEuMSEwHwYDVQQL\nDBhDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eUMxIDAeBgNVBAMMF0FydWJhUEVDIFMu\ncC5BLiBORyBDQSAzMB4XDTIwMDYwOTAwMDAwMFoXDTIzMDYwOTIzNTk1OVowdzEL\nMAkGA1UEBhMCSVQxFDASBgNVBAMMC0JFUlRJIE1JUktPMR8wHQYDVQQFExZUSU5J\nVC1CUlRNUks3NFAyOEIwMDZUMQ4wDAYDVQQqDAVNSVJLTzEOMAwGA1UEBAwFQkVS\nVEkxETAPBgNVBC4TCDIxNDAzODkxMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAuhcbGseJ6TGP1HW+ys8zuztEEfG/LjGgeg+C5hhE7CmIr2fSKXn5NTfV\nIqR9sRkAoaLt0asZHZPfqlYXqCfpnC35zn5oP9g1gDq0Cp7FDFuW16tdFRFjyaW5\nJMT4O82Cf861OswyYSHos9nAeqhWg/NeARI4aaGTtDH5Jd/ebhMr+n9YXNQsW0uH\nm2Q+YcV5QdiOAA+dHff2Edgcz+cRaryB9ma3EZmKnKQKCmuck1lkxRX64fV4Dc3e\nSHTm6Fcmfbe7OHl2fuvxk5H15cZdxSF9VM1mcaKxarTpR5zLkKxqQJKQ/YAkgeA1\n1pMlejJ45YM/xmAasZUV/STSf6XBbwIDAQABo4ICLTCCAikwDgYDVR0PAQH/BAQD\nAgZAMB0GA1UdDgQWBBTc/tOHIIBJZ+XYUm8PVfBZSu/S6jBPBgNVHSAESDBGMDwG\nCysGAQQBgegtAQEBMC0wKwYIKwYBBQUHAgEWH2h0dHBzOi8vY2EuYXJ1YmFwZWMu\naXQvY3BzLmh0bWwwBgYEK0wQBjBYBgNVHR8EUTBPME2gS6BJhkdodHRwOi8vY3Js\nLmFydWJhcGVjLml0L0FydWJhUEVDU3BBQ2VydGlmaWNhdGlvbkF1dGhvcml0eUMv\nTGF0ZXN0Q1JMLmNybDCBvwYIKwYBBQUHAQMEgbIwga8wCAYGBACORgEBMAsGBgQA\njkYBAwIBFDAIBgYEAI5GAQQwgYsGBgQAjkYBBTCBgDA+FjhodHRwczovL3d3dy5w\nZWMuaXQvcmVwb3NpdG9yeS9hcnViYXBlYy1xdWFsaWYtcGRzLWVuLnBkZhMCZW4w\nPhY4aHR0cHM6Ly93d3cucGVjLml0L3JlcG9zaXRvcnkvYXJ1YmFwZWMtcXVhbGlm\nLXBkcy1pdC5wZGYTAml0MB8GA1UdIwQYMBaAFPDARbG2NbTqXyn6gwNK3C/1s33o\nMGoGCCsGAQUFBwEBBF4wXDA1BggrBgEFBQcwAoYpaHR0cDovL2NhY2VydC5wZWMu\naXQvY2VydHMvQVBfTkdfQ0FfMy5jZXIwIwYIKwYBBQUHMAGGF2h0dHA6Ly9vY3Nw\nLmFydWJhcGVjLml0MA0GCSqGSIb3DQEBCwUAA4IBAQBa1xYtYVvHqIS076oNItYW\n8f/cUZmrtSuzz4DR9vgnh8Nnl4UZOjtNLa6EEWg8N2Qe6CQKRDkNre/Imm+BsLkT\nxzGcVTTUX04ERL9NLe/jave3s+SXrOz8Dcr9CSeswa6Ky+/8WBZeqDi9pJWTL0bD\nwLofLlWNP6iTvezMq/5WBAtOCnVMLvKcMzrFacoDrbBiOummNoJ2u0+/DXgtmmcx\nQNgW1j6lDRWanthAmyXtmqn49T6EWn11q27UbLSDfuQkRTHBgUpRmYtn8vw7PYMo\nC+2O5/OOiDrW2MGwLYZ7zwJA7r4TdLD0AltBl6h6HnDPMu23xngj2wi3pda2bC7I\n-----END CERTIFICATE-----`,
   ];
   for (const item of pem) {
-    const cert = await config.crypto.certStorage.importCert("pem", item, {name: "RSASSA-PKCS1-v1_5", hash: "SHA-256"}, ["verify"]);
+    const cert = await config.crypto.certStorage.importCert("pem", item, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, ["verify"]);
     await config.crypto.certStorage.setItem(cert);
   }
 });
