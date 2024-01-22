@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.4](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.3...v2.6.4) (2024-01-22)
+
+
+### Bug Fixes
+
+* eslint errors ([332c79f](https://github.com/PeculiarVentures/node-webcrypto-p11/commit/332c79f70d9ae2d1ba8703cb78f6b90e8ea25bc5))
+* TS definition error for v5.3 ([a87b1e4](https://github.com/PeculiarVentures/node-webcrypto-p11/commit/a87b1e4bcb9a37d5d96051585d7363173d48ebb1))
+
 ### [2.6.3](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.2...v2.6.3) (2023-04-05)
 
 
