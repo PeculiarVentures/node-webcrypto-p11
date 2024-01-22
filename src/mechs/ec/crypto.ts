@@ -200,7 +200,7 @@ export class EcCrypto implements types.IContainer {
     });
 
     // Set EC public key attributes
-    template.paramsEC = Buffer.from(namedCurve.raw);;
+    template.paramsEC = Buffer.from(namedCurve.raw);
     let pointEc: Buffer;
     if (namedCurve.name === "curve25519") {
       pointEc = utils.b64UrlDecode(jwk.x!);

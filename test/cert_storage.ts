@@ -11,346 +11,347 @@ const X509_REQUEST_RAW = Buffer.from("308202BC308201A402003078310B30090603550406
 const X509_PEM = PemConverter.fromBufferSource(X509_RAW, "CERTIFICATE");
 const X509_REQUEST_PEM = PemConverter.fromBufferSource(X509_REQUEST_RAW, "CERTIFICATE REQUEST");
 
-(isNSS("CertStorage. NSS is readonly")
+const ctx = isNSS("CertStorage. NSS is readonly")
   ? context.skip
-  : context)
-  ("Certificate storage", () => {
+  : context;
 
-    beforeEach(async () => {
-      await crypto.certStorage.clear();
-      await crypto.keyStorage.clear();
-    });
+ctx("Certificate storage", () => {
 
-    context("indexOf", () => {
-      [
-        { type: "x509", data: X509_RAW, format: "raw" },
-        { type: "request", data: X509_REQUEST_RAW, format: "raw" },
-        { type: "x509", data: X509_PEM, format: "pem" },
-        { type: "request", data: X509_REQUEST_PEM, format: "pem" },
-      ].forEach((params) => {
-        it(`${params.type} ${params.format}`, async () => {
-          const cert = await crypto.certStorage.importCert(params.format as CryptoCertificateFormat, params.data, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-          const index = await crypto.certStorage.setItem(cert);
-          const found = await crypto.certStorage.indexOf(cert);
-          assert.strictEqual(found, null);
-          const certByIndex = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-          assert.strictEqual(!!certByIndex, true, "Cannot get cert item from storage");
-        });
+  beforeEach(async () => {
+    await crypto.certStorage.clear();
+    await crypto.keyStorage.clear();
+  });
+
+  context("indexOf", () => {
+    [
+      { type: "x509", data: X509_RAW, format: "raw" },
+      { type: "request", data: X509_REQUEST_RAW, format: "raw" },
+      { type: "x509", data: X509_PEM, format: "pem" },
+      { type: "request", data: X509_REQUEST_PEM, format: "pem" },
+    ].forEach((params) => {
+      it(`${params.type} ${params.format}`, async () => {
+        const cert = await crypto.certStorage.importCert(params.format as CryptoCertificateFormat, params.data, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+        const index = await crypto.certStorage.setItem(cert);
+        const found = await crypto.certStorage.indexOf(cert);
+        assert.strictEqual(found, null);
+        const certByIndex = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+        assert.strictEqual(!!certByIndex, true, "Cannot get cert item from storage");
       });
-    });
-
-    context("importCert", () => {
-
-      it("x509", async () => {
-        const item = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]) as X509Certificate;
-        const json = item.toJSON();
-        assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
-        assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
-        assert.strictEqual(json.notBefore.toISOString(), "2007-06-29T15:13:05.000Z");
-        assert.strictEqual(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
-        assert.strictEqual(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
-        assert.strictEqual(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
-        assert.strictEqual(json.serialNumber, "00fedce3010fc948ff");
-        assert.strictEqual(json.type, "x509");
-
-        assert.strictEqual(item.label, "Certigna");
-        assert.strictEqual(item.token, false);
-        assert.strictEqual(item.sensitive, false);
-      });
-
-      it("x509 to token", async () => {
-        const item = await crypto.certStorage.importCert(
-          "raw",
-          X509_RAW,
-          {
-            name: "RSASSA-PKCS1-v1_5",
-            hash: "SHA-256",
-            token: true,
-            label: "custom",
-          } as RsaHashedImportParams,
-          ["verify"]) as X509Certificate;
-
-        assert.strictEqual(item.label, "custom");
-        assert.strictEqual(item.token, true);
-        assert.strictEqual(item.sensitive, false);
-      });
-
-      it("request", async () => {
-        const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
-        const json = item.toJSON();
-        assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
-        assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-384");
-        assert.strictEqual(json.subjectName, "C=US, CN=my-syte.net, L=Sun Antonio, O=My home organization, ST=Tesxas, OU=None");
-        assert.strictEqual(json.type, "request");
-
-        assert.strictEqual(item.label, "X509 Request");
-        assert.strictEqual(item.token, false);
-        assert.strictEqual(item.sensitive, false);
-      });
-
-      it("request to token", async () => {
-        const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384", token: true, label: "custom" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
-
-        assert.strictEqual(item.label, "custom");
-        assert.strictEqual(item.token, true);
-        assert.strictEqual(item.sensitive, false);
-      });
-
-      it("wrong type throws error", async () => {
-        await assert.rejects(crypto.certStorage.importCert("wrong" as any, X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384" } as RsaHashedImportParams, ["verify"]));
-      });
-
-    });
-
-    context("set/get item", () => {
-
-      it("x509", async () => {
-        const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        const index = await crypto.certStorage.setItem(x509);
-        const x5092 = await crypto.certStorage.getItem(index);
-        assert.strictEqual(!!x5092, true);
-      });
-
-      it("request", async () => {
-        const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        const index = await crypto.certStorage.setItem(request);
-        const request2 = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        assert.strictEqual(!!request2, true);
-      });
-
-      it("null", async () => {
-        const item = await crypto.certStorage.getItem("not exist");
-        assert.strictEqual(item, null);
-      });
-
-      it("set wrong object", async () => {
-        await assert.rejects(crypto.certStorage.setItem({} as any), Error);
-      });
-
-    });
-
-    context("get value", () => {
-
-      it("x509", async () => {
-        const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        const index = await crypto.certStorage.setItem(x509);
-        const raw = await crypto.certStorage.getValue(index);
-        assert.strictEqual(!!raw, true);
-        assert.strictEqual(raw!.byteLength > 0, true);
-      });
-
-      it("request", async () => {
-        const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-        const index = await crypto.certStorage.setItem(request);
-        const raw = await crypto.certStorage.getValue(index);
-        assert.strictEqual(!!raw, true);
-        assert.strictEqual(raw!.byteLength > 0, true);
-      });
-
-      it("null", async () => {
-        const item = await crypto.certStorage.getItem("not exist");
-        assert.strictEqual(item, null);
-      });
-
-      it("set wrong object", async () => {
-        await assert.rejects(crypto.certStorage.setItem({} as any), Error);
-      });
-
-    });
-
-    it("removeItem", async () => {
-      let indexes = await crypto.certStorage.keys();
-      assert.strictEqual(indexes.length, 0);
-
-      const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-      await crypto.certStorage.setItem(request);
-
-      const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-      const x509Index = await crypto.certStorage.setItem(x509);
-
-      indexes = await crypto.certStorage.keys();
-      assert.strictEqual(indexes.length, 2);
-
-      await crypto.certStorage.removeItem(x509Index);
-
-      indexes = await crypto.certStorage.keys();
-      assert.strictEqual(indexes.length, 1);
-    });
-
-    it("exportCert", async () => {
-      const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
-      const raw = await crypto.certStorage.exportCert("raw", x509);
-      assert.strictEqual(Buffer.from(raw).equals(X509_RAW), true);
-    });
-
-    it("test", async () => {
-      const alg = {
-        name: "RSASSA-PKCS1-v1_5",
-        hash: "SHA-256",
-        publicExponent: new Uint8Array([1, 0, 1]),
-        modulusLength: 2048
-      };
-
-      const keys = await crypto.subtle.generateKey(
-        {
-          ...alg,
-          token: true,
-        } as any,
-        false,
-        [
-          "sign",
-          "verify"
-        ]);
-      const keyIndex = await crypto.keyStorage.setItem(keys.privateKey);
-
-      const cert = await x509.X509CertificateGenerator.createSelfSigned(
-        {
-          serialNumber: "01",
-          name: "CN=Test",
-          notBefore: new Date("2020/01/01"),
-          notAfter: new Date("2020/01/02"),
-          signingAlgorithm: alg,
-          keys,
-          extensions: [
-            new x509.BasicConstraintsExtension(true, 2, true),
-            new x509.ExtendedKeyUsageExtension(
-              ["1.2.3.4.5.6.7", "2.3.4.5.6.7.8"],
-              true
-            ),
-            new x509.KeyUsagesExtension(
-              x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign,
-              true
-            )
-          ]
-        },
-        crypto as globalThis.Crypto
-      );
-
-      const fortifyCert = await crypto.certStorage.importCert(
-        "raw",
-        cert.rawData,
-        {
-          ...alg,
-          token: true,
-        },
-        ["verify"]
-      );
-      const certIndex = await crypto.certStorage.setItem(fortifyCert);
-
-      assert.strictEqual(keyIndex.split("-")[2], certIndex.split("-")[2]);
-    });
-
-    context("issue #75", () => {
-
-      /**
-       * Generate RSA key pair using graphene
-       * @returns id of generated key
-       */
-      function generateRsaKeys(): Buffer {
-        const id = crypto.getRandomValues(Buffer.alloc(10));
-
-        crypto.session.generateKeyPair(graphene.KeyGenMechanism.RSA, {
-          keyType: graphene.KeyType.RSA,
-          id,
-          modulusBits: 2048,
-          publicExponent: Buffer.from([1, 0, 1]),
-          token: true,
-          verify: true,
-          encrypt: true,
-          wrap: true
-        }, {
-          keyType: graphene.KeyType.RSA,
-          id,
-          token: true,
-          sign: true,
-          decrypt: true,
-          unwrap: true
-        });
-        return id;
-      }
-
-      interface NullableCryptoKeyPair {
-        privateKey: CryptoKey | null;
-        publicKey: CryptoKey | null;
-      }
-
-      /**
-       * Get CryptoKeyPair using node-webcrypto-p11
-       * @param id id of key pair
-       * @returns CryptoKeyPair
-       */
-      async function getCryptoKeys(id: Buffer): Promise<NullableCryptoKeyPair> {
-        let privateKey: CryptoKey | null = null;
-        let publicKey: CryptoKey | null = null;
-
-        const indexes = await crypto.keyStorage.keys();
-        for (const index of indexes) {
-          if (index.split("-")[2] === id.toString("hex")) {
-            const key = await crypto.keyStorage.getItem(index);
-            if (key.type === "private") {
-              privateKey = key;
-            } else if (key.type === "public") {
-              publicKey = key;
-            }
-          }
-        }
-
-        return { privateKey, publicKey };
-      }
-
-      it("import x509 certificate", async () => {
-        // generate RSA key using graphene
-        const id = generateRsaKeys();
-        const keys = await getCryptoKeys(id);
-
-        assert.ok(keys.privateKey, "Private key not found");
-        assert.ok(keys.publicKey, "Public key not found");
-
-        const signingAlg = {
-          name: "RSASSA-PKCS1-v1_5",
-          hash: "SHA-256",
-        };
-        const cert = await x509.X509CertificateGenerator.createSelfSigned({
-          serialNumber: "01",
-          name: "CN=Test",
-          notBefore: new Date("2020/01/01"),
-          notAfter: new Date("2020/01/02"),
-          signingAlgorithm: signingAlg,
-          keys: {
-            privateKey: keys.privateKey,
-            publicKey: keys.publicKey,
-          },
-        }, crypto);
-
-        const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
-        assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
-      });
-
-      it("import CSR", async () => {
-        // generate RSA key using graphene
-        const id = generateRsaKeys();
-        const keys = await getCryptoKeys(id);
-
-        assert.ok(keys.privateKey, "Private key not found");
-        assert.ok(keys.publicKey, "Public key not found");
-
-        const signingAlg = {
-          name: "RSASSA-PKCS1-v1_5",
-          hash: "SHA-256",
-        };
-        const cert = await x509.Pkcs10CertificateRequestGenerator.create({
-          name: "CN=Test",
-          signingAlgorithm: signingAlg,
-          keys: {
-            privateKey: keys.privateKey,
-            publicKey: keys.publicKey,
-          },
-        }, crypto);
-
-        const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
-        assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
-      });
-
     });
   });
+
+  context("importCert", () => {
+
+    it("x509", async () => {
+      const item = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]) as X509Certificate;
+      const json = item.toJSON();
+      assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
+      assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-256");
+      assert.strictEqual(json.notBefore.toISOString(), "2007-06-29T15:13:05.000Z");
+      assert.strictEqual(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
+      assert.strictEqual(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
+      assert.strictEqual(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
+      assert.strictEqual(json.serialNumber, "00fedce3010fc948ff");
+      assert.strictEqual(json.type, "x509");
+
+      assert.strictEqual(item.label, "Certigna");
+      assert.strictEqual(item.token, false);
+      assert.strictEqual(item.sensitive, false);
+    });
+
+    it("x509 to token", async () => {
+      const item = await crypto.certStorage.importCert(
+        "raw",
+        X509_RAW,
+        {
+          name: "RSASSA-PKCS1-v1_5",
+          hash: "SHA-256",
+          token: true,
+          label: "custom",
+        } as RsaHashedImportParams,
+        ["verify"]) as X509Certificate;
+
+      assert.strictEqual(item.label, "custom");
+      assert.strictEqual(item.token, true);
+      assert.strictEqual(item.sensitive, false);
+    });
+
+    it("request", async () => {
+      const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
+      const json = item.toJSON();
+      assert.strictEqual(json.publicKey.algorithm.name, "RSASSA-PKCS1-v1_5");
+      assert.strictEqual((json.publicKey.algorithm as Pkcs11RsaHashedKeyAlgorithm).hash.name, "SHA-384");
+      assert.strictEqual(json.subjectName, "C=US, CN=my-syte.net, L=Sun Antonio, O=My home organization, ST=Tesxas, OU=None");
+      assert.strictEqual(json.type, "request");
+
+      assert.strictEqual(item.label, "X509 Request");
+      assert.strictEqual(item.token, false);
+      assert.strictEqual(item.sensitive, false);
+    });
+
+    it("request to token", async () => {
+      const item = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384", token: true, label: "custom" } as RsaHashedImportParams, ["verify"]) as X509CertificateRequest;
+
+      assert.strictEqual(item.label, "custom");
+      assert.strictEqual(item.token, true);
+      assert.strictEqual(item.sensitive, false);
+    });
+
+    it("wrong type throws error", async () => {
+      await assert.rejects(crypto.certStorage.importCert("wrong" as any, X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-384" } as RsaHashedImportParams, ["verify"]));
+    });
+
+  });
+
+  context("set/get item", () => {
+
+    it("x509", async () => {
+      const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+      const index = await crypto.certStorage.setItem(x509);
+      const x5092 = await crypto.certStorage.getItem(index);
+      assert.strictEqual(!!x5092, true);
+    });
+
+    it("request", async () => {
+      const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+      const index = await crypto.certStorage.setItem(request);
+      const request2 = await crypto.certStorage.getItem(index, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+      assert.strictEqual(!!request2, true);
+    });
+
+    it("null", async () => {
+      const item = await crypto.certStorage.getItem("not exist");
+      assert.strictEqual(item, null);
+    });
+
+    it("set wrong object", async () => {
+      await assert.rejects(crypto.certStorage.setItem({} as any), Error);
+    });
+
+  });
+
+  context("get value", () => {
+
+    it("x509", async () => {
+      const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+      const index = await crypto.certStorage.setItem(x509);
+      const raw = await crypto.certStorage.getValue(index);
+      assert.strictEqual(!!raw, true);
+      assert.strictEqual(raw!.byteLength > 0, true);
+    });
+
+    it("request", async () => {
+      const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+      const index = await crypto.certStorage.setItem(request);
+      const raw = await crypto.certStorage.getValue(index);
+      assert.strictEqual(!!raw, true);
+      assert.strictEqual(raw!.byteLength > 0, true);
+    });
+
+    it("null", async () => {
+      const item = await crypto.certStorage.getItem("not exist");
+      assert.strictEqual(item, null);
+    });
+
+    it("set wrong object", async () => {
+      await assert.rejects(crypto.certStorage.setItem({} as any), Error);
+    });
+
+  });
+
+  it("removeItem", async () => {
+    let indexes = await crypto.certStorage.keys();
+    assert.strictEqual(indexes.length, 0);
+
+    const request = await crypto.certStorage.importCert("raw", X509_REQUEST_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+    await crypto.certStorage.setItem(request);
+
+    const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+    const x509Index = await crypto.certStorage.setItem(x509);
+
+    indexes = await crypto.certStorage.keys();
+    assert.strictEqual(indexes.length, 2);
+
+    await crypto.certStorage.removeItem(x509Index);
+
+    indexes = await crypto.certStorage.keys();
+    assert.strictEqual(indexes.length, 1);
+  });
+
+  it("exportCert", async () => {
+    const x509 = await crypto.certStorage.importCert("raw", X509_RAW, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" } as RsaHashedImportParams, ["verify"]);
+    const raw = await crypto.certStorage.exportCert("raw", x509);
+    assert.strictEqual(Buffer.from(raw).equals(X509_RAW), true);
+  });
+
+  it("test", async () => {
+    const alg = {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256",
+      publicExponent: new Uint8Array([1, 0, 1]),
+      modulusLength: 2048
+    };
+
+    const keys = await crypto.subtle.generateKey(
+      {
+        ...alg,
+        token: true,
+      } as any,
+      false,
+      [
+        "sign",
+        "verify"
+      ]);
+    const keyIndex = await crypto.keyStorage.setItem(keys.privateKey);
+
+    const cert = await x509.X509CertificateGenerator.createSelfSigned(
+      {
+        serialNumber: "01",
+        name: "CN=Test",
+        notBefore: new Date("2020/01/01"),
+        notAfter: new Date("2020/01/02"),
+        signingAlgorithm: alg,
+        keys,
+        extensions: [
+          new x509.BasicConstraintsExtension(true, 2, true),
+          new x509.ExtendedKeyUsageExtension(
+            ["1.2.3.4.5.6.7", "2.3.4.5.6.7.8"],
+            true
+          ),
+          new x509.KeyUsagesExtension(
+            x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign,
+            true
+          )
+        ]
+      },
+      crypto as globalThis.Crypto
+    );
+
+    const fortifyCert = await crypto.certStorage.importCert(
+      "raw",
+      cert.rawData,
+      {
+        ...alg,
+        token: true,
+      },
+      ["verify"]
+    );
+    const certIndex = await crypto.certStorage.setItem(fortifyCert);
+
+    assert.strictEqual(keyIndex.split("-")[2], certIndex.split("-")[2]);
+  });
+
+  context("issue #75", () => {
+
+    /**
+     * Generate RSA key pair using graphene
+     * @returns id of generated key
+     */
+    function generateRsaKeys(): Buffer {
+      const id = crypto.getRandomValues(Buffer.alloc(10));
+
+      crypto.session.generateKeyPair(graphene.KeyGenMechanism.RSA, {
+        keyType: graphene.KeyType.RSA,
+        id,
+        modulusBits: 2048,
+        publicExponent: Buffer.from([1, 0, 1]),
+        token: true,
+        verify: true,
+        encrypt: true,
+        wrap: true
+      }, {
+        keyType: graphene.KeyType.RSA,
+        id,
+        token: true,
+        sign: true,
+        decrypt: true,
+        unwrap: true
+      });
+      return id;
+    }
+
+    interface NullableCryptoKeyPair {
+      privateKey: CryptoKey | null;
+      publicKey: CryptoKey | null;
+    }
+
+    /**
+     * Get CryptoKeyPair using node-webcrypto-p11
+     * @param id id of key pair
+     * @returns CryptoKeyPair
+     */
+    async function getCryptoKeys(id: Buffer): Promise<NullableCryptoKeyPair> {
+      let privateKey: CryptoKey | null = null;
+      let publicKey: CryptoKey | null = null;
+
+      const indexes = await crypto.keyStorage.keys();
+      for (const index of indexes) {
+        if (index.split("-")[2] === id.toString("hex")) {
+          const key = await crypto.keyStorage.getItem(index);
+          if (key.type === "private") {
+            privateKey = key;
+          } else if (key.type === "public") {
+            publicKey = key;
+          }
+        }
+      }
+
+      return { privateKey, publicKey };
+    }
+
+    it("import x509 certificate", async () => {
+      // generate RSA key using graphene
+      const id = generateRsaKeys();
+      const keys = await getCryptoKeys(id);
+
+      assert.ok(keys.privateKey, "Private key not found");
+      assert.ok(keys.publicKey, "Public key not found");
+
+      const signingAlg = {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256",
+      };
+      const cert = await x509.X509CertificateGenerator.createSelfSigned({
+        serialNumber: "01",
+        name: "CN=Test",
+        notBefore: new Date("2020/01/01"),
+        notAfter: new Date("2020/01/02"),
+        signingAlgorithm: signingAlg,
+        keys: {
+          privateKey: keys.privateKey,
+          publicKey: keys.publicKey,
+        },
+      }, crypto);
+
+      const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
+      assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
+    });
+
+    it("import CSR", async () => {
+      // generate RSA key using graphene
+      const id = generateRsaKeys();
+      const keys = await getCryptoKeys(id);
+
+      assert.ok(keys.privateKey, "Private key not found");
+      assert.ok(keys.publicKey, "Public key not found");
+
+      const signingAlg = {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256",
+      };
+      const cert = await x509.Pkcs10CertificateRequestGenerator.create({
+        name: "CN=Test",
+        signingAlgorithm: signingAlg,
+        keys: {
+          privateKey: keys.privateKey,
+          publicKey: keys.publicKey,
+        },
+      }, crypto);
+
+      const p11Cert = await crypto.certStorage.importCert("raw", cert.rawData, signingAlg, ["verify"]);
+      assert.strictEqual(p11Cert.id.split("-")[2], id.toString("hex"));
+    });
+
+  });
+});
 

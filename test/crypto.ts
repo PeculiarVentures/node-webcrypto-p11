@@ -33,7 +33,7 @@ context("Crypto", () => {
   context("custom template builder", () => {
     class CustomTemplateBuilder implements types.ITemplateBuilder {
 
-      build(params: types.ITemplateBuildParameters): types.ITemplate {
+      build(_params: types.ITemplateBuildParameters): types.ITemplate {
         return {
           label: "CustomTemplate",
           token: false,
@@ -46,7 +46,7 @@ context("Crypto", () => {
           wrap: false,
           unwrap: false,
           derive: false,
-        }
+        };
       }
 
     }
@@ -65,6 +65,6 @@ context("Crypto", () => {
       assert.strictEqual((key.algorithm as Pkcs11AesKeyAlgorithm).label, "CustomTemplate");
       assert.deepStrictEqual(key.usages, ["encrypt"]);
     });
-  })
+  });
 
 });

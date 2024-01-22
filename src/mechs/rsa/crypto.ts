@@ -108,13 +108,14 @@ export class RsaCrypto implements types.IContainer {
 
   public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
-      case "jwk":
+      case "jwk": {
         const jwk: any = keyData;
         if (jwk.d) {
           return this.importJwkPrivateKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
         } else {
           return this.importJwkPublicKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
         }
+      }
       case "spki": {
         const raw = new Uint8Array(keyData as Uint8Array).buffer as ArrayBuffer;
         const jwk = this.spki2jwk(raw);
@@ -163,9 +164,10 @@ export class RsaCrypto implements types.IContainer {
 
   protected jwkAlgName(algorithm: RsaHashedKeyAlgorithm): string {
     switch (algorithm.name.toUpperCase()) {
-      case "RSA-OAEP":
+      case "RSA-OAEP": {
         const mdSize = /(\d+)$/.exec(algorithm.hash.name)![1];
         return `RSA-OAEP${mdSize !== "1" ? `-${mdSize}` : ""}`;
+      }
       case "RSASSA-PKCS1-V1_5":
         return `RS${/(\d+)$/.exec(algorithm.hash.name)![1]}`;
       case "RSA-PSS":

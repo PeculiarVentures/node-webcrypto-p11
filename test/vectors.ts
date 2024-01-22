@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as assert from "node:assert";
 import { WebcryptoTest, vectors } from "@peculiar/webcrypto-test";
 import { ITestImportAction } from "@peculiar/webcrypto-test/build/types/types";

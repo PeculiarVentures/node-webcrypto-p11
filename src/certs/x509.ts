@@ -39,7 +39,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   public get subjectName(): string {
     return this.getData().subject;
   }
-  public override type: "x509" = "x509";
+  public override type = "x509" as const;
 
   public get value(): ArrayBuffer {
     Pkcs11Object.assertStorage(this.p11Object);
@@ -53,6 +53,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
     const array = new Uint8Array(data);
     this.parse(array.buffer as ArrayBuffer);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
     this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto) as CryptoKey;
 

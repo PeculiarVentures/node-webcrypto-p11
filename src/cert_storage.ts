@@ -16,7 +16,7 @@ export interface IGetValue {
    * Returns item blob
    * @param key Object identifier
    */
-  getValue(key: string): Promise<ArrayBuffer | null>
+  getValue(key: string): Promise<ArrayBuffer | null>;
 }
 export class CertificateStorage implements core.CryptoCertificateStorage, IGetValue {
 
@@ -104,6 +104,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
       }
       return x509request;
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       return null;
     }
@@ -131,7 +132,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
         attributes: {
           token: true,
         }
-      })
+      });
       const obj = this.crypto.session.copy(data.p11Object, template);
       return certs.CryptoCertificate.getID(obj.toType<any>());
     } else {

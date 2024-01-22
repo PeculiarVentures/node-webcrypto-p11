@@ -22,7 +22,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   public get subjectName(): string {
     return this.getData()?.subject;
   }
-  public override type: "request" = "request";
+  public override type = "request" as const;
   declare public p11Object?: graphene.Data;
   public csr?: x509.Pkcs10CertificateRequest;
 
@@ -42,6 +42,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
     const array = new Uint8Array(data).buffer as ArrayBuffer;
     this.parse(array);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { token, label, sensitive, ...keyAlg } = algorithm; // remove custom attrs for key
     this.publicKey = await this.getData().publicKey.export(keyAlg, keyUsages, this.crypto as globalThis.Crypto) as CryptoKey;
 

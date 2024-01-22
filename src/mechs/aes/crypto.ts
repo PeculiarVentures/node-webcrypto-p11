@@ -68,7 +68,7 @@ export class AesCrypto implements types.IContainer {
   public async exportKey(format: string, key: AesCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     const template = key.key.getAttribute({ value: null, valueLen: null });
     switch (format.toLowerCase()) {
-      case "jwk":
+      case "jwk": {
         const aes: string = /AES-(\w+)/.exec(key.algorithm.name!)![1];
         const jwk: JsonWebKey = {
           kty: "oct",
@@ -78,6 +78,7 @@ export class AesCrypto implements types.IContainer {
           key_ops: key.usages,
         };
         return jwk;
+      }
       case "raw":
         return new Uint8Array(template.value!).buffer;
         break;
@@ -88,28 +89,22 @@ export class AesCrypto implements types.IContainer {
 
   public async importKey(format: string, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11KeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     // get key value
-    let value: ArrayBuffer;
+    const formatLower = format.toLowerCase();
+    if (formatLower !== "jwk" && formatLower !== "raw") {
+      throw new core.OperationError("format: Must be 'jwk' or 'raw'");
+    }
 
-    switch (format.toLowerCase()) {
-      case "jwk":
-        const jwk = keyData as JsonWebKey;
-        if (!jwk.k) {
-          throw new core.OperationError("jwk.k: Cannot get required property");
-        }
-        keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
-      case "raw":
-        value = keyData as ArrayBuffer;
-        switch (value.byteLength) {
-          case 16:
-          case 24:
-          case 32:
-            break;
-          default:
-            throw new core.OperationError("keyData: Is wrong key length");
-        }
-        break;
-      default:
-        throw new core.OperationError("format: Must be 'jwk' or 'raw'");
+    if (formatLower === "jwk") {
+      const jwk = keyData as JsonWebKey;
+      if (!jwk.k) {
+        throw new core.OperationError("jwk.k: Cannot get required property");
+      }
+      keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
+    }
+
+    const value = keyData as ArrayBuffer;
+    if (value.byteLength !== 16 && value.byteLength !== 24 && value.byteLength !== 32) {
+      throw new core.OperationError("keyData: Is wrong key length");
     }
 
     // prepare key algorithm

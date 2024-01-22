@@ -81,15 +81,19 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     let value: ArrayBuffer;
 
     switch (format.toLowerCase()) {
-      case "jwk":
+      case "jwk": {
         const jwk = keyData as JsonWebKey;
         if (!jwk.k) {
           throw new core.OperationError("jwk.k: Cannot get required property");
         }
         keyData = pvtsutils.Convert.FromBase64Url(jwk.k);
-      case "raw":
+        value = keyData;
+        break;
+      }
+      case "raw": {
         value = keyData as ArrayBuffer;
         break;
+      }
       default:
         throw new core.OperationError("format: Must be 'jwk' or 'raw'");
     }
@@ -121,7 +125,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
   public async onExportKey(format: KeyFormat, key: HmacCryptoKey): Promise<JsonWebKey | ArrayBuffer> {
     const template = key.key.getAttribute({ value: null });
     switch (format.toLowerCase()) {
-      case "jwk":
+      case "jwk": {
         const jwk: JsonWebKey = {
           kty: "oct",
           k: pvtsutils.Convert.ToBase64Url(template.value!),
@@ -130,6 +134,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
           key_ops: key.usages,
         };
         return jwk;
+      }
       case "raw":
         return new Uint8Array(template.value!).buffer;
         break;

@@ -97,7 +97,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     }
   }
 
-  protected wc2pk11(alg: EcdsaParams, keyAlg: KeyAlgorithm): { name: string, params: null; } {
+  protected wc2pk11(alg: EcdsaParams, _keyAlg: KeyAlgorithm): { name: string, params: null; } {
     let algName: string;
     const hashAlg = (alg.hash as Algorithm).name.toUpperCase();
     switch (hashAlg) {
