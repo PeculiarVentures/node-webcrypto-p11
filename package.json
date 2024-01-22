@@ -10,13 +10,16 @@
     "README.md",
     "LICENSE"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "test": "mocha",
     "test:softhsm": "mocha",
     "test:nss": "PV_CRYPTO=nss mocha",
     "build": "rollup -c",
-    "lint": "tslint src/**/*.ts test/**/*.ts",
-    "lint:fix": "tslint --fix src/**/*.ts test/**/*.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint --fix . --ext .ts",
     "prepub": "npm run lint && npm run build",
     "pub": "npm version patch && git push --follow-tags",
     "coverage": "nyc npm test",
@@ -27,15 +30,15 @@
     "url": "https://github.com/PeculiarVentures/node-webcrypto-p11.git"
   },
   "dependencies": {
-    "@peculiar/asn1-schema": "^2.3.6",
-    "@peculiar/asn1-x509": "^2.3.6",
+    "@peculiar/asn1-schema": "^2.3.8",
+    "@peculiar/asn1-x509": "^2.3.8",
     "@peculiar/json-schema": "^1.1.12",
-    "@peculiar/x509": "^1.9.3",
-    "graphene-pk11": "^2.3.2",
-    "pkcs11js": "^1.3.1",
-    "pvtsutils": "^1.3.2",
-    "tslib": "^2.5.0",
-    "webcrypto-core": "^1.7.7"
+    "@peculiar/x509": "^1.9.6",
+    "graphene-pk11": "^2.3.4",
+    "pkcs11js": "^2.0.1",
+    "pvtsutils": "^1.3.5",
+    "tslib": "^2.6.2",
+    "webcrypto-core": "^1.7.8"
   },
   "keywords": [
     "crypto",
@@ -58,16 +61,18 @@
   "homepage": "https://github.com/PeculiarVentures/node-webcrypto-p11#readme",
   "devDependencies": {
     "@peculiar/webcrypto-test": "^1.0.7",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^18.15.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.5",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "eslint": "^8.56.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "rollup": "^3.20.2",
-    "rollup-plugin-dts": "^5.3.0",
-    "rollup-plugin-typescript2": "^0.34.1",
-    "ts-node": "^10.9.1",
-    "tslint": "^6.1.3",
-    "typescript": "^5.0.3"
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   },
   "funding": {
     "type": "github",
