@@ -45,9 +45,11 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     // #endregion
   }
 
-  public override async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair>;
-  public override async generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
-  public override async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKeyPair | CryptoKey> {
+  public override async generateKey(algorithm: "Ed25519", extractable: boolean, keyUsages: ReadonlyArray<"sign" | "verify">): Promise<CryptoKeyPair>;
+  public override async generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<globalThis.CryptoKeyPair>;
+  public override async generateKey(algorithm: AesKeyGenParams | HmacKeyGenParams | Pbkdf2Params, extractable: boolean, keyUsages: KeyUsage[]): Promise<globalThis.CryptoKey>;
+  public override async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<globalThis.CryptoKeyPair | globalThis.CryptoKey>;
+  public override async generateKey(algorithm: AlgorithmIdentifier, extractable: boolean, keyUsages: Iterable<KeyUsage>): Promise<globalThis.CryptoKeyPair | globalThis.CryptoKey> {
     const keys = await super.generateKey(algorithm, extractable, keyUsages) as CryptoKey;
 
     // Fix ID for generated key pair. It must be hash of public key raw
