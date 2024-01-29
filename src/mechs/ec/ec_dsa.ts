@@ -116,6 +116,9 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
       case "SHA-512":
         algName = "ECDSA_SHA512";
         break;
+      case "NO-HASH":
+        algName = "ECDSA";
+        break;
       default:
         throw new core.OperationError(`Cannot create PKCS11 mechanism from algorithm '${hashAlg}'`);
     }
