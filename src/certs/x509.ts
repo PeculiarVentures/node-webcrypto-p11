@@ -128,7 +128,7 @@ export class X509Certificate extends CryptoCertificate implements core.CryptoX50
   protected parse(data: ArrayBuffer): void {
     try {
       this.x509 = new x509.X509Certificate(data);
-    } catch (e) {
+    } catch {
       throw new ParserError("Cannot parse X509 certificate");
     }
   }

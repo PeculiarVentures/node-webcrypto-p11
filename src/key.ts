@@ -120,7 +120,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     try {
       // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
       this.extractable = key.extractable;
-    } catch (e) {
+    } catch {
       this.extractable = false;
     }
     this.usages = [];
@@ -160,7 +160,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     try {
       // Yubico throws CKR_ATTRIBUTE_TYPE_INVALID
       this.extractable = key.extractable;
-    } catch (e) {
+    } catch {
       this.extractable = false;
     }
     if (key.sign) {

@@ -11,7 +11,7 @@ export const config = process.env.PV_CRYPTO === "nss" ?
   }
   :
   {
-    library: "/usr/local/lib/softhsm/libsofthsm2.so",
+    library: os.platform() === "darwin" ? "/usr/local/lib/softhsm/libsofthsm2.so" : "/usr/lib/softhsm/libsofthsm2.so",
     name: "SoftHSMv2",
     slot: 0,
     readWrite: true,
