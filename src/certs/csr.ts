@@ -108,7 +108,7 @@ export class X509CertificateRequest extends CryptoCertificate implements core.Cr
   protected parse(data: ArrayBuffer): void {
     try {
       this.csr = new x509.Pkcs10CertificateRequest(data);
-    } catch (e) {
+    } catch {
       throw new ParserError("Cannot parse PKCS10 certificate request");
     }
   }
