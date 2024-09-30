@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.6](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.5...v2.6.6) (2024-09-30)
+
+
+### Bug Fixes
+
+* Handle error when exporting keys in `computeID` method ([f7bfc7e](https://github.com/PeculiarVentures/node-webcrypto-p11/commit/f7bfc7ea2b18100ae56d092e5b7eb761d859e86d))
+
 ### [2.6.5](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.4...v2.6.5) (2024-08-29)
 
 ### [2.6.4](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.3...v2.6.4) (2024-01-22)
