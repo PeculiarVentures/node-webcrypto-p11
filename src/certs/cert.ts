@@ -86,7 +86,13 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
     const indexes = await this.crypto.keyStorage.keys();
     if (!indexes.some(o => o.split("-")[2] === id.toString("hex"))) {
       // If the key is not found, look for it on the token
-      const certKeyRaw = await this.crypto.subtle.exportKey("spki", this.publicKey);
+      let certKeyRaw: ArrayBuffer;
+      try {
+        certKeyRaw = await this.crypto.subtle.exportKey("spki", this.publicKey);
+      } catch {
+        return id;
+      }
+
       for (const index of indexes) {
         const [type] = index.split("-");
         if (type !== "public") {
@@ -94,13 +100,21 @@ export abstract class CryptoCertificate extends Pkcs11Object implements Pkcs11Cr
         }
 
         // Export the key and compare it to the public key
-        const key = await this.crypto.keyStorage.getItem(index);
-        const keyRaw = await this.crypto.subtle.exportKey("spki", key);
-        if (pvtsutils.BufferSourceConverter.isEqual(keyRaw, certKeyRaw)) {
-          // found
-          id = key.p11Object.id;
-          break;
+        let keyRaw: ArrayBuffer;
+        try {
+          const key = await this.crypto.keyStorage.getItem(index);
+          keyRaw = await this.crypto.subtle.exportKey("spki", key);
+
+          if (pvtsutils.BufferSourceConverter.isEqual(keyRaw, certKeyRaw)) {
+            // found
+            id = key.p11Object.id;
+            break;
+          }
+        } catch {
+          // Skip the key if it cannot be exported
+          continue;
         }
+
       }
     }
 
