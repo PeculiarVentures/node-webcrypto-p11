@@ -170,7 +170,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
 
     const decipher = this.container.session.createDecipher(mechanism, key.key);
     try {
-      await alwaysAuthenticate(key, this.container);
+      await alwaysAuthenticate(key, this.container, "decrypt");
     } catch (e) {
       try {
         // call C_SignFinal to close the active state
@@ -217,7 +217,7 @@ export class RsaOaepProvider extends core.RsaOaepProvider implements types.ICont
     const decipher = this.container.session.createDecipher(graphene.MechanismEnum.RSA_X_509, key.key);
 
     try {
-      await alwaysAuthenticate(key, this.container);
+      await alwaysAuthenticate(key, this.container, "decrypt");
     } catch (e) {
       try {
         // call C_SignFinal to close the active state
