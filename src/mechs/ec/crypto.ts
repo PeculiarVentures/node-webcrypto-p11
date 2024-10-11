@@ -156,6 +156,9 @@ export class EcCrypto implements types.IContainer {
   }
 
   public prepareData(hashAlgorithm: string, data: Buffer): Buffer {
+    if (hashAlgorithm === "NO-HASH") {
+      return utils.prepareData(data)
+    } else {
     // use nodejs crypto for digest calculating
     return utils.digest(hashAlgorithm.replace("-", ""), data);
   }
