@@ -166,19 +166,26 @@ export function getProviderInfo(slot: graphene.Slot): ProviderInfo {
   return provider;
 }
 
+export type OperationType = "decrypt" | "sign";
+
 /**
  * Checks and calls `onAlwaysAuthenticate` method
  * @param key Crypto key
  * @param container Crypto container
+ * @param operation Operation type
  * @throws Throws CryptoError if `alwaysAuthenticate` is enabled for the key and `onAlwaysAuthenticate` method of the container is undefined
  */
-export async function alwaysAuthenticate(key: CryptoKey, container: ISessionContainer): Promise<void> {
+export async function alwaysAuthenticate(
+  key: CryptoKey,
+  container: ISessionContainer,
+  operation: OperationType,
+): Promise<void> {
   if (key.key instanceof graphene.PrivateKey && key.key.alwaysAuthenticate) {
     if (!container.onAlwaysAuthenticate) {
       throw new core.CryptoError("Crypto key requires re-authentication, but Crypto doesn't have 'onAlwaysAuthenticate' method");
     }
 
-    const pin = await container.onAlwaysAuthenticate(key, container);
+    const pin = await container.onAlwaysAuthenticate(key, container, operation);
     if (pin) {
       container.session.login(pin, graphene.UserType.CONTEXT_SPECIFIC);
     }

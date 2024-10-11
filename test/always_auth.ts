@@ -165,7 +165,12 @@ ctx("CKA_ALWAYS_AUTHENTICATE", () => {
           });
 
           it(v.keyUsage, async () => {
-            crypto.onAlwaysAuthenticate = (): string => pin;
+            crypto.onAlwaysAuthenticate = (key, target, operation): string => {
+              assert.strictEqual(key, keys.privateKey);
+              assert.strictEqual(target, crypto);
+              assert.strictEqual(operation, "decrypt");
+              return pin;
+            };
 
             let i = 2;
             while (i--) {

@@ -1,5 +1,6 @@
 import * as graphene from "graphene-pk11";
 import * as pvtsutils from "pvtsutils";
+import { OperationType } from "./utils";
 
 export type ITemplate = graphene.ITemplate;
 
@@ -39,7 +40,7 @@ export interface ITemplateBuilder {
 }
 
 export type AlwaysAuthenticateHandleResult = string | null;
-export type AlwaysAuthenticateHandle = (key: CryptoKey, crypto: ISessionContainer) => AlwaysAuthenticateHandleResult | Promise<AlwaysAuthenticateHandleResult>;
+export type AlwaysAuthenticateHandle = (key: CryptoKey, crypto: ISessionContainer, operation: OperationType) => AlwaysAuthenticateHandleResult | Promise<AlwaysAuthenticateHandleResult>;
 
 export interface ISessionContainer {
   readonly session: graphene.Session;

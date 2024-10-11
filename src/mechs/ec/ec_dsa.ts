@@ -42,7 +42,7 @@ export class EcdsaProvider extends core.EcdsaProvider implements types.IContaine
     }
     const signer = this.container.session.createSign(mechanism, key.key);
     try {
-      await alwaysAuthenticate(key, this.container);
+      await alwaysAuthenticate(key, this.container, "sign");
     } catch (e) {
       try {
         // call C_SignFinal to close the active state
