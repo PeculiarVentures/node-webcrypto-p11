@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.7](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.6...v2.6.7) (2024-10-11)
+
+
+### Bug Fixes
+
+* Add operation type to onAlwaysAuthenticate function ([e3f4282](https://github.com/PeculiarVentures/node-webcrypto-p11/commit/e3f4282946385e5e8b83bd0fc1d18d91457302e3))
+
 ### [2.6.6](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.5...v2.6.6) (2024-09-30)
 
 
