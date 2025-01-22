@@ -21,11 +21,6 @@ export const config = process.env.PV_CRYPTO === "nss" ?
 console.log(`PKCS11 provider: ${config.name} at ${config.library}`);
 export const crypto = new Crypto(config);
 
-crypto.onAlwaysAuthenticate = () => {
-  console.warn("WARN: using always authenticate");
-  return config.pin || "";
-};
-
 process.on("beforeExit", () => {
   crypto.close();
 });

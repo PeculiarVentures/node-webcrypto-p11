@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { Pkcs11RsaHashedImportParams, Pkcs11RsaHashedKeyGenParams } from "../src";
 import { RsaCryptoKey } from "../src/mechs";
-import { crypto } from "./config";
+import { config, crypto } from "./config";
 
 context("RSA", () => {
 
@@ -87,6 +87,11 @@ context("RSA", () => {
     });
 
     it("generate + encrypt/decrypt (with alwaysAuthenticate)", async () => {
+      let callAuthenticate = false;
+      crypto.onAlwaysAuthenticate = () => {
+        callAuthenticate = true;
+        return config.pin || "";
+      };
       const alg = {
         name: "RSAES-PKCS1-v1_5",
         publicExponent: new Uint8Array([1, 0, 1]),
@@ -101,6 +106,7 @@ context("RSA", () => {
       const dec = await crypto.subtle.decrypt(alg, keys.privateKey, enc);
 
       assert.deepStrictEqual(Buffer.from(dec), data);
+      assert.strictEqual(callAuthenticate, true);
     });
   });
 });
