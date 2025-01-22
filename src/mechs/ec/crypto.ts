@@ -142,6 +142,15 @@ export class EcCrypto implements types.IContainer {
 
   public getAlgorithm(p11AlgorithmName: string | number): string {
     const mechanisms = this.container.session.slot.getMechanisms();
+    switch (p11AlgorithmName) {  
+      case "ECDSA":
+      case "ECDSA_SHA1":
+      case "ECDSA_SHA256":
+      case "ECDSA_SHA384":
+      case "ECDSA_SHA512":
+        p11AlgorithmName = "ECDSA";
+        break;
+    }
     let EC: string | undefined;
     for (let i = 0; i < mechanisms.length; i++) {
       const mechanism = mechanisms.tryGetItem(i);
