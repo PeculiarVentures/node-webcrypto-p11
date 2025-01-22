@@ -27,7 +27,7 @@ ctx("KeyStorage", () => {
           modulusLength: 1024,
         };
         const keys = await crypto.subtle.generateKey(algorithm, false, ["sign", "verify"]);
-        const key = (keys as any)[type] as CryptoKey;
+        const key = (keys as unknown as Record<string, CryptoKey>)[type] as CryptoKey;
 
         const index = await crypto.keyStorage.setItem(key);
         const found = await crypto.keyStorage.indexOf(key);

@@ -26,14 +26,16 @@ export function prepareData(data: BufferSource): Buffer {
   return Buffer.from(pvtsutils.BufferSourceConverter.toArrayBuffer(data));
 }
 
-export function isHashedAlgorithm(data: any): data is HashedAlgorithm {
+export function isHashedAlgorithm(data: unknown): data is HashedAlgorithm {
   return data instanceof Object
     && "name" in data
     && "hash" in data;
 }
 
-export function isCryptoKeyPair(data: any): data is CryptoKeyPair {
-  return data && data.privateKey && data.publicKey;
+export function isCryptoKeyPair(data: unknown): data is CryptoKeyPair {
+  return data instanceof Object
+    && "privateKey" in data
+    && "publicKey" in data;
 }
 
 export function prepareAlgorithm(algorithm: AlgorithmIdentifier): Algorithm {

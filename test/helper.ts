@@ -8,6 +8,7 @@ import { config } from "./config";
  */
 export function isKeyEqual(a: CryptoKey, b: CryptoKey): boolean {
   if (a instanceof CryptoKey && b instanceof CryptoKey) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (a as any).data.equals((b as any).data);
   }
   return false;

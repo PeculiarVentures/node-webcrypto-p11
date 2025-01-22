@@ -82,7 +82,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, ...defaultAlg } = CryptoKey.defaultKeyAlgorithm();
-    this.algorithm = { ...alg, ...defaultAlg } as any;
+    this.algorithm = { ...alg, ...defaultAlg } as T;
     this.id = CryptoKey.getID(key);
 
     if (usages) {

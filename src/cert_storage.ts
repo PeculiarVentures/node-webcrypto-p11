@@ -54,7 +54,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     const keys: string[] = [];
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
-        const item = obj.toType<any>();
+        const item = obj.toType<graphene.X509Certificate>();
         const id = certs.CryptoCertificate.getID(item);
         keys.push(id);
       });
@@ -134,7 +134,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
         }
       });
       const obj = this.crypto.session.copy(data.p11Object, template);
-      return certs.CryptoCertificate.getID(obj.toType<any>());
+      return certs.CryptoCertificate.getID(obj.toType<graphene.X509Certificate>());
     } else {
       return data.id;
     }
@@ -230,7 +230,7 @@ export class CertificateStorage implements core.CryptoCertificateStorage, IGetVa
     let object: graphene.SessionObject | null = null;
     TEMPLATES.forEach((template) => {
       this.crypto.session!.find(template, (obj) => {
-        const item = obj.toType<any>();
+        const item = obj.toType<graphene.X509Certificate>();
         if (id === certs.CryptoCertificate.getID(item)) {
           object = item;
           return false;

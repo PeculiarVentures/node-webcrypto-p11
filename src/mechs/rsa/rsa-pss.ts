@@ -36,6 +36,7 @@ export class RsaPssProvider extends core.RsaPssProvider implements types.IContai
     const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
     mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
     if (mechanism.name === "RSA_PKCS_PSS") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
     }
     const signer = this.container.session.createSign(mechanism, key.key);
@@ -67,6 +68,7 @@ export class RsaPssProvider extends core.RsaPssProvider implements types.IContai
       const mechanism = this.wc2pk11(algorithm, key.algorithm as RsaHashedKeyAlgorithm);
       mechanism.name = this.crypto.getAlgorithm(this.name, mechanism.name);
       if (mechanism.name === "RSA_PKCS_PSS") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         buf = this.crypto.prepareData((key as any).algorithm.hash.name, buf);
       }
       this.container.session.createVerify(mechanism, key.key).once(buf, Buffer.from(signature), (err, data2) => {
