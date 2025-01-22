@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.7...v2.7.0) (2025-01-22)
+
+
+### Features
+
+* Implement RSAES-PKCS1-v1_5 provider for encryption and decryption ([4a49732](https://github.com/PeculiarVentures/node-webcrypto-p11/commit/4a4973242fa8773b91837205480142275d685831))
+
 ### [2.6.7](https://github.com/PeculiarVentures/node-webcrypto-p11/compare/v2.6.6...v2.6.7) (2024-10-11)
 
 
