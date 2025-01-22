@@ -114,6 +114,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
       let CryptoKeyClass: typeof CryptoKey;
       switch (alg.name.toUpperCase()) {
         case "RSASSA-PKCS1-V1_5":
+        case "RSAES-PKCS1-V1_5":
         case "RSA-PSS":
         case "RSA-OAEP":
           CryptoKeyClass = RsaCryptoKey as typeof CryptoKey;

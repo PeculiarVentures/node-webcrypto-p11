@@ -61,7 +61,7 @@ context("RSA", () => {
     const alg: globalThis.RsaHashedKeyGenParams = {
       name: "RSASSA-PKCS1-v1_5",
       hash: "SHA-256",
-      publicExponent: new Uint8Array([1,0,1]),
+      publicExponent: new Uint8Array([1, 0, 1]),
       modulusLength: 3072,
     };
     const keys = await crypto.subtle.generateKey(alg, false, ["sign", "verify"]);
@@ -69,4 +69,38 @@ context("RSA", () => {
     assert.strictEqual((keys.privateKey.algorithm as unknown as RsaHashedKeyAlgorithm).modulusLength, 3072);
   });
 
+  context("RSAES-PKCS1-v1_5", () => {
+    it("generate + encrypt/decrypt", async () => {
+      const alg = {
+        name: "RSAES-PKCS1-v1_5",
+        publicExponent: new Uint8Array([1, 0, 1]),
+        modulusLength: 2048,
+      } as RsaHashedKeyGenParams;
+      const keys = await crypto.subtle.generateKey(alg, true, ["encrypt", "decrypt"]);
+
+      const data = Buffer.from("test message");
+
+      const enc = await crypto.subtle.encrypt(alg, keys.publicKey, data);
+      const dec = await crypto.subtle.decrypt(alg, keys.privateKey, enc);
+
+      assert.deepStrictEqual(Buffer.from(dec), data);
+    });
+
+    it("generate + encrypt/decrypt (with alwaysAuthenticate)", async () => {
+      const alg = {
+        name: "RSAES-PKCS1-v1_5",
+        publicExponent: new Uint8Array([1, 0, 1]),
+        modulusLength: 2048,
+        alwaysAuthenticate: true,
+      } as unknown as RsaHashedKeyGenParams;
+      const keys = await crypto.subtle.generateKey(alg, true, ["encrypt", "decrypt"]);
+
+      const data = Buffer.from("test message");
+
+      const enc = await crypto.subtle.encrypt(alg, keys.publicKey, data);
+      const dec = await crypto.subtle.decrypt(alg, keys.privateKey, enc);
+
+      assert.deepStrictEqual(Buffer.from(dec), data);
+    });
+  });
 });

@@ -172,6 +172,8 @@ export class RsaCrypto implements types.IContainer {
         return `RS${/(\d+)$/.exec(algorithm.hash.name)![1]}`;
       case "RSA-PSS":
         return `PS${/(\d+)$/.exec(algorithm.hash.name)![1]}`;
+      case "RSAES-PKCS1-V1_5":
+        return `RSA`;
       default:
         throw new core.OperationError("algorithm: Is not recognized");
     }

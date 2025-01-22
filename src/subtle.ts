@@ -25,6 +25,7 @@ export class SubtleCrypto extends core.SubtleCrypto implements types.IContainer 
     this.providers.set(new mechs.RsaSsaProvider(this.container));
     this.providers.set(new mechs.RsaPssProvider(this.container));
     this.providers.set(new mechs.RsaOaepProvider(this.container));
+    this.providers.set(new mechs.RsaEsProvider(this.container));
     // #endregion
     // #region EC
     this.providers.set(new mechs.EcdsaProvider(this.container));
