@@ -101,6 +101,7 @@ export class HmacProvider extends core.HmacProvider implements types.IContainer 
     const hmacAlg = {
       ...algorithm,
       name: this.name,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       length: value.byteLength * 8 || this.getDefaultLength((algorithm as any).hash.name),
     } as types.Pkcs11HmacKeyAlgorithm;
     const template: graphene.ITemplate = this.createTemplate({

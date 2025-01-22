@@ -84,7 +84,7 @@ export class EcdhProvider extends core.EcdhProvider implements types.IContainer 
           name: "ECDH1_DERIVE",
           params: new graphene.EcdhParams(
             graphene.EcKdf.NULL,
-            null as any,
+            null,
             ecPoint, // CKA_EC_POINT
           ),
         },

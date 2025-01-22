@@ -21,7 +21,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
     const keys: string[] = [];
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
-        const item = obj.toType<any>();
+        const item = obj.toType<graphene.Key>();
         keys.push(CryptoKey.getID(item));
       });
     });
@@ -51,6 +51,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
   /** @deprecated Use getItem(index, algorithm, extractable, keyUsages) */
   public async getItem(key: string, algorithm: Algorithm, usages: KeyUsage[]): Promise<CryptoKey>;
   public async getItem(index: string, algorithm: core.ImportAlgorithms, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getItem(key: string, ...args: any[]): Promise<CryptoKey> {
     const subjectObject = this.getItemById(key);
     if (subjectObject) {
@@ -86,6 +87,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
             } else {
               alg.name = "RSA-OAEP";
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (alg as any).hash = { name: "SHA-256" };
             break;
           }
@@ -114,6 +116,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
       let CryptoKeyClass: typeof CryptoKey;
       switch (alg.name.toUpperCase()) {
         case "RSASSA-PKCS1-V1_5":
+        case "RSAES-PKCS1-V1_5":
         case "RSA-PSS":
         case "RSA-OAEP":
           CryptoKeyClass = RsaCryptoKey as typeof CryptoKey;
@@ -171,7 +174,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
         }
       });
       const obj = this.crypto.session.copy(p11Key.key, template);
-      return CryptoKey.getID(obj.toType<any>());
+      return CryptoKey.getID(obj.toType<graphene.Key>());
     } else {
       return data.id;
     }
@@ -188,7 +191,7 @@ export class KeyStorage implements core.CryptoKeyStorage {
     let key: graphene.SessionObject | null = null;
     OBJECT_TYPES.forEach((objectClass) => {
       this.crypto.session!.find({ class: objectClass, token: true }, (obj) => {
-        const item = obj.toType<any>();
+        const item = obj.toType<graphene.Key>();
         if (id === CryptoKey.getID(item)) {
           key = item;
           return false;

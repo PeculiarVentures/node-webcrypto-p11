@@ -63,7 +63,7 @@ export class EcCrypto implements types.IContainer {
               privateKey: new EcCryptoKey(keys.privateKey, algorithm),
               publicKey: new EcCryptoKey(keys.publicKey, algorithm),
             };
-            resolve(wcKeyPair as any);
+            resolve(wcKeyPair);
           }
         } catch (e) {
           reject(e);
@@ -107,7 +107,7 @@ export class EcCrypto implements types.IContainer {
   public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: types.Pkcs11EcKeyImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk": {
-        const jwk: any = keyData;
+        const jwk = keyData as JsonWebKey;
         if (jwk.d) {
           return this.importJwkPrivateKey(jwk, algorithm, extractable, keyUsages);
         } else {

@@ -70,7 +70,7 @@ export class RsaCrypto implements types.IContainer {
               privateKey: new RsaCryptoKey(keys.privateKey, algorithm),
               publicKey: new RsaCryptoKey(keys.publicKey, algorithm),
             };
-            resolve(wcKeyPair as any);
+            resolve(wcKeyPair);
           }
         } catch (e) {
           reject(e);
@@ -109,7 +109,7 @@ export class RsaCrypto implements types.IContainer {
   public async importKey(format: KeyFormat, keyData: JsonWebKey | ArrayBuffer, algorithm: RsaHashedImportParams, extractable: boolean, keyUsages: KeyUsage[]): Promise<CryptoKey> {
     switch (format.toLowerCase()) {
       case "jwk": {
-        const jwk: any = keyData;
+        const jwk = keyData as JsonWebKey;
         if (jwk.d) {
           return this.importJwkPrivateKey(jwk, algorithm as RsaHashedKeyGenParams, extractable, keyUsages);
         } else {
@@ -172,6 +172,8 @@ export class RsaCrypto implements types.IContainer {
         return `RS${/(\d+)$/.exec(algorithm.hash.name)![1]}`;
       case "RSA-PSS":
         return `PS${/(\d+)$/.exec(algorithm.hash.name)![1]}`;
+      case "RSAES-PKCS1-V1_5":
+        return `RSA`;
       default:
         throw new core.OperationError("algorithm: Is not recognized");
     }

@@ -7,7 +7,7 @@ export class Assert {
    * @param data
    * @throws TypeError
    */
-  public static isSession(data: any): asserts data is graphene.Session {
+  public static isSession(data: unknown): asserts data is graphene.Session {
     if (!(data instanceof graphene.Session)) {
       throw new TypeError("PKCS#11 session is not initialized");
     }
@@ -18,7 +18,7 @@ export class Assert {
    * @param data
    * @throws TypeError
    */
-  public static isModule(data: any): asserts data is graphene.Module {
+  public static isModule(data: unknown): asserts data is graphene.Module {
     if (!(data instanceof graphene.Module)) {
       throw new TypeError("PKCS#11 module is not initialized");
     }
@@ -29,13 +29,13 @@ export class Assert {
    * @param data
    * @throws TypeError
    */
-  public static isCryptoKey(data: any): asserts data is CryptoKey {
+  public static isCryptoKey(data: unknown): asserts data is CryptoKey {
     if (!(data instanceof CryptoKey)) {
       throw new TypeError("Object is not an instance of PKCS#11 CryptoKey");
     }
   }
 
-  public static requiredParameter(parameter: any, parameterName: string): asserts parameter {
+  public static requiredParameter(parameter: unknown, parameterName: string): asserts parameter {
     if (!parameter) {
       throw new Error(`Absent mandatory parameter "${parameterName}"`);
     }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as assert from "assert";
 import * as graphene from "graphene-pk11";
 import * as x509 from "@peculiar/x509";
