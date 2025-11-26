@@ -52,7 +52,7 @@ ctx("Certificate storage", () => {
       assert.strictEqual(json.notAfter.toISOString(), "2027-06-29T15:13:05.000Z");
       assert.strictEqual(json.subjectName, "C=FR, O=Dhimyotis, CN=Certigna");
       assert.strictEqual(json.issuerName, "C=FR, O=Dhimyotis, CN=Certigna");
-      assert.strictEqual(json.serialNumber, "00fedce3010fc948ff");
+      assert.strictEqual(json.serialNumber, "fedce3010fc948ff");
       assert.strictEqual(json.type, "x509");
 
       assert.strictEqual(item.label, "Certigna");
