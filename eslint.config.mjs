@@ -6,7 +6,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
-    ignores: ['node_modules/**/*.js', 'build/**/*.js'],
+    ignores: ['node_modules/**/*.js', 'build/**/*.{d.ts,js}'],
   },
   {
     rules: {
