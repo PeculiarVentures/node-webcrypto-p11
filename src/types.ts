@@ -56,15 +56,22 @@ export interface IContainer {
   readonly container: ISessionContainer;
 }
 
-export interface CryptoParams {
+export interface CryptoBaseParams {
+  /**
+   * Crypto provider name
+   */
+  name?: string;
+  /**
+   * list of vendor json files
+   */
+  vendors?: string[];
+}
+
+export interface CryptoLibraryParams extends CryptoBaseParams {
   /**
    * Path to library
    */
   library: string;
-  /**
-   * Name of PKCS11 module
-   */
-  name?: string;
   /**
    * Index of slot
    */
@@ -75,14 +82,16 @@ export interface CryptoParams {
    */
   pin?: string;
   /**
-   * list of vendor json files
-   */
-  vendors?: string[];
-  /**
    * NSS library parameters
    */
   libraryParameters?: string;
 }
+
+export interface CryptoSessionParams extends CryptoBaseParams {
+  session: graphene.Session;
+}
+
+export type CryptoParams = CryptoLibraryParams | CryptoSessionParams;
 
 export interface ProviderInfo {
   id: string;

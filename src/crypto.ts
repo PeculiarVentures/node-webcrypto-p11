@@ -60,40 +60,58 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
   constructor(props: types.CryptoParams) {
     super();
 
-    const mod = graphene.Module.load(props.library, props.name || props.library);
-    this.name = props.name;
-    try {
-      if (props.libraryParameters) {
-        mod.initialize({
-          libraryParameters: props.libraryParameters,
-        });
-      } else {
-        mod.initialize();
-      }
-    } catch (e) {
-      if (!(e instanceof pkcs11.Pkcs11Error && e.code === pkcs11.CKR_CRYPTOKI_ALREADY_INITIALIZED)) {
-        throw e;
-      }
-    }
-    this.initialized = true;
+    if ('session' in props) {
+      const { session } = props;
+      // Initialize from existing objects
+      this.slot = session.slot;
+      this.#session = session;
+      this.token = this.slot.getToken();
+      this.isLoginRequired = !!(this.token.flags & graphene.TokenFlag.LOGIN_REQUIRED);
+      this.isLoggedIn = !this.isLoginRequired;
+      this.isReadWrite = !!(session.flags & graphene.SessionFlag.RW_SESSION);
+      this.initialized = false; // Module not initialized by us
+      this.name = props.name;
 
-    const slotIndex = props.slot || 0;
-    const slots = mod.getSlots(true);
-    if (!(0 <= slotIndex && slotIndex < slots.length)) {
-      throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
-    }
-    this.slot = slots.items(slotIndex);
-    this.token = this.slot.getToken();
-    this.isLoginRequired = !!(this.token.flags & graphene.TokenFlag.LOGIN_REQUIRED);
-    this.isLoggedIn = !this.isLoginRequired;
-    this.isReadWrite = !!props.readWrite;
-    this.open(props.readWrite);
+      for (const i in props.vendors!) {
+        graphene.Mechanism.vendor(props.vendors![i]);
+      }
+    } else {
+      // Initialize from library
+      const mod = graphene.Module.load(props.library, props.name || props.library);
+      this.name = props.name;
+      try {
+        if (props.libraryParameters) {
+          mod.initialize({
+            libraryParameters: props.libraryParameters,
+          });
+        } else {
+          mod.initialize();
+        }
+      } catch (e) {
+        if (!(e instanceof pkcs11.Pkcs11Error && e.code === pkcs11.CKR_CRYPTOKI_ALREADY_INITIALIZED)) {
+          throw e;
+        }
+      }
+      this.initialized = true;
 
-    if (props.pin && this.isLoginRequired) {
-      this.login(props.pin);
-    }
-    for (const i in props.vendors!) {
-      graphene.Mechanism.vendor(props.vendors![i]);
+      const slotIndex = props.slot || 0;
+      const slots = mod.getSlots(true);
+      if (!(0 <= slotIndex && slotIndex < slots.length)) {
+        throw new WebCryptoError(`Slot by index ${props.slot} is not found`);
+      }
+      this.slot = slots.items(slotIndex);
+      this.token = this.slot.getToken();
+      this.isLoginRequired = !!(this.token.flags & graphene.TokenFlag.LOGIN_REQUIRED);
+      this.isLoggedIn = !this.isLoginRequired;
+      this.isReadWrite = !!props.readWrite;
+      this.open(props.readWrite);
+
+      if (props.pin && this.isLoginRequired) {
+        this.login(props.pin);
+      }
+      for (const i in props.vendors!) {
+        graphene.Mechanism.vendor(props.vendors![i]);
+      }
     }
 
     this.subtle = new SubtleCrypto(this);
@@ -175,9 +193,15 @@ export class Crypto extends core.Crypto implements core.CryptoStorages, types.IS
    * Close PKCS11 module
    */
   public close(): void {
-    if (this.initialized) {
-      this.session.logout();
+    if (this.isLoggedIn && this.isLoginRequired) {
+      this.logout();
+    }
+    try {
       this.session.close();
+    } catch {
+      // Ignore errors if session is already closed
+    }
+    if (this.initialized) {
       this.slot.module.finalize();
       this.slot.module.close();
     }

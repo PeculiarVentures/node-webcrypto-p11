@@ -67,4 +67,14 @@ context("Crypto", () => {
     });
   });
 
+  it("create using session parameters", () => {
+    const session = crypto.session;
+
+    const newCrypto = new types.Crypto({ session });
+    assert.strictEqual(newCrypto.isReadWrite, crypto.isReadWrite, "isReadWrite mismatch");
+    // assert.strictEqual(newCrypto.isLoggedIn, crypto.isLoggedIn, "isLoggedIn mismatch");
+    assert.strictEqual(newCrypto.slot.handle.toString("hex"), crypto.slot.handle.toString("hex"), "slot handle mismatch");
+    assert.strictEqual(newCrypto.session.handle.toString("hex"), crypto.session.handle.toString("hex"), "session handle mismatch");
+  });
+
 });
