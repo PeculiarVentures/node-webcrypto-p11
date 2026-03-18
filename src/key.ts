@@ -53,7 +53,7 @@ export class CryptoKey<T extends Pkcs11KeyAlgorithm = Pkcs11KeyAlgorithm> extend
    * If `true`, the user has to supply the PIN for each use (sign or decrypt) with the key. Use `crypto.onAlwaysAuthenticate` handler to customize this behavior.
    * @since v2.6.0
    */
-  public alwaysAuthenticate?: boolean | undefined;
+  public alwaysAuthenticate?: boolean;
 
   public override type: KeyType = "secret";
   public override extractable: boolean = false;
